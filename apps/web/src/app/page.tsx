@@ -1,4 +1,5 @@
 import React from 'react';
+import { ScrollReveal } from "@/components/scroll-reveal";
 import Link from 'next/link';
 import { RECEIPT_ANCHOR_ID } from '@/lib/receipt-anchor';
 
