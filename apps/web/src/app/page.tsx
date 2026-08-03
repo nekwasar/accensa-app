@@ -40,13 +40,13 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-4 justify-start md:justify-center pt-8">
             <Link
               href="/verify"
-              className="px-8 py-4 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black text-sm uppercase tracking-wider hover:bg-emerald-700 dark:hover:bg-emerald-400 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-600/20 dark:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+              className="px-8 py-4 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-slate-200/50 dark:border-white/20 text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider hover:bg-white/60 dark:hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none"
             >
               Verify a Receipt
             </Link>
             <Link
               href="/dashboard"
-              className="px-8 py-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] dark:backdrop-blur-md text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-all hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
+              className="px-8 py-4 rounded-xl bg-white dark:bg-white/[0.02] dark:backdrop-blur-md text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-all hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
             >
               View Dashboard
             </Link>
