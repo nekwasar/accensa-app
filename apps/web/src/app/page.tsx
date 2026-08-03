@@ -110,14 +110,14 @@ export default function Landing() {
             <FeatureCard title="Predictable Gas" desc="Lets a merchant definitively bound the cost of their refund policy in advance rather than guessing." />
           </div>
         </div>
-      </section>
+      </ScrollReveal>
 
       {/* Contracts Live */}
-      <section className="px-6 py-24 md:py-32 border-t border-slate-200 dark:border-white/5 transition-colors duration-300">
+      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
           <div className="text-left md:text-center mb-16">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Network</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Live Contracts</h2>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Live <span className="text-slate-400 dark:text-slate-500 italic font-normal">Contracts.</span></h2>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed mt-6 text-lg font-medium max-w-2xl mx-auto transition-colors duration-300">
               Both contracts are deployed and initialized on Stellar testnet, and batch #1 is anchored. Verify receipts against it right now.
             </p>
