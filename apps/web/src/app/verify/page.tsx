@@ -161,7 +161,7 @@ function Result({ result }: { result: VerifyResponse }) {
           <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-colors duration-300 ${verified ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white'}`}>
             {verified ? '✓' : '✕'}
           </div>
-          <p className={`text-3xl font-black tracking-tight transition-colors duration-300 ${verified ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+          <p className={`text-3xl font-black tracking-tight transition-colors duration-300 ${verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
             {verified ? 'Proof Verified' : 'Proof Rejected'}
           </p>
         </div>
