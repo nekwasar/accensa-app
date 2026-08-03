@@ -73,7 +73,7 @@ of a cent, which is the only way verifiability survives micropayment economics.
 |---|---|---|
 | **Indexer** | [`apps/web/src/app/api/sync`](apps/web/src/app/api/sync) | Decodes Stellar Asset Contract `transfer` events addressed to the merchant and persists them to PostgreSQL. Runs on a schedule; tracks a ledger cursor so it never rescans or double-counts. |
 | **Dashboard** | [`apps/web/`](apps/web) | Next.js app showing payments, totals, and receipt verification. |
-| **SDK** | [`packages/sdk/`](packages/sdk) | `verifyReceipt()` for off-chain Merkle verification, and `attachAccensaHook()` middleware for route-level attribution. |
+| **SDK** | [`packages/sdk/`](packages/sdk) | `verifyReceipt()` for off-chain Merkle verification, and `attachAccensaHook()` / `createSettleHook()` for reporting route-level attribution from your x402 server. |
 | **Demo merchant** | [`apps/demo-merchant/`](apps/demo-merchant) | Minimal paid endpoint for exercising the flow end to end. |
 
 ## Verifying a Receipt Off-Chain
@@ -118,6 +118,7 @@ docker run --name pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 MERCHANT_ADDRESS=GCALKSGAZRJLSUEJT3M5W6LN4R7XQOLIRCOS6ZA6EDZVTZDBIIPPFKJ6
 STELLAR_RPC_URL=https://soroban-testnet.stellar.org
+HOOK_API_KEY=any-shared-secret   # required for /api/hook/settle
 
 # 3. Dashboard (schema is created on first request)
 cd apps/web
@@ -131,6 +132,33 @@ says so — the dashboard never invents rows to fill space.
 
 Routes: `/` is the landing page, `/dashboard` the merchant view, and `/verify` the
 public receipt verifier, which needs no account.
+
+### Route-level attribution
+
+A SAC `transfer` event carries the payer, amount, and asset — never the HTTP route
+that was paid for. That mapping exists only inside your server, at the moment x402
+settles, so it has to be reported rather than indexed.
+
+Set `HOOK_API_KEY` on both sides, then report settlements from your x402 server:
+
+```ts
+import { createSettleHook } from '@accensa/sdk';
+
+resourceServer.onAfterSettle(
+  createSettleHook({ indexerUrl: 'https://your-accensa.vercel.app', apiKey: process.env.HOOK_API_KEY }),
+);
+```
+
+Or, if you only have the response to work from, mount `attachAccensaHook()` after your
+x402 middleware — it reads the `X-PAYMENT-RESPONSE` header.
+
+`POST /api/hook/settle` is the endpoint behind both. It is the only write path into
+`payments` not derived from the ledger, so it fails closed: with no `HOOK_API_KEY`
+configured it accepts nothing. Reported attribution is marked with `hook_reported_at`,
+keeping merchant-reported fields distinguishable from on-chain ones. Settlements for
+transfers the indexer has not reached yet are staged and completed on the next run.
+
+[`apps/demo-merchant/`](apps/demo-merchant) is a working example.
 
 ### Contract addresses
 

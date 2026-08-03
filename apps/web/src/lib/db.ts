@@ -66,6 +66,7 @@ export async function ensureSchema(client: Client): Promise<void> {
     ['route', 'VARCHAR(255)'],
     ['method', 'VARCHAR(10)'],
     ['request_id', 'VARCHAR(64)'],
+    ['hook_reported_at', 'TIMESTAMPTZ'],
   ]) {
     await client.query(`ALTER TABLE payments ADD COLUMN IF NOT EXISTS ${col} ${type};`);
   }
@@ -79,9 +80,76 @@ export async function ensureSchema(client: Client): Promise<void> {
     );
   `);
 
+  // Attribution reported by the merchant arrives before the indexer has seen
+  // the transfer — the sync job runs on a schedule, the hook fires the instant
+  // x402 settles. Those staged rows have no amount or payer yet, and inventing
+  // a zero to satisfy a constraint is exactly the fabrication this codebase
+  // exists to avoid. The chain fills them in.
+  for (const col of ['amount', 'payer']) {
+    await client.query(`ALTER TABLE payments ALTER COLUMN ${col} DROP NOT NULL;`);
+  }
+
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
+}
+
+/**
+ * Records merchant-reported route attribution against a payment.
+ *
+ * Attribution is the one fact the chain cannot supply: a SAC `transfer` event
+ * has no notion of an HTTP route. It therefore arrives from the seller's own
+ * process and is trusted only as far as the shared secret guarding this path.
+ *
+ * `hook_reported_at` marks the row as carrying merchant-reported data, so the
+ * two provenances stay distinguishable downstream. Ledger fields are never
+ * written here — if the transfer has not been indexed yet, the row is staged
+ * with a null ledger and the sync job fills in the on-chain truth later.
+ *
+ * A staged row also has a null `ts`, which is what keeps it out of the
+ * dashboard: /api/payments filters on `ts IS NOT NULL`, so an attribution can
+ * never be presented as revenue before the chain confirms the transfer.
+ *
+ * Returns whether the settlement matched an already-indexed payment.
+ */
+export async function recordSettlement(
+  client: Client,
+  s: {
+    txHash: string;
+    route: string;
+    method: string;
+    requestId?: string | null;
+    payer?: string | null;
+  },
+): Promise<{ matchedExistingPayment: boolean }> {
+  const updated = await client.query(
+    `UPDATE payments
+        SET route = $2, method = $3, request_id = $4, hook_reported_at = now()
+      WHERE tx_hash = $1`,
+    [s.txHash, s.route, s.method, s.requestId ?? null],
+  );
+
+  if ((updated.rowCount ?? 0) > 0) return { matchedExistingPayment: true };
+
+  // Not indexed yet. Stage the attribution so it is not lost; the sync job
+  // completes the row when it reaches that ledger. ON CONFLICT guards the race
+  // where the indexer inserts between the UPDATE and the INSERT.
+  // ts is explicitly NULL, not omitted: the column carries a CURRENT_TIMESTAMP
+  // default, and letting it fire would stamp a staged row with the time it was
+  // reported rather than the time the payment settled on chain — and would put
+  // it straight onto the dashboard, since that filters on ts IS NOT NULL.
+  await client.query(
+    `INSERT INTO payments (tx_hash, payer, route, method, request_id, ts, hook_reported_at)
+     VALUES ($1, $2, $3, $4, $5, NULL, now())
+     ON CONFLICT (tx_hash) DO UPDATE
+       SET route = EXCLUDED.route,
+           method = EXCLUDED.method,
+           request_id = EXCLUDED.request_id,
+           hook_reported_at = now()`,
+    [s.txHash, s.payer ?? null, s.route, s.method, s.requestId ?? null],
+  );
+
+  return { matchedExistingPayment: false };
 }
 
 export async function getLastSyncedLedger(client: Client): Promise<number | null> {
