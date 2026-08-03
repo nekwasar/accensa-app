@@ -174,17 +174,23 @@ export default function Landing() {
 
 function BentoCard({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-3xl border border-slate-200/60 dark:border-white/20 bg-white/50 dark:bg-white/5 backdrop-blur-2xl p-8 md:p-10 flex flex-col hover:shadow-2xl dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] ${className}`}>
-      <h3 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">{title}</h3>
-      {children}
+    <div className={`relative overflow-hidden group rounded-3xl bg-white/40 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/5 p-8 md:p-10 flex flex-col hover:shadow-2xl dark:hover:shadow-[0_0_30px_rgba(255,255,255,0.02)] transition-all duration-500 shadow-sm dark:shadow-none ${className}`}>
+      {/* Dotted Grid Hover Effect */}
+      <div className="absolute inset-0 bg-grid opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      
+      {/* Content Wrapper to stay above background */}
+      <div className="relative z-10 flex flex-col h-full">
+        <h3 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">{title}</h3>
+        {children}
+      </div>
     </div>
   );
 }
 
 function FeatureCard({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200/60 dark:border-white/20 bg-white/50 dark:bg-white/5 backdrop-blur-2xl p-8 hover:bg-white/70 dark:hover:bg-white/10 hover:shadow-2xl dark:hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-all duration-300 group shadow-[0_4px_15px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
-      <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm dark:shadow-none">
+    <div className="rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/5 p-8 hover:bg-white/70 dark:hover:bg-white/10 hover:shadow-2xl dark:hover:shadow-sm dark:shadow-none">
+      <div className="w-10 h-10 rounded-xl bg-emerald-400 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm dark:shadow-none">
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
