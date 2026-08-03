@@ -66,9 +66,6 @@ export default async function BatchPage({
 
       <div className="max-w-3xl mx-auto space-y-10 relative z-10">
         <header className="space-y-4">
-          <Link href="/" className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-            ← Back to Accensa
-          </Link>
           <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
             Batch{' '}
             <span className="bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">

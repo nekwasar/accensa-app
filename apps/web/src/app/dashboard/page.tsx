@@ -2,8 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
-import Link from 'next/link';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 interface Payment {
   tx_hash: string;
@@ -73,12 +71,6 @@ export default function Dashboard() {
         {/* Header Grid */}
         <header className="grid lg:grid-cols-3 gap-8 items-end">
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
-              <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                <span>←</span> Back to Accensa
-              </Link>
-              <ThemeToggle />
-            </div>
             <div>
               <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-3">Dashboard</p>
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Settled Volume</h1>

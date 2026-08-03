@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { RECEIPT_ANCHOR_ID } from '@/lib/receipt-anchor';
-import { Nav } from '@/components/nav';
 
 const REFUND_VAULT_ID =
   process.env.NEXT_PUBLIC_REFUND_VAULT_ID ??
@@ -13,7 +12,6 @@ const explorer = (id: string) =>
 export default function Landing() {
   return (
     <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 transition-colors duration-300">
-      <Nav />
 
       {/* Hero Section */}
       <section className="relative px-6 pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[85vh]">
