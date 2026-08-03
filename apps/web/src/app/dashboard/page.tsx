@@ -65,7 +65,7 @@ export default function Dashboard() {
   const totalAsset = assets.size === 1 ? [...assets][0] : '';
 
   return (
-    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 transition-colors duration-300 p-6 md:p-12 lg:p-20">
+    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-white dark:bg-[#04090f] bg-grid p-6 md:p-12 lg:p-20">
       <div className="max-w-7xl mx-auto space-y-12">
         
         {/* Header Grid */}
