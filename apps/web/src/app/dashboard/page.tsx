@@ -166,7 +166,7 @@ export default function Dashboard() {
                               <span className="font-mono text-slate-600 dark:text-slate-300">{payment.route}</span>
                             </div>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-600">—</span>
+                            <span className="text-slate-400 dark:text-slate-600">-</span>
                           )}
                         </td>
                         <td className="px-4 py-3 md:px-8 md:py-5 text-slate-500 text-sm">
@@ -207,7 +207,7 @@ export default function Dashboard() {
                   </span>
                 </Field>
                 <Field label="Ledger">
-                  <span className="font-mono text-slate-500 dark:text-slate-300 text-lg transition-colors duration-300">{selected.ledger ?? '—'}</span>
+                  <span className="font-mono text-slate-500 dark:text-slate-300 text-lg transition-colors duration-300">{selected.ledger ?? '-'}</span>
                 </Field>
               </div>
               <Field label="Payer">

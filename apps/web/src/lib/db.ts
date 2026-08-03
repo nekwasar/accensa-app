@@ -5,7 +5,7 @@ import { Client } from 'pg';
  *
  * There is deliberately no default connection string: a fallback committed to
  * the repository is a published credential. Use the Supabase *session pooler*
- * host in production — Vercel Functions have no IPv6 route, and Supabase direct
+ * host in production - Vercel Functions have no IPv6 route, and Supabase direct
  * connections (db.<ref>.supabase.co) are IPv6-only.
  */
 export function connectionString(): string {
@@ -27,7 +27,7 @@ export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise
 /**
  * Brings the schema up to the canonical shape.
  *
- * Idempotent, and safe against either historical layout — see
+ * Idempotent, and safe against either historical layout - see
  * migrations/001_unify_payments.sql for the full reasoning. Kept in code as
  * well so a fresh database works without a manual migration step.
  */

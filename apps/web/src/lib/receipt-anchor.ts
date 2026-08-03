@@ -13,7 +13,7 @@ import {
 /**
  * Reads the ReceiptAnchor contract on Stellar.
  *
- * Every call here is a read-only simulation — nothing is signed, nothing is
+ * Every call here is a read-only simulation - nothing is signed, nothing is
  * submitted, and no fees are paid. That matters for the public verifier: an
  * agent operator must be able to check a receipt without an account, a wallet,
  * or any trust in this service.
@@ -82,7 +82,7 @@ async function simulate(method: string, args: xdr.ScVal[]): Promise<unknown> {
 /**
  * Verifies a receipt against an anchored batch, on-chain.
  *
- * Returns the contract's own answer — the point of the verifier is that this
+ * Returns the contract's own answer - the point of the verifier is that this
  * number comes from the ledger, not from us.
  */
 export async function verifyReceiptOnChain(

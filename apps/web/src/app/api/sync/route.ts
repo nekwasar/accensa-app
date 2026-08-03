@@ -52,8 +52,8 @@ async function rpc<T>(method: string, params: unknown): Promise<T> {
 /**
  * Indexes Stellar Asset Contract transfers into the merchant's payment ledger.
  *
- * Invoked by Vercel Cron. Protected by CRON_SECRET when set — Vercel sends it
- * as a bearer token — so the endpoint cannot be driven by arbitrary callers.
+ * Invoked by Vercel Cron. Protected by CRON_SECRET when set - Vercel sends it
+ * as a bearer token - so the endpoint cannot be driven by arbitrary callers.
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -131,7 +131,7 @@ export async function GET(request: Request) {
             transferEvent.txHash,
             transferEvent.ledger,
             transferEvent.from,
-            transferEvent.amount, // string — never a float
+            transferEvent.amount, // string - never a float
             transferEvent.asset,
             transferEvent.ledgerClosedAt,
           ],

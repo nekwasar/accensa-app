@@ -31,7 +31,7 @@ describe('stroopsToDecimal', () => {
   });
 });
 
-describe('decodeTransferEvent — against real testnet events', () => {
+describe('decodeTransferEvent - against real testnet events', () => {
   const events = fixture.events as RawEvent[];
 
   it('decodes every captured event', () => {
@@ -65,7 +65,7 @@ describe('decodeTransferEvent — against real testnet events', () => {
   });
 });
 
-describe('decodeTransferEvent — malformed input', () => {
+describe('decodeTransferEvent - malformed input', () => {
   const valid = (fixture.events as RawEvent[])[0];
 
   it('returns null rather than throwing on too few topics', () => {

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Accensa — provable payments for x402 sellers on Stellar";
+const title = "Accensa - provable payments for x402 sellers on Stellar";
 const description =
   "Agents prove they were charged correctly. Merchants refund without becoming custodians. Receipts anchored on Stellar, verifiable by anyone without an account.";
 

@@ -35,9 +35,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id: raw } = await params;
   const found = await load(raw);
-  if (!found) return { title: 'Batch not found — Accensa' };
+  if (!found) return { title: 'Batch not found - Accensa' };
 
-  const title = `Batch #${found.id} — Accensa`;
+  const title = `Batch #${found.id} - Accensa`;
   const description = `${found.batch.count} receipts anchored on Stellar. Merkle root ${found.batch.root.slice(0, 16)}…`;
   return { title, description, openGraph: { title, description } };
 }
@@ -78,7 +78,7 @@ export default async function BatchPage({
           <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg transition-colors duration-300">
             {batch.count} {batch.count === 1 ? 'receipt' : 'receipts'} anchored on
             Stellar. Anyone holding a receipt from this period can prove it belongs
-            here — without an account, and without trusting the merchant.
+            here - without an account, and without trusting the merchant.
           </p>
         </header>
 
@@ -116,7 +116,7 @@ export default async function BatchPage({
         <section className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10 transition-colors duration-300">
           <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Check it yourself</h2>
           <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed transition-colors duration-300">
-            Read the same batch straight from the ledger — no part of this page is
+            Read the same batch straight from the ledger - no part of this page is
             taken on trust:
           </p>
           <pre className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#06111f] p-6 text-sm font-mono shadow-inner dark:shadow-none transition-colors duration-300">

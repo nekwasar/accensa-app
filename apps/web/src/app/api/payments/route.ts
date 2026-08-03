@@ -7,7 +7,7 @@ export interface PaymentRow {
   tx_hash: string;
   ledger: number | null;
   payer: string;
-  /** Decimal string. Deliberately not a number — see below. */
+  /** Decimal string. Deliberately not a number - see below. */
   amount: string;
   asset: string | null;
   ts: string;

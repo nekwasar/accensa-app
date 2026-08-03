@@ -21,11 +21,7 @@ export default function Landing() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-100/50 dark:bg-emerald-500/5 rounded-full blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300" />
         
         <div className="max-w-5xl mx-auto text-center space-y-8 relative z-10">
-          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none dark:backdrop-blur-md mb-4 transition-colors duration-300">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none dark:backdrop-blur-md mb-4 transition-colors duration-300">
             <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Live on Stellar Testnet</span>
           </div>
 
@@ -84,7 +80,7 @@ export default function Landing() {
             </BentoCard>
             <BentoCard className="md:col-span-2" title="3. Anyone Verifies">
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium mt-2 transition-colors duration-300">
-                Agents check their receipt against the anchored root — locally and directly against the smart contract. Zero trust required.
+                Agents check their receipt against the anchored root - locally and directly against the smart contract. Zero trust required.
               </p>
               <div className="mt-8">
                 <Link href="/verify" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
@@ -109,7 +105,7 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard title="Sub-cent Fees" desc="Make per-request agent payments viable at all. On most chains the settlement fee exceeds the payment." />
-            <FeatureCard title="Batched Anchoring" desc="Amortizes to near zero — one call covers an entire billing period. Verifiability costs a fraction of a cent." />
+            <FeatureCard title="Batched Anchoring" desc="Amortizes to near zero - one call covers an entire billing period. Verifiability costs a fraction of a cent." />
             <FeatureCard title="Native USDC" desc="Means float and refunds settle in the asset merchants actually price in, with absolutely no bridging." />
             <FeatureCard title="Predictable Gas" desc="Lets a merchant definitively bound the cost of their refund policy in advance rather than guessing." />
           </div>

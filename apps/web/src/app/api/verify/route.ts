@@ -21,13 +21,13 @@ export interface CheckResult {
 }
 
 export interface VerifyResponse {
-  /** Recomputed in this process from the proof — no ledger involved. */
+  /** Recomputed in this process from the proof - no ledger involved. */
   local: CheckResult;
   /** The contract's own answer, read from the ledger. */
   onchain: CheckResult;
   /** True only when both independent implementations agree the receipt is valid. */
   verified: boolean;
-  /** Set when the two disagree — which should never happen. */
+  /** Set when the two disagree - which should never happen. */
   disagreement: boolean;
   batch?: { id: number; root: string; count: number; periodStart: number; periodEnd: number };
   contract: string;
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
   // The two checks are deliberately independent. Local recomputes the root from
   // the proof in this process; on-chain asks the contract. Running both and
-  // showing both is the point — agreement between an independent computation
+  // showing both is the point - agreement between an independent computation
   // and the ledger is what makes a receipt trustworthy without trusting us.
   const local: CheckResult = (() => {
     try {
