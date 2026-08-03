@@ -121,14 +121,14 @@ export default function VerifyPage() {
                 onChange={(e) => setProof(e.target.value)}
                 rows={3}
                 placeholder="7ca64ee6…&#10;1733fad1…"
-                className="w-full bg-slate-50 dark:bg-[#06111f] border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 font-mono text-slate-600 dark:text-slate-400 text-sm focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none resize-y leading-relaxed"
+                className="w-full bg-slate-50 dark:bg-[#0a111a] border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 font-mono text-slate-600 dark:text-slate-400 text-sm focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none resize-y leading-relaxed"
               />
             </Field>
 
             <button
               type="submit"
               disabled={state.status === 'checking'}
-              className="w-full px-8 py-5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black text-lg uppercase tracking-wider hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:opacity-50 transition-all shadow-md shadow-emerald-600/20 dark:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+              className="w-full px-8 py-5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black text-lg uppercase tracking-wider hover:bg-emerald-600 dark:hover:bg-emerald-400 disabled:opacity-50 transition-all shadow-md shadow-emerald-600/20 dark:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
             >
               {state.status === 'checking' ? 'Processing...' : 'Verify Cryptographic Proof'}
             </button>
