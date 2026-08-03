@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { RECEIPT_ANCHOR_ID } from '@/lib/receipt-anchor';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const REFUND_VAULT_ID =
   process.env.NEXT_PUBLIC_REFUND_VAULT_ID ??
@@ -11,196 +12,164 @@ const explorer = (id: string) =>
 
 export default function Landing() {
   return (
-    <main className="min-h-screen text-white bg-[linear-gradient(160deg,#031207_0%,#010603_45%,#072813_160%)] font-sans">
+    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 transition-colors duration-300">
       <Nav />
 
-      {/* Hero */}
-      <section className="px-6 pt-24 pb-32 md:pt-40 md:pb-40">
-        <div className="max-w-4xl mx-auto text-center space-y-10">
-          <p className="uppercase tracking-[0.25em] text-emerald-400 font-bold text-xs inline-flex items-center gap-2">
-            Live on Stellar testnet
-          </p>
+      {/* Hero Section */}
+      <section className="relative px-6 pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[85vh]">
+        {/* Subtle radial glow matching emerald theme */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-100/50 dark:bg-emerald-500/5 rounded-full blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300" />
+        
+        <div className="max-w-5xl mx-auto text-center space-y-8 relative z-10">
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none dark:backdrop-blur-md mb-4 transition-colors duration-300">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Live on Stellar Testnet</span>
+          </div>
 
-          <h1 className="text-6xl md:text-7xl font-black tracking-tighter leading-[1.05] text-white">
-            Prove every{' '}
-            <span className="text-emerald-400">
-              x402 payment.
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1.05] text-slate-900 dark:text-white transition-colors duration-300">
+            Trustless payments <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-200">
+              for AI agents.
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed font-medium">
-            Agents prove they were charged correctly. Merchants refund without
-            becoming custodians. Receipts anchored on Stellar, verifiable by
-            anyone — no account required.
+          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium transition-colors duration-300">
+            Agents cryptographically prove they were charged correctly. Merchants refund without
+            custodian risk. Verifiable by anyone, anchored on Stellar.
           </p>
 
-          <div className="flex flex-wrap gap-4 justify-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Link
               href="/verify"
-              className="px-8 py-4 rounded-xl bg-emerald-500 text-[#010603] font-bold text-sm hover:bg-emerald-400 transition-colors tracking-wide"
+              className="px-8 py-4 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black text-sm uppercase tracking-wider hover:bg-emerald-700 dark:hover:bg-emerald-400 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-600/20 dark:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
             >
-              Verify a receipt
+              Verify a Receipt
             </Link>
             <Link
               href="/dashboard"
-              className="px-8 py-4 rounded-xl border border-white/20 bg-white/5 text-white font-bold text-sm hover:bg-white/10 transition-colors tracking-wide"
+              className="px-8 py-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] dark:backdrop-blur-md text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-all hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
             >
-              View the dashboard
+              View Dashboard
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Problem */}
-      <Section title="The problem" eyebrow="Context">
-        <p className="text-white/70 leading-relaxed mb-6 text-lg font-medium">
-          x402 turns any HTTP endpoint into a paid resource: an agent hits your
-          API, gets a <code className="text-emerald-400 font-bold">402 Payment Required</code>,
-          pays, and retries. That works — but it leaves both sides without
-          recourse.
-        </p>
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card title="The agent cannot audit">
-            Its receipt comes from the seller&rsquo;s own API, attesting to the
-            seller&rsquo;s own behaviour. When an agent makes thousands of
-            sub-cent calls a day across dozens of vendors, &ldquo;trust the
-            seller&rsquo;s dashboard&rdquo; is not an auditing story.
-          </Card>
-          <Card title="The merchant cannot refund safely">
-            Manual refunds don&rsquo;t scale to per-request payments, and an
-            unbounded refund key over merchant float is exactly what a seller
-            does not want sitting in a web backend.
-          </Card>
-        </div>
-      </Section>
+      {/* Bento Grid Architecture */}
+      <section className="px-6 py-24 md:py-32 relative">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-16 text-center">
+            <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Architecture</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">How it works</h2>
+          </div>
 
-      {/* How it works */}
-      <Section title="How it works" eyebrow="Architecture">
-        <ol className="grid md:grid-cols-3 gap-6">
-          <Step n={1} title="Agent pays">
-            Payment settles on Stellar as a Stellar Asset Contract transfer.
-          </Step>
-          <Step n={2} title="Accensa indexes & anchors">
-            The indexer decodes transfers to your address, then anchors a Merkle
-            root of the batch on-chain.
-          </Step>
-          <Step n={3} title="Anyone verifies">
-            An agent checks its receipt against the anchored root — locally and
-            against the contract. No account, no trust in us.
-          </Step>
-        </ol>
-      </Section>
-
-      {/* Live proof */}
-      <Section title="Live, not a mockup" eyebrow="Network">
-        <p className="text-white/70 leading-relaxed mb-8 text-lg font-medium">
-          Both contracts are deployed and initialized on Stellar testnet, and
-          batch #1 is anchored. You can verify a receipt against it right now —
-          and watch a forged one get rejected.
-        </p>
-        <div className="grid sm:grid-cols-2 gap-6">
-          <ContractCard name="ReceiptAnchor" id={RECEIPT_ANCHOR_ID} />
-          <ContractCard name="RefundVault" id={REFUND_VAULT_ID} />
+          <div className="grid md:grid-cols-3 gap-6">
+            <BentoCard className="md:col-span-2 transition-all duration-300" title="1. The Agent Pays">
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium mt-2 transition-colors duration-300">
+                Every request acts as an isolated transaction. The payment settles natively on Stellar as a Stellar Asset Contract transfer, leaving an immutable footprint.
+              </p>
+            </BentoCard>
+            <BentoCard className="md:row-span-2" title="2. Accensa Indexes">
+              <div className="space-y-4 mt-4">
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium transition-colors duration-300">
+                  The indexer decodes transfers to your address in real-time, grouping them into cryptographically secure batches.
+                </p>
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 font-mono text-xs text-emerald-700 dark:text-emerald-400 break-all transition-colors duration-300">
+                  root: 7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1
+                </div>
+              </div>
+            </BentoCard>
+            <BentoCard className="md:col-span-2" title="3. Anyone Verifies">
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium mt-2 transition-colors duration-300">
+                Agents check their receipt against the anchored root — locally and directly against the smart contract. Zero trust required.
+              </p>
+              <div className="mt-8">
+                <Link href="/verify" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
+                  Try the Verifier →
+                </Link>
+              </div>
+            </BentoCard>
+          </div>
         </div>
-        <div className="mt-10">
-          <Link
-            href="/verify"
-            className="inline-block text-xs font-bold tracking-[0.15em] uppercase text-emerald-400 hover:text-emerald-300 transition-colors"
-          >
-            Try the verifier with a sample receipt →
-          </Link>
-        </div>
-      </Section>
+      </section>
 
-      {/* Two audiences */}
-      <Section title="Two sides, one ledger" eyebrow="Audiences">
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card title="For merchants">
-            See revenue reconstructed from chain data, attributed to the endpoint
-            that earned it, with refunds bounded by an on-chain policy instead of
-            a support inbox.
-            <div className="pt-6 mt-auto">
-              <Link
-                href="/dashboard"
-                className="inline-block text-emerald-400 font-bold uppercase tracking-[0.15em] text-xs hover:text-emerald-300 transition-colors"
-              >
-                Open the dashboard →
-              </Link>
+      {/* The Protocol Benefits */}
+      <section className="px-6 py-24 md:py-32 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.01] transition-colors duration-300">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-16">
+            <div className="max-w-2xl">
+              <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Protocol</p>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Why Stellar?</h2>
             </div>
-          </Card>
-          <Card title="For agent operators">
-            Verify any receipt you were given, against the ledger, without an
-            account or a wallet. If the proof doesn&rsquo;t lead to the anchored
-            root, you know — and so does everyone else.
-            <div className="pt-6 mt-auto">
-              <Link
-                href="/verify"
-                className="inline-block text-emerald-400 font-bold uppercase tracking-[0.15em] text-xs hover:text-emerald-300 transition-colors"
-              >
-                Verify a receipt →
-              </Link>
-            </div>
-          </Card>
+            <p className="text-slate-600 dark:text-slate-400 font-medium max-w-md text-lg transition-colors duration-300">Built on a ledger designed specifically for high-throughput, low-latency financial settlement.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <FeatureCard title="Sub-cent Fees" desc="Make per-request agent payments viable at all. On most chains the settlement fee exceeds the payment." />
+            <FeatureCard title="Batched Anchoring" desc="Amortizes to near zero — one call covers an entire billing period. Verifiability costs a fraction of a cent." />
+            <FeatureCard title="Native USDC" desc="Means float and refunds settle in the asset merchants actually price in, with absolutely no bridging." />
+            <FeatureCard title="Predictable Gas" desc="Lets a merchant definitively bound the cost of their refund policy in advance rather than guessing." />
+          </div>
         </div>
-      </Section>
+      </section>
 
-      {/* Why Stellar */}
-      <Section title="Why Stellar" eyebrow="Protocol">
-        <ul className="space-y-6 text-white/70 leading-relaxed text-lg">
-          <Bullet label="Sub-cent fees">
-            make per-request agent payments viable at all. On most chains the
-            settlement fee exceeds the payment.
-          </Bullet>
-          <Bullet label="Batched anchoring">
-            amortises to near zero — one call covers an entire billing period, so
-            verifiability costs a fraction of a cent per receipt.
-          </Bullet>
-          <Bullet label="Native USDC">
-            means float and refunds settle in the asset merchants actually price
-            in, with no bridge.
-          </Bullet>
-          <Bullet label="Predictable fees">
-            let a merchant bound the cost of their refund policy in advance
-            rather than guessing at gas.
-          </Bullet>
-        </ul>
-      </Section>
+      {/* Contracts Live */}
+      <section className="px-6 py-24 md:py-32 border-t border-slate-200 dark:border-white/5 transition-colors duration-300">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Network</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Live Contracts</h2>
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed mt-6 text-lg font-medium max-w-2xl mx-auto transition-colors duration-300">
+              Both contracts are deployed and initialized on Stellar testnet, and batch #1 is anchored. Verify receipts against it right now.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <ContractCard name="ReceiptAnchor" id={RECEIPT_ANCHOR_ID} />
+            <ContractCard name="RefundVault" id={REFUND_VAULT_ID} />
+          </div>
+        </div>
+      </section>
 
-      {/* Get started */}
-      <Section title="Verify a receipt in your own code" eyebrow="Integration">
-        <p className="text-white/70 leading-relaxed mb-8 text-lg font-medium">
-          The SDK mirrors the contract exactly — sorted-pair SHA-256, so proofs
-          carry no position flags. Both implementations are pinned to the same
-          conformance vectors.
-        </p>
-        <pre className="mt-2 overflow-x-auto rounded-3xl border border-white/10 bg-[#020804]/80 backdrop-blur-lg p-8 text-sm shadow-2xl">
-          <code className="text-emerald-100 font-mono leading-relaxed">{`import { verifyReceipt } from '@accensa/sdk/merkle';
+      {/* Integration Code block */}
+      <section className="px-6 py-24 md:py-32 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-[#020508] transition-colors duration-300">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-10">
+            <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Integration</p>
+            <h2 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">SDK Drop-in</h2>
+          </div>
+          <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#04090f] overflow-hidden shadow-xl dark:shadow-2xl relative group transition-colors duration-300">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80 dark:opacity-50" />
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex gap-2 transition-colors duration-300">
+              <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
+              <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
+              <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
+            </div>
+            <pre className="p-8 overflow-x-auto text-sm">
+              <code className="text-slate-700 dark:text-slate-300 font-mono leading-loose transition-colors duration-300">
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">import</span> {'{ verifyReceipt }'} <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">from</span> '@accensa/sdk/merkle';<br/><br/>
+                <span className="text-slate-400 dark:text-slate-500 italic dark:not-italic">// Verify locally or on-chain</span><br/>
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">const</span> ok = verifyReceipt(receiptHash, proof, anchoredRoot);<br/>
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">if</span> (!ok) <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">throw new</span> Error(<span className="text-teal-600 dark:text-teal-200">'Receipt is not in the anchored batch'</span>);
+              </code>
+            </pre>
+          </div>
+        </div>
+      </section>
 
-const ok = verifyReceipt(receiptHash, proof, anchoredRoot);
-if (!ok) throw new Error('Receipt is not in the anchored batch');`}</code>
-        </pre>
-      </Section>
-
-      <footer className="px-6 py-20 mt-24 border-t border-white/10">
-        <div className="max-w-4xl mx-auto flex flex-wrap gap-x-10 gap-y-6 justify-center text-xs font-bold uppercase tracking-[0.2em] text-white/40">
-          <Link href="/dashboard" className="hover:text-emerald-400 transition-colors">
-            Dashboard
-          </Link>
-          <Link href="/verify" className="hover:text-emerald-400 transition-colors">
-            Verify
-          </Link>
-          <a
-            href="https://accensa-docs.vercel.app"
-            className="hover:text-emerald-400 transition-colors"
-          >
-            Documentation
-          </a>
-          <a
-            href="https://github.com/accensa"
-            className="hover:text-emerald-400 transition-colors"
-          >
-            GitHub
-          </a>
+      <footer className="px-6 py-12 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#04090f] transition-colors duration-300">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 md:gap-6 text-center md:text-left">
+          <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
+            Accensa
+          </span>
+          <div className="flex flex-wrap gap-8 justify-center text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+            <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>
+            <Link href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>
+            <a href="https://accensa-docs.vercel.app" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</a>
+            <a href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
+          </div>
         </div>
       </footer>
     </main>
@@ -209,64 +178,43 @@ if (!ok) throw new Error('Receipt is not in the anchored batch');`}</code>
 
 function Nav() {
   return (
-    <nav className="px-6 py-8 border-b border-white/5 bg-[#031207]/80 backdrop-blur-2xl sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto flex items-center justify-between">
-        <span className="text-2xl font-black tracking-tighter text-white">
+    <nav className="px-6 py-6 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-[#04090f]/80 backdrop-blur-xl sticky top-0 z-50 transition-colors duration-300">
+      <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white flex items-center gap-3 transition-colors duration-300">
+          <div className="w-6 h-6 rounded bg-emerald-500 shadow-sm dark:shadow-[0_0_15px_rgba(16,185,129,0.4)]" />
           Accensa
         </span>
-        <div className="flex items-center gap-10 text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-          <Link href="/verify" className="hover:text-emerald-400 transition-colors">
-            Verify
-          </Link>
-          <Link href="/dashboard" className="hover:text-emerald-400 transition-colors">
-            Dashboard
-          </Link>
-          <a
-            href="https://github.com/accensa"
-            className="hover:text-emerald-400 transition-colors hidden md:block"
-          >
-            GitHub
-          </a>
+        <div className="flex items-center gap-4 sm:gap-6 md:gap-8 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+          <Link href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>
+          <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>
+          <a href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors hidden md:block">GitHub</a>
+          <ThemeToggle />
         </div>
       </div>
     </nav>
   );
 }
 
-function Section({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
+function BentoCard({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className="px-6 py-24 border-t border-white/5">
-      <div className="max-w-4xl mx-auto space-y-10">
-        <div>
-          <p className="uppercase tracking-[0.25em] text-emerald-400 font-bold text-xs mb-4">
-            {eyebrow}
-          </p>
-          <h2 className="text-5xl font-black tracking-tighter text-white">{title}</h2>
-        </div>
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-3xl border border-white/10 bg-[#041108]/75 backdrop-blur-md p-10 flex flex-col">
-      <p className="text-2xl font-black tracking-tighter text-white mb-4">{title}</p>
-      <div className="text-white/70 leading-relaxed font-medium">{children}</div>
+    <div className={`rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-8 md:p-10 flex flex-col hover:shadow-lg dark:hover:shadow-none hover:bg-white dark:hover:bg-white/[0.04] transition-all duration-300 ${className}`}>
+      <h3 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">{title}</h3>
+      {children}
     </div>
   );
 }
 
-function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+function FeatureCard({ title, desc }: { title: string; desc: string }) {
   return (
-    <li className="rounded-3xl border border-white/10 bg-[#041108]/75 backdrop-blur-md p-8 flex flex-col items-start">
-      <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500 text-[#010603] text-xl font-black mb-8 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-        {n}
-      </span>
-      <p className="text-2xl font-black tracking-tighter text-white mb-3">{title}</p>
-      <p className="text-white/70 leading-relaxed font-medium">{children}</p>
-    </li>
+    <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.01] p-8 hover:bg-white dark:hover:bg-white/[0.03] hover:shadow-md dark:hover:shadow-none transition-all duration-300 group">
+      <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm dark:shadow-none">
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white mb-3 transition-colors duration-300">{title}</h3>
+      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed transition-colors duration-300">{desc}</p>
+    </div>
   );
 }
 
@@ -276,24 +224,17 @@ function ContractCard({ name, id }: { name: string; id: string }) {
       href={explorer(id)}
       target="_blank"
       rel="noreferrer"
-      className="block rounded-3xl border border-white/10 bg-[#041108]/75 backdrop-blur-md p-8 hover:border-emerald-500/30 hover:bg-[#05160b]/90 transition-all group"
+      className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-8 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:shadow-lg dark:hover:shadow-none dark:hover:bg-white/[0.04] hover:-translate-y-1 transition-all group"
     >
-      <p className="text-xl font-black tracking-tighter text-white group-hover:text-emerald-400 transition-colors">
-        {name} ↗
-      </p>
-      <p className="font-mono text-sm text-white/50 break-all mt-3">{id}</p>
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+          {name}
+        </p>
+        <span className="text-emerald-600 dark:text-emerald-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all font-bold">↗</span>
+      </div>
+      <div className="inline-block bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 rounded-lg px-3 py-2 font-mono text-xs text-slate-500 dark:text-slate-400 break-all transition-colors duration-300">
+        {id}
+      </div>
     </a>
-  );
-}
-
-function Bullet({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <li className="flex gap-5">
-      <span className="text-emerald-500 shrink-0 mt-1.5 text-sm">●</span>
-      <span>
-        <strong className="text-white font-black tracking-tight block mb-1">{label}</strong>
-        <span className="font-medium text-white/60">{children}</span>
-      </span>
-    </li>
   );
 }

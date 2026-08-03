@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/theme-toggle';
 import type { VerifyResponse } from '../api/verify/route';
 
 const SAMPLE = {
   batchId: '1',
   leaf: 'c476fc0553303ec4275bd4cb50ab7fa8182e343dbc4c721d7e2076fd77a5b56c',
-  proof:
-    '7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1\n1733fad16ada0c23d8cdaff52bea66bea308dddddcb79348842acef0065c9615',
+  proof: '7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1\n1733fad16ada0c23d8cdaff52bea66bea308dddddcb79348842acef0065c9615',
 };
 
 const FORGED_LEAF = '16b138aabc889c21114436424e13132bd8928d2c21b4ac5a9ac5198104efb42c';
@@ -35,10 +35,7 @@ export default function VerifyPage() {
         body: JSON.stringify({
           batchId: Number(batchId),
           leaf: leaf.trim(),
-          proof: proof
-            .split(/[\s,]+/)
-            .map((p) => p.trim())
-            .filter(Boolean),
+          proof: proof.split(/[\s,]+/).map((p) => p.trim()).filter(Boolean),
         }),
       });
       const body = await res.json();
@@ -48,10 +45,7 @@ export default function VerifyPage() {
       }
       setState({ status: 'done', result: body as VerifyResponse });
     } catch (error) {
-      setState({
-        status: 'error',
-        message: error instanceof Error ? error.message : 'Request failed',
-      });
+      setState({ status: 'error', message: error instanceof Error ? error.message : 'Request failed' });
     }
   }
 
@@ -63,93 +57,83 @@ export default function VerifyPage() {
   }
 
   return (
-    <main className="min-h-screen text-white bg-[linear-gradient(160deg,#031207_0%,#010603_45%,#072813_160%)] font-sans px-6 py-20 md:py-32">
-      <div className="max-w-3xl mx-auto space-y-16">
-        <header className="space-y-6">
-          <Link href="/" className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 hover:text-emerald-400 transition-colors">
-            ← Back to Accensa
-          </Link>
-          <h1 className="text-5xl font-black tracking-tighter text-white">
-            Verify a receipt
+    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 transition-colors duration-300 p-6 md:p-12 lg:p-20">
+      <div className="max-w-4xl mx-auto space-y-12">
+        <header className="space-y-6 text-center max-w-2xl mx-auto relative">
+          <div className="flex justify-between items-center w-full mb-8">
+            <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              <span>←</span> Back to Accensa
+            </Link>
+            <ThemeToggle />
+          </div>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
+            Verify a Receipt
           </h1>
-          <p className="text-white/70 leading-relaxed text-lg font-medium">
-            Check that a payment receipt really belongs to a batch anchored on
-            Stellar. Your receipt is checked <strong className="text-white font-black tracking-tight block sm:inline mt-2 sm:mt-0">twice</strong>:
-            recomputed here from the proof, and independently by the{' '}
-            <code className="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded">ReceiptAnchor</code> contract on
-            the ledger. They must agree.
-          </p>
-          <p className="text-white/50 text-sm font-bold uppercase tracking-widest border-l-2 border-white/20 pl-4">
-            No account, no wallet, no signature. Both checks are read-only and
-            cost nothing.
+          <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg transition-colors duration-300">
+            Check that a payment receipt belongs to a batch anchored on Stellar. Checked twice: locally from the proof, and independently by the contract.
           </p>
         </header>
 
-        <div className="flex flex-wrap gap-4">
-          <button
-            type="button"
-            onClick={() => loadSample(false)}
-            className="px-6 py-4 rounded-xl bg-[#041108] border border-emerald-500/30 text-emerald-400 font-bold text-xs uppercase tracking-[0.1em] hover:bg-emerald-500/10 transition-colors"
-          >
-            Load a valid sample
-          </button>
-          <button
-            type="button"
-            onClick={() => loadSample(true)}
-            className="px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-[0.1em] hover:bg-white/10 transition-colors"
-          >
-            Load a forged receipt
-          </button>
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-12 shadow-xl dark:shadow-2xl transition-colors duration-300">
+          <div className="flex flex-wrap gap-4 mb-8">
+            <button type="button" onClick={() => loadSample(false)} className="px-5 py-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors">
+              Valid Sample
+            </button>
+            <button type="button" onClick={() => loadSample(true)} className="px-5 py-2.5 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none">
+              Forged Sample
+            </button>
+          </div>
+
+          <form onSubmit={submit} className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <Field label="Batch ID" hint="The anchored batch number.">
+                <input
+                  value={batchId}
+                  onChange={(e) => setBatchId(e.target.value)}
+                  placeholder="1"
+                  required
+                  className="w-full bg-slate-50 dark:bg-[#06111f] border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none"
+                />
+              </Field>
+
+              <Field label="Receipt Hash (Leaf)" hint="Hex-encoded 32-byte hash.">
+                <input
+                  value={leaf}
+                  onChange={(e) => setLeaf(e.target.value)}
+                  placeholder="c476fc05…"
+                  required
+                  className="w-full bg-slate-50 dark:bg-[#06111f] border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 font-mono text-emerald-700 dark:text-emerald-400 focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none"
+                />
+              </Field>
+            </div>
+
+            <Field label="Merkle Proof" hint="Sibling hashes, ordered leaf to root.">
+              <textarea
+                value={proof}
+                onChange={(e) => setProof(e.target.value)}
+                rows={3}
+                placeholder="7ca64ee6…&#10;1733fad1…"
+                className="w-full bg-slate-50 dark:bg-[#06111f] border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 font-mono text-slate-600 dark:text-slate-400 text-sm focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none resize-y leading-relaxed"
+              />
+            </Field>
+
+            <button
+              type="submit"
+              disabled={state.status === 'checking'}
+              className="w-full px-8 py-5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black text-lg uppercase tracking-wider hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:opacity-50 transition-all shadow-md shadow-emerald-600/20 dark:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+            >
+              {state.status === 'checking' ? 'Processing...' : 'Verify Cryptographic Proof'}
+            </button>
+          </form>
         </div>
 
-        <form onSubmit={submit} className="space-y-10 bg-[#041108]/75 backdrop-blur-md border border-white/10 rounded-3xl p-10 shadow-2xl">
-          <Field label="Batch ID" hint="The anchored batch this receipt belongs to.">
-            <input
-              value={batchId}
-              onChange={(e) => setBatchId(e.target.value)}
-              inputMode="numeric"
-              placeholder="1"
-              required
-              className="w-full bg-[#010603] border border-white/10 rounded-2xl px-6 py-5 font-mono text-white text-lg focus:outline-none focus:border-emerald-500/50 transition-colors shadow-inner"
-            />
-          </Field>
-
-          <Field label="Receipt hash (leaf)" hint="Hex-encoded 32-byte hash of your receipt.">
-            <input
-              value={leaf}
-              onChange={(e) => setLeaf(e.target.value)}
-              placeholder="c476fc05…"
-              required
-              className="w-full bg-[#010603] border border-white/10 rounded-2xl px-6 py-5 font-mono text-emerald-100 text-lg focus:outline-none focus:border-emerald-500/50 transition-colors shadow-inner"
-            />
-          </Field>
-
-          <Field
-            label="Merkle proof"
-            hint="One sibling hash per line, ordered leaf to root. A single-receipt batch has an empty proof."
-          >
-            <textarea
-              value={proof}
-              onChange={(e) => setProof(e.target.value)}
-              rows={4}
-              placeholder={'7ca64ee6…\n1733fad1…'}
-              className="w-full bg-[#010603] border border-white/10 rounded-2xl px-6 py-5 font-mono text-white/80 text-sm focus:outline-none focus:border-emerald-500/50 transition-colors shadow-inner resize-y leading-relaxed"
-            />
-          </Field>
-
-          <button
-            type="submit"
-            disabled={state.status === 'checking'}
-            className="w-full px-8 py-6 rounded-2xl bg-emerald-500 text-[#010603] font-black text-xl hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors tracking-tight shadow-[0_0_30px_rgba(16,185,129,0.2)]"
-          >
-            {state.status === 'checking' ? 'Checking both sources…' : 'Verify receipt'}
-          </button>
-        </form>
-
         {state.status === 'error' && (
-          <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-8 space-y-3">
-            <p className="text-emerald-400 font-black text-2xl tracking-tighter">Could not verify</p>
-            <p className="text-white/70 font-medium">{state.message}</p>
+          <div className="rounded-2xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-6 flex gap-4 items-start shadow-sm dark:shadow-none transition-colors duration-300">
+            <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">✕</div>
+            <div>
+              <p className="text-red-700 dark:text-red-400 font-bold transition-colors duration-300">Verification Error</p>
+              <p className="text-red-600 dark:text-red-400/80 text-sm mt-1 transition-colors duration-300">{state.message}</p>
+            </div>
           </div>
         )}
 
@@ -163,78 +147,37 @@ function Result({ result }: { result: VerifyResponse }) {
   const { local, onchain, verified, disagreement, batch } = result;
 
   return (
-    <div className="space-y-8 mt-12 animate-in fade-in slide-in-from-bottom-8 duration-500">
-      <div
-        className={`rounded-3xl border p-10 ${
-          verified
-            ? 'border-emerald-500/40 bg-[#041108]/90 shadow-[0_0_50px_-10px_rgba(16,185,129,0.2)]'
-            : 'border-white/20 bg-white/5'
-        }`}
-      >
-        <p className={`text-4xl font-black tracking-tighter ${verified ? 'text-emerald-400' : 'text-white'}`}>
-          {verified ? 'Receipt verified.' : 'Receipt not verified.'}
-        </p>
-        <p className="text-white/70 text-lg mt-6 leading-relaxed font-medium">
-          {verified
-            ? 'Both an independent local recomputation and the on-chain contract agree this receipt is in the anchored batch.'
-            : 'This receipt is not part of the anchored batch. Nothing was charged incorrectly by checking — the proof simply does not lead to the anchored root.'}
+    <div className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div className={`rounded-3xl border p-6 md:p-12 transition-colors duration-300 ${verified ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/5 shadow-lg shadow-emerald-600/10 dark:shadow-[0_0_50px_rgba(16,185,129,0.1)]' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 shadow-lg dark:shadow-none'}`}>
+        <div className="flex items-center gap-4 mb-4">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-colors duration-300 ${verified ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white'}`}>
+            {verified ? '✓' : '✕'}
+          </div>
+          <p className={`text-3xl font-black tracking-tight transition-colors duration-300 ${verified ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+            {verified ? 'Proof Verified' : 'Proof Rejected'}
+          </p>
+        </div>
+        <p className="text-slate-600 dark:text-slate-400 text-lg transition-colors duration-300">
+          {verified ? 'The receipt cryptographic proof accurately resolves to the anchored Merkle root on Stellar.' : 'This receipt is invalid. The cryptographic proof does not lead to the anchored batch root.'}
         </p>
       </div>
 
-      {disagreement && (
-        <div className="rounded-3xl border border-emerald-400/40 bg-emerald-400/10 p-8">
-          <p className="text-emerald-400 font-black text-2xl tracking-tighter">The two checks disagree</p>
-          <p className="text-white/70 mt-3 font-medium">
-            This should never happen. The local implementation and the contract
-            are pinned to the same conformance vectors. Please report it.
-          </p>
-        </div>
-      )}
-
       <div className="grid md:grid-cols-2 gap-6">
-        <CheckCard
-          title="Local recomputation"
-          subtitle="Recomputed from your proof, in this process."
-          result={local}
-        />
-        <CheckCard
-          title="On-chain contract"
-          subtitle="ReceiptAnchor.verify_receipt, read from the ledger."
-          result={onchain}
-        />
+        <CheckCard title="Local Compute" source="Recomputed in browser" result={local} />
+        <CheckCard title="Ledger Contract" source="Queried from Stellar node" result={onchain} />
       </div>
 
       {batch && (
-        <div className="rounded-3xl border border-white/10 bg-[#041108]/75 backdrop-blur-md p-10 space-y-8">
-          <p className="uppercase tracking-[0.2em] font-bold text-xs">
-            <Link
-              href={`/batches/${batch.id}`}
-              className="text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              Anchored batch #{batch.id} →
-            </Link>
-          </p>
-          <dl className="grid sm:grid-cols-2 gap-8 text-sm">
-            <Detail label="Merkle root" mono>
-              {batch.root}
-            </Detail>
-            <Detail label="Receipts in batch">{batch.count}</Detail>
-            <Detail label="Period start">
-              {new Date(batch.periodStart * 1000).toLocaleString()}
-            </Detail>
-            <Detail label="Period end">
-              {new Date(batch.periodEnd * 1000).toLocaleString()}
-            </Detail>
-          </dl>
-          <div className="pt-8 border-t border-white/10">
-            <a
-              href={`https://stellar.expert/explorer/testnet/contract/${result.contract}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              View contract on Stellar Expert ↗
-            </a>
+        <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-6 md:p-8 space-y-6 shadow-md dark:shadow-none transition-colors duration-300">
+          <p className="uppercase tracking-widest font-bold text-xs text-slate-400 dark:text-slate-500 mb-2 transition-colors duration-300">Anchored Batch Metadata</p>
+          <div className="grid sm:grid-cols-2 gap-8">
+            <Detail label="Batch ID" value={`#${batch.id}`} />
+            <Detail label="Transaction Count" value={batch.count.toString()} />
+            <Detail label="Period Start" value={new Date(batch.periodStart * 1000).toLocaleString()} />
+            <Detail label="Period End" value={new Date(batch.periodEnd * 1000).toLocaleString()} />
+            <div className="sm:col-span-2">
+              <Detail label="Merkle Root" value={batch.root} mono />
+            </div>
           </div>
         </div>
       )}
@@ -242,67 +185,40 @@ function Result({ result }: { result: VerifyResponse }) {
   );
 }
 
-function CheckCard({
-  title,
-  subtitle,
-  result,
-}: {
-  title: string;
-  subtitle: string;
-  result: { ok: boolean | null; error?: string };
-}) {
-  const tone =
-    result.ok === true
-      ? 'text-emerald-400'
-      : result.ok === false
-        ? 'text-white'
-        : 'text-white/50';
-  const label =
-    result.ok === true ? 'Valid' : result.ok === false ? 'Not in batch' : 'Unavailable';
-
+function CheckCard({ title, source, result }: { title: string; source: string; result: { ok: boolean | null; error?: string } }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-8 space-y-3">
-      <p className="uppercase tracking-[0.2em] font-bold text-xs text-white/50">{title}</p>
-      <p className={`text-3xl font-black tracking-tighter ${tone}`}>{label}</p>
-      <p className="text-sm font-medium text-white/60 leading-relaxed pt-3">{subtitle}</p>
-      {result.error && <p className="text-sm text-emerald-400/80 pt-3 font-mono">{result.error}</p>}
+    <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#06111f] p-6 shadow-sm dark:shadow-none transition-colors duration-300">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <p className="text-slate-900 dark:text-white font-bold text-lg transition-colors duration-300">{title}</p>
+          <p className="text-slate-500 text-xs mt-1 transition-colors duration-300">{source}</p>
+        </div>
+        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${result.ok ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}>
+          {result.ok ? 'Valid' : 'Failed'}
+        </span>
+      </div>
+      {result.error && <p className="text-xs text-red-600 dark:text-red-400/80 font-mono mt-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-transparent p-3 dark:p-2 rounded-lg dark:rounded transition-colors duration-300">{result.error}</p>}
     </div>
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-3">
-      <span className="block text-xs font-bold uppercase tracking-[0.2em] text-white/80">{label}</span>
+    <label className="block space-y-2">
+      <div className="flex justify-between items-baseline">
+        <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors duration-300">{label}</span>
+      </div>
       {children}
-      <span className="block text-sm font-medium text-white/40">{hint}</span>
+      <span className="block text-xs font-medium text-slate-400 dark:text-slate-500 transition-colors duration-300">{hint}</span>
     </label>
   );
 }
 
-function Detail({
-  label,
-  children,
-  mono,
-}: {
-  label: string;
-  children: React.ReactNode;
-  mono?: boolean;
-}) {
+function Detail({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="min-w-0 space-y-2">
-      <dt className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">{label}</dt>
-      <dd className={`text-white break-all text-xl font-black tracking-tighter ${mono ? 'font-mono text-[0.9rem] font-medium tracking-normal text-emerald-100' : ''}`}>
-        {children}
-      </dd>
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 transition-colors duration-300">{label}</p>
+      <p className={`transition-colors duration-300 ${mono ? 'text-slate-900 dark:text-white font-mono text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-transparent px-3 py-2 rounded-lg break-all' : 'text-slate-900 dark:text-white font-medium text-lg'}`}>{value}</p>
     </div>
   );
 }

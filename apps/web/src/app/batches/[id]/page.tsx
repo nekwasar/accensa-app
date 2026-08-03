@@ -58,35 +58,35 @@ export default async function BatchPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white px-6 py-16 md:py-24">
+    <main className="min-h-screen bg-slate-50 dark:bg-[#04090f] text-slate-900 dark:text-white px-6 py-16 md:py-24 transition-colors duration-300">
       <div className="fixed inset-0 overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-600/20 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-600/20 blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-100/50 dark:bg-emerald-600/20 blur-[120px] transition-colors duration-300" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-100/50 dark:bg-teal-600/20 blur-[120px] transition-colors duration-300" />
       </div>
 
-      <div className="max-w-3xl mx-auto space-y-10">
+      <div className="max-w-3xl mx-auto space-y-10 relative z-10">
         <header className="space-y-4">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
-            ← Accensa
+          <Link href="/" className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            ← Back to Accensa
           </Link>
-          <h1 className="text-4xl font-bold tracking-tight">
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
             Batch{' '}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
               #{id}
             </span>
           </h1>
-          <p className="text-gray-400 leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg transition-colors duration-300">
             {batch.count} {batch.count === 1 ? 'receipt' : 'receipts'} anchored on
             Stellar. Anyone holding a receipt from this period can prove it belongs
             here — without an account, and without trusting the merchant.
           </p>
         </header>
 
-        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-5">
+        <section className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-8 space-y-6 shadow-lg dark:shadow-none transition-colors duration-300">
           <Detail label="Merkle root" mono>
             {batch.root}
           </Detail>
-          <div className="grid sm:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-3 gap-6">
             <Detail label="Receipts">{batch.count}</Detail>
             <Detail label="Period start">{period.start.toLocaleString()}</Detail>
             <Detail label="Period end">{period.end.toLocaleString()}</Detail>
@@ -96,10 +96,10 @@ export default async function BatchPage({
           </Detail>
         </section>
 
-        <section className="flex flex-wrap gap-3">
+        <section className="flex flex-wrap gap-4">
           <Link
             href="/verify"
-            className="px-5 py-2.5 rounded-lg bg-emerald-500 text-black font-semibold text-sm hover:bg-emerald-400 transition-colors"
+            className="px-6 py-3 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black text-sm uppercase tracking-wider hover:bg-emerald-700 dark:hover:bg-emerald-400 transition-all shadow-md dark:shadow-none"
           >
             Verify a receipt in this batch
           </Link>
@@ -107,20 +107,20 @@ export default async function BatchPage({
             href={`https://stellar.expert/explorer/testnet/contract/${RECEIPT_ANCHOR_ID}`}
             target="_blank"
             rel="noreferrer"
-            className="px-5 py-2.5 rounded-lg border border-white/15 text-gray-200 text-sm hover:bg-white/5 transition-colors"
+            className="px-6 py-3 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-transparent text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm dark:shadow-none"
           >
             View contract on Stellar Expert ↗
           </a>
         </section>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Check it yourself</h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
+        <section className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10 transition-colors duration-300">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Check it yourself</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed transition-colors duration-300">
             Read the same batch straight from the ledger — no part of this page is
             taken on trust:
           </p>
-          <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-5 text-xs">
-            <code className="text-gray-300">{`stellar contract invoke \\
+          <pre className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#06111f] p-6 text-sm font-mono shadow-inner dark:shadow-none transition-colors duration-300">
+            <code className="text-slate-700 dark:text-slate-300 leading-loose transition-colors duration-300">{`stellar contract invoke \\
   --id ${RECEIPT_ANCHOR_ID} \\
   --network testnet --source <your-identity> \\
   -- get_batch --batch_id ${id}`}</code>
@@ -142,8 +142,8 @@ function Detail({
 }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
-      <p className={`text-gray-200 break-all ${mono ? 'font-mono text-xs pt-1' : 'pt-0.5'}`}>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 transition-colors duration-300">{label}</p>
+      <p className={`text-slate-900 dark:text-white break-all transition-colors duration-300 ${mono ? 'font-mono text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-transparent px-3 py-2 rounded-lg' : 'font-medium text-lg'}`}>
         {children}
       </p>
     </div>
