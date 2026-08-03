@@ -79,7 +79,7 @@ export default async function BatchPage({
           </p>
         </header>
 
-        <section className="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-3xl p-8 space-y-6 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-colors duration-300">
+        <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/20 rounded-3xl p-6 md:p-12 mb-12 shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
           <Detail label="Merkle root" mono>
             {batch.root}
           </Detail>
@@ -91,7 +91,7 @@ export default async function BatchPage({
           <Detail label="Contract" mono>
             {RECEIPT_ANCHOR_ID}
           </Detail>
-        </section>
+        </div>
 
         <section className="flex flex-wrap gap-4">
           <Link
@@ -116,12 +116,14 @@ export default async function BatchPage({
             Read the same batch straight from the ledger - no part of this page is
             taken on trust:
           </p>
-          <pre className="overflow-x-auto rounded-2xl border border-slate-200/50 dark:border-white/10 bg-white/40 dark:bg-black/20 backdrop-blur-md p-6 text-sm font-mono shadow-inner dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-colors duration-300">
-            <code className="text-slate-700 dark:text-slate-300 leading-loose transition-colors duration-300">{`stellar contract invoke \\
+          <div className="rounded-2xl border border-slate-200/60 dark:border-white/20 bg-white/40 dark:bg-black/20 backdrop-blur-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] relative group transition-colors duration-300">
+            <pre className="p-6 text-sm font-mono">
+              <code className="text-slate-700 dark:text-slate-300 leading-loose transition-colors duration-300">{`stellar contract invoke \\
   --id ${RECEIPT_ANCHOR_ID} \\
   --network testnet --source <your-identity> \\
   -- get_batch --batch_id ${id}`}</code>
-          </pre>
+            </pre>
+          </div>
         </section>
       </div>
     </main>

@@ -77,7 +77,7 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-3xl p-8 flex flex-col shadow-lg dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden transition-colors duration-300">
+          <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/20 rounded-3xl p-8 flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] relative overflow-hidden transition-colors duration-300">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[40px] dark:blur-[50px] pointer-events-none" />
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Settled</span>
             <span className="text-4xl sm:text-5xl font-black tracking-tighter mt-4 flex items-baseline gap-2 text-slate-900 dark:text-white transition-colors duration-300">
@@ -94,8 +94,8 @@ export default function Dashboard() {
         </header>
 
         {/* Data Table Section */}
-        <section className="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-colors duration-300">
-          <div className="px-8 py-6 border-b border-slate-200/50 dark:border-white/10 flex justify-between items-center bg-white/20 dark:bg-black/20 backdrop-blur-md transition-colors duration-300">
+        <section className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/20 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
+          <div className="px-8 py-6 border-b border-slate-200/60 dark:border-white/20 flex justify-between items-center bg-white/30 dark:bg-black/30 backdrop-blur-xl transition-colors duration-300">
             <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Recent Settlements</h2>
             <StatusPill state={state} onRetry={reload} />
           </div>
@@ -224,10 +224,10 @@ export default function Dashboard() {
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/80 backdrop-blur-sm transition-colors duration-300" onClick={() => setSelected(null)}>
           <div 
-            className="bg-white/80 dark:bg-[#06111f]/80 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-200 transition-colors duration-300 max-h-[90vh] flex flex-col" 
+            className="bg-white/70 dark:bg-[#06111f]/70 backdrop-blur-3xl border border-slate-200/60 dark:border-white/20 rounded-3xl w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] animate-in zoom-in-95 duration-200 transition-colors duration-300 max-h-[90vh] flex flex-col" 
             onClick={e => e.stopPropagation()}
           >
-            <div className="px-6 py-4 md:px-8 md:py-6 border-b border-slate-100/50 dark:border-white/10 flex justify-between items-center bg-white/40 dark:bg-black/20 transition-colors duration-300 shrink-0">
+            <div className="px-6 py-4 md:px-8 md:py-6 border-b border-slate-200/60 dark:border-white/20 flex justify-between items-center bg-white/40 dark:bg-black/30 transition-colors duration-300 shrink-0">
               <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Payment Details</h3>
               <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white transition-colors">✕</button>
             </div>
