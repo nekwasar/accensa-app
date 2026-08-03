@@ -14,6 +14,7 @@ export function Nav() {
     <nav className="px-6 py-4 md:py-6 fixed w-full top-0 z-50 bg-white/50 dark:bg-white/5 backdrop-blur-3xl border-b border-slate-200/50 dark:border-white/10 dark:shadow-[0_4px_30px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-colors duration-300">
       <div className="max-w-6xl mx-auto flex items-center justify-between relative">
         <Link href="/" className="text-xl md:text-2xl font-harabara font-bold tracking-wider text-slate-900 dark:text-white flex items-center gap-3 transition-colors duration-300 z-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/accensa-logo-no-bg.png" alt="Accensa Logo" className="w-6 h-6 md:w-8 md:h-8 rounded-lg shadow-sm invert hue-rotate-180 dark:invert-0 dark:hue-rotate-0" />
           <span>Accensa<span className="text-emerald-600 dark:text-emerald-400 text-[1.3em] inline-block -ml-[0.05em] leading-none">.</span></span>
         </Link>
