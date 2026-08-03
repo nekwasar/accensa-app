@@ -66,14 +66,14 @@ export default function VerifyPage() {
           </p>
         </header>
 
-        <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/20 rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
+        <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
           <div className="flex flex-wrap gap-4 mb-8">
             <button 
               type="button" 
               onClick={() => loadSample(false)} 
               className={`px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors ${
                 batchId === SAMPLE.batchId && leaf === SAMPLE.leaf && proof === SAMPLE.proof
-                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
                   : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm dark:shadow-none'
               }`}
             >
