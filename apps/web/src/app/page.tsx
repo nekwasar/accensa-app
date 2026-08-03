@@ -145,15 +145,15 @@ export default function Landing() {
             </div>
             <pre className="p-4 md:p-8 overflow-x-auto text-xs md:text-sm">
               <code className="block text-slate-700 dark:text-slate-300 font-mono leading-loose transition-colors duration-300 whitespace-pre-wrap break-words md:whitespace-pre md:break-normal">
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">import</span> {'{ verifyReceipt }'} <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">from</span> &apos;@accensa/sdk/merkle&apos;;<br/><br/>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold dark:font-normal">import</span> {'{ verifyReceipt }'} <span className="text-emerald-600 dark:text-emerald-400 font-bold dark:font-normal">from</span> &apos;@accensa/sdk/merkle&apos;;<br/><br/>
                 <span className="text-slate-400 dark:text-slate-500 italic dark:not-italic">{'// Verify locally or on-chain'}</span><br/>
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">const</span> ok = verifyReceipt(receiptHash, proof, anchoredRoot);<br/>
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">if</span> (!ok) <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">throw new</span> Error(&apos;Receipt is not in the anchored batch&apos;);
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold dark:font-normal">const</span> ok = verifyReceipt(receiptHash, proof, anchoredRoot);<br/>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold dark:font-normal">if</span> (!ok) <span className="text-emerald-600 dark:text-emerald-400 font-bold dark:font-normal">throw new</span> Error(&apos;Receipt is not in the anchored batch&apos;);
               </code>
             </pre>
           </div>
         </div>
-      </section>
+      </ScrollReveal>
 
       <footer className="px-6 py-12 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#04090f] transition-colors duration-300">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-center gap-8 md:gap-6 text-center md:text-left">
