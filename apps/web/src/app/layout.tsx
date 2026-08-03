@@ -18,16 +18,19 @@ const geistMono = Geist_Mono({
 const bellavoir = localFont({
   src: "../../public/fonts/BellavoirSerif_PERSONAL_USE_ONLY.otf",
   variable: "--font-bellavoir",
+  display: "swap",
 });
 
 const camiro = localFont({
   src: "../../public/fonts/Camiro.ttf",
   variable: "--font-camiro",
+  display: "swap",
 });
 
 const harabara = localFont({
   src: "../../public/fonts/Harabara.ttf",
   variable: "--font-harabara",
+  display: "swap",
 });
 
 const title = "Accensa - provable payments for x402 sellers on Stellar";
