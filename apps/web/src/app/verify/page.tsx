@@ -195,13 +195,13 @@ function Result({ result }: { result: VerifyResponse }) {
 
 function CheckCard({ title, source, result }: { title: string; source: string; result: { ok: boolean | null; error?: string } }) {
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#06111f] p-6 shadow-sm dark:shadow-none transition-colors duration-300">
+    <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0a111a] p-6 shadow-sm dark:shadow-none transition-colors duration-300">
       <div className="flex justify-between items-start mb-4">
         <div>
           <p className="text-slate-900 dark:text-white font-bold text-lg transition-colors duration-300">{title}</p>
           <p className="text-slate-500 text-xs mt-1 transition-colors duration-300">{source}</p>
         </div>
-        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${result.ok ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}>
+        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${result.ok ? 'bg-emerald-400 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}>
           {result.ok ? 'Valid' : 'Failed'}
         </span>
       </div>
