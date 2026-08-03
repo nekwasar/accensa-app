@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+@theme {
+  --font-bellavoir: var(--font-bellavoir), serif;
+  --font-camiro: var(--font-camiro), sans-serif;
+  --font-harabara: var(--font-harabara), sans-serif;
+}

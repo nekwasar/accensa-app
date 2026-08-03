@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Nav } from "@/components/nav";
 
+import localFont from "next/font/local";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -12,6 +14,21 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const bellavoir = localFont({
+  src: "../../public/fonts/BellavoirSerif_PERSONAL_USE_ONLY.otf",
+  variable: "--font-bellavoir",
+});
+
+const camiro = localFont({
+  src: "../../public/fonts/Camiro.ttf",
+  variable: "--font-camiro",
+});
+
+const harabara = localFont({
+  src: "../../public/fonts/Harabara.ttf",
+  variable: "--font-harabara",
 });
 
 const title = "Accensa - provable payments for x402 sellers on Stellar";
@@ -35,7 +52,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bellavoir.variable} ${camiro.variable} ${harabara.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#04090f] transition-colors duration-300 relative">
         {/* Global Ambient Background Blobs */}
