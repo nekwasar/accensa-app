@@ -141,8 +141,8 @@ export default function Landing() {
               <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
               <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
             </div>
-            <pre className="p-8 overflow-x-auto text-sm">
-              <code className="text-slate-700 dark:text-slate-300 font-mono leading-loose transition-colors duration-300">
+            <pre className="p-4 md:p-8 overflow-x-auto text-xs md:text-sm">
+              <code className="block text-slate-700 dark:text-slate-300 font-mono leading-loose transition-colors duration-300 whitespace-pre-wrap break-words md:whitespace-pre md:break-normal">
                 <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">import</span> {'{ verifyReceipt }'} <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">from</span> &apos;@accensa/sdk/merkle&apos;;<br/><br/>
                 <span className="text-slate-400 dark:text-slate-500 italic dark:not-italic">{'// Verify locally or on-chain'}</span><br/>
                 <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">const</span> ok = verifyReceipt(receiptHash, proof, anchoredRoot);<br/>
