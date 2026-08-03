@@ -94,8 +94,8 @@ export default function Dashboard() {
         </header>
 
         {/* Data Table Section */}
-        <section className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/20 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
-          <div className="px-8 py-6 border-b border-slate-200/60 dark:border-white/20 flex justify-between items-center bg-white/30 dark:bg-black/30 backdrop-blur-xl transition-colors duration-300">
+        <section className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
+          <div className="px-8 py-6 flex justify-between items-center bg-white/30 dark:bg-black/30 backdrop-blur-xl transition-colors duration-300">
             <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Recent Settlements</h2>
             <StatusPill state={state} onRetry={reload} />
           </div>
