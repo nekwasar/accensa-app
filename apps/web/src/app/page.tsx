@@ -73,7 +73,7 @@ export default function Landing() {
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium transition-colors duration-300">
                   The indexer decodes transfers to your address in real-time, grouping them into cryptographically secure batches.
                 </p>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 font-mono text-xs text-emerald-700 dark:text-emerald-400 break-all transition-colors duration-300">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 font-mono text-xs text-emerald-600 dark:text-emerald-400 break-all transition-colors duration-300">
                   root: 7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1
                 </div>
               </div>
