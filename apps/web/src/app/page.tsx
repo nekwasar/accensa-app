@@ -55,11 +55,11 @@ export default function Landing() {
       </section>
 
       {/* Bento Grid Architecture */}
-      <section className="px-6 py-24 md:py-32 relative">
+      <ScrollReveal as="section" className="px-6 py-24 md:py-32 relative">
         <div className="max-w-6xl mx-auto">
           <div className="mb-16 text-left md:text-center">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Architecture</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">How it works</h2>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">How it <span className="text-slate-400 dark:text-slate-500 italic font-normal">works.</span></h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
