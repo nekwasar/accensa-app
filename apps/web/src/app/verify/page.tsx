@@ -84,7 +84,7 @@ export default function VerifyPage() {
               onClick={() => loadSample(true)} 
               className={`px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors ${
                 batchId === SAMPLE.batchId && leaf === FORGED_LEAF && proof === SAMPLE.proof
-                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
                   : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 shadow-sm dark:shadow-none'
               }`}
             >
