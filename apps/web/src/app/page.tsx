@@ -12,21 +12,22 @@ const explorer = (id: string) =>
 
 export default function Landing() {
   return (
-    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 transition-colors duration-300">
+    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-white dark:bg-[#04090f] bg-grid">
 
       {/* Hero Section */}
-      <section className="relative px-6 pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[85vh]">
+      <section className="relative px-6 pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[85vh] relative">
+        <div className="absolute inset-0 bg-noise opacity-10 dark:opacity-20 pointer-events-none mix-blend-overlay z-0" />
         {/* Subtle radial glow matching emerald theme */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-100/50 dark:bg-emerald-500/5 rounded-full blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-transparent dark:bg-emerald-500/5 rounded-full blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300" />
         
         <div className="max-w-5xl mx-auto text-left md:text-center space-y-8 relative z-10">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none dark:backdrop-blur-md mb-4 transition-colors duration-300">
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Live on Stellar Testnet</span>
+          <div className="inline-flex items-center mb-4 transition-colors duration-300">
+            <span className="text-sm font-camiro font-bold tracking-[0.35em] text-emerald-600 dark:text-emerald-400 uppercase">— Live on Stellar Testnet —</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1.05] text-slate-900 dark:text-white transition-colors duration-300">
-            Trustless payments <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-200">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-harabara font-bold tracking-wide leading-[1.05] text-slate-900 dark:text-white transition-colors duration-300">
+            Trustless payments, <br className="hidden md:block" />
+            <span className="text-slate-400 dark:text-slate-500 italic font-normal">
               for AI agents.
             </span>
           </h1>
