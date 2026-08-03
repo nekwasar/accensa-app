@@ -66,7 +66,7 @@ export default function VerifyPage() {
           </p>
         </header>
 
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-12 shadow-xl dark:shadow-2xl transition-colors duration-300">
+        <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-3xl p-6 md:p-12 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-colors duration-300">
           <div className="flex flex-wrap gap-4 mb-8">
             <button 
               type="button" 

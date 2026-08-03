@@ -79,7 +79,7 @@ export default async function BatchPage({
           </p>
         </header>
 
-        <section className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-8 space-y-6 shadow-lg dark:shadow-none transition-colors duration-300">
+        <section className="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-3xl p-8 space-y-6 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-colors duration-300">
           <Detail label="Merkle root" mono>
             {batch.root}
           </Detail>
@@ -116,7 +116,7 @@ export default async function BatchPage({
             Read the same batch straight from the ledger - no part of this page is
             taken on trust:
           </p>
-          <pre className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#06111f] p-6 text-sm font-mono shadow-inner dark:shadow-none transition-colors duration-300">
+          <pre className="overflow-x-auto rounded-2xl border border-slate-200/50 dark:border-white/10 bg-white/40 dark:bg-black/20 backdrop-blur-md p-6 text-sm font-mono shadow-inner dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-colors duration-300">
             <code className="text-slate-700 dark:text-slate-300 leading-loose transition-colors duration-300">{`stellar contract invoke \\
   --id ${RECEIPT_ANCHOR_ID} \\
   --network testnet --source <your-identity> \\

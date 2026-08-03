@@ -134,9 +134,9 @@ export default function Landing() {
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Integration</p>
             <h2 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">SDK Drop-in</h2>
           </div>
-          <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#04090f] overflow-hidden shadow-xl dark:shadow-2xl relative group transition-colors duration-300">
+          <div className="rounded-2xl border border-slate-200/50 dark:border-white/10 bg-white/40 dark:bg-black/20 backdrop-blur-xl overflow-hidden shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative group transition-colors duration-300">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80 dark:opacity-50" />
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex gap-2 transition-colors duration-300">
+            <div className="px-6 py-4 border-b border-slate-200/50 dark:border-white/10 flex gap-2 transition-colors duration-300 bg-white/20 dark:bg-white/5">
               <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
               <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
               <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
@@ -172,7 +172,7 @@ export default function Landing() {
 
 function BentoCard({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-8 md:p-10 flex flex-col hover:shadow-lg dark:hover:shadow-none hover:bg-white dark:hover:bg-white/[0.04] transition-all duration-300 ${className}`}>
+    <div className={`rounded-3xl border border-slate-200/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-xl p-8 md:p-10 flex flex-col hover:shadow-xl dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white/60 dark:hover:bg-white/10 transition-all duration-300 shadow-lg dark:shadow-none ${className}`}>
       <h3 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">{title}</h3>
       {children}
     </div>
@@ -181,7 +181,7 @@ function BentoCard({ title, children, className = '' }: { title: string; childre
 
 function FeatureCard({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.01] p-8 hover:bg-white dark:hover:bg-white/[0.03] hover:shadow-md dark:hover:shadow-none transition-all duration-300 group">
+    <div className="rounded-2xl border border-slate-200/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-lg p-8 hover:bg-white/60 dark:hover:bg-white/10 hover:shadow-xl dark:hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-all duration-300 group shadow-md dark:shadow-none">
       <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm dark:shadow-none">
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -199,7 +199,7 @@ function ContractCard({ name, id }: { name: string; id: string }) {
       href={explorer(id)}
       target="_blank"
       rel="noreferrer"
-      className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-8 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:shadow-lg dark:hover:shadow-none dark:hover:bg-white/[0.04] hover:-translate-y-1 transition-all group"
+      className="block rounded-2xl border border-slate-200/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-xl p-8 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:shadow-xl dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] dark:hover:bg-white/10 hover:-translate-y-1 transition-all group shadow-lg dark:shadow-none"
     >
       <div className="flex justify-between items-center mb-4">
         <p className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">

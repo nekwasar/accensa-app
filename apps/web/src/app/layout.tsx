@@ -37,7 +37,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#04090f] transition-colors duration-300">
+      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#04090f] transition-colors duration-300 relative">
+        {/* Global Ambient Background Blobs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-300/20 dark:bg-emerald-600/10 blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/20 dark:bg-teal-600/10 blur-[120px]" />
+          <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] rounded-full bg-sky-300/10 dark:bg-sky-600/5 blur-[100px]" />
+        </div>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Nav />
           {children}
