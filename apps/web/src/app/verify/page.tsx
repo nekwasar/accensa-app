@@ -100,7 +100,7 @@ export default function VerifyPage() {
                   onChange={(e) => setBatchId(e.target.value)}
                   placeholder="1"
                   required
-                  className="w-full bg-slate-50 dark:bg-[#06111f] border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none"
+                  className="w-full bg-slate-50 dark:bg-[#0a111a] border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none"
                 />
               </Field>
 
