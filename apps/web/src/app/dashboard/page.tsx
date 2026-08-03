@@ -116,7 +116,7 @@ export default function Dashboard() {
 
             {state.status === 'ready' && payments.length === 0 && (
               <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-4 px-6">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2 animate-pulse">●</div>
+                <div className="w-12 h-12 rounded-full bg-emerald-400 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2 animate-pulse">●</div>
                 <p className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">Awaiting Data</p>
                 <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm">Payments settled to this merchant address will appear here automatically.</p>
               </div>
