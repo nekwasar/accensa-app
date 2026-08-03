@@ -222,18 +222,18 @@ export default function Dashboard() {
 
       {/* Modal Dialog */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/80 backdrop-blur-sm transition-colors duration-300" onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#04090f]/40 dark:bg-black/80 backdrop-blur-sm transition-colors duration-300" onClick={() => setSelected(null)}>
           <div 
-            className="bg-white/70 dark:bg-[#06111f]/70 backdrop-blur-3xl border border-slate-200/60 dark:border-white/20 rounded-3xl w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] animate-in zoom-in-95 duration-200 transition-colors duration-300 max-h-[90vh] flex flex-col" 
+            className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-3xl border border-slate-200 dark:border-white/10 w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] animate-in zoom-in-95 duration-200 transition-colors duration-300 max-h-[90vh] flex flex-col" 
             onClick={e => e.stopPropagation()}
           >
-            <div className="px-6 py-4 md:px-8 md:py-6 border-b border-slate-200/60 dark:border-white/20 flex justify-between items-center bg-white/40 dark:bg-black/30 transition-colors duration-300 shrink-0">
+            <div className="px-6 py-4 md:px-8 md:py-6 border-b border-slate-200/60 dark:border-white/20 flex justify-between items-center bg-slate-50 dark:bg-[#0a111a] transition-colors duration-300 shrink-0">
               <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Payment Details</h3>
               <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white transition-colors">✕</button>
             </div>
             <div className="p-6 md:p-8 space-y-6 md:space-y-8 overflow-y-auto">
               <Field label="Transaction Hash">
-                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 px-4 py-3 rounded-xl font-mono text-xs text-emerald-700 dark:text-emerald-400 break-all transition-colors duration-300">
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-400 dark:border-emerald-500/20 px-4 py-3 rounded-xl font-mono text-xs text-emerald-600 dark:text-emerald-400 break-all transition-colors duration-300">
                   {selected.tx_hash}
                 </div>
               </Field>
