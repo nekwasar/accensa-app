@@ -123,10 +123,24 @@ export async function GET(request: Request) {
         // Defensive: never record a transfer that is not to this merchant.
         if (transferEvent.to !== merchant) continue;
 
+        // DO UPDATE, not DO NOTHING: a row may already exist because the
+        // merchant reported route attribution before this transfer was
+        // indexed, which is the normal ordering — the hook fires the moment
+        // x402 settles, this job runs on a schedule. Skipping the conflict
+        // would leave that row permanently null and invisible.
+        //
+        // Only ledger-owned columns are written. route, method, request_id and
+        // hook_reported_at belong to the merchant's report and are left alone.
         const res = await client.query(
           `INSERT INTO payments (tx_hash, ledger, payer, amount, asset, ts)
            VALUES ($1, $2, $3, $4::numeric, $5, $6::timestamptz)
-           ON CONFLICT (tx_hash) DO NOTHING`,
+           ON CONFLICT (tx_hash) DO UPDATE
+             SET ledger = EXCLUDED.ledger,
+                 payer  = EXCLUDED.payer,
+                 amount = EXCLUDED.amount,
+                 asset  = EXCLUDED.asset,
+                 ts     = EXCLUDED.ts
+           WHERE payments.ledger IS NULL`,
           [
             transferEvent.txHash,
             transferEvent.ledger,

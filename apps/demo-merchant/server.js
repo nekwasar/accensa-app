@@ -5,6 +5,7 @@ import {
   x402HTTPResourceServer
 } from "@x402/express";
 import { HTTPFacilitatorClient } from "@x402/core/server";
+import { ExactStellarScheme } from "@x402/stellar/exact/server";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,10 +14,38 @@ const PORT = process.env.PORT || 3001;
 const ACCENSA_URL = process.env.ACCENSA_URL || "http://localhost:3000";
 const HOOK_API_KEY = process.env.HOOK_API_KEY;
 
+const NETWORK = "stellar:testnet";
+
+// Native XLM Stellar Asset Contract on testnet. Priced as an explicit
+// AssetAmount rather than a bare number: the default money parser assumes
+// USDC, and the asset has to match what the indexer watches
+// (ASSET_CONTRACT_IDS) or the settled transfer is never picked up.
+const XLM_SAC =
+  process.env.TOKEN_ADDRESS || "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
+
+/**
+ * x402 identifies the paid resource by absolute URL. Attribution wants the path
+ * alone — the host is the merchant's own, so grouping revenue by it is noise.
+ * Mirrors routeFromResourceUrl() in @accensa/sdk, inlined here because this
+ * demo runs as plain ESM with no build step.
+ */
+function routeFromResourceUrl(url) {
+  if (typeof url !== "string" || url.trim() === "") return "";
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url.startsWith("/") ? url : "";
+  }
+}
+
 // 1. Create the resource server and point it to the public facilitator
 const resourceServer = new x402ResourceServer([
   new HTTPFacilitatorClient({ url: "https://www.x402.org/facilitator" })
 ]);
+
+// The facilitator settles, but the resource server still needs the scheme
+// implementation to build and verify payment requirements locally.
+resourceServer.register(NETWORK, new ExactStellarScheme());
 
 // 2. Path B: report the route that was paid for.
 //
@@ -41,7 +70,16 @@ resourceServer.onAfterSettle(async (ctx) => {
     return;
   }
 
-  console.log("✅ Settled", ctx.result.transaction, "for", ctx.paymentPayload?.path);
+  // x402 identifies the paid resource by absolute URL; attribution wants the
+  // path. There is no method on the payload, so a server paywalling more than
+  // one verb on a path has to decide for itself which it is reporting.
+  const route = routeFromResourceUrl(ctx.paymentPayload?.resource?.url);
+  if (!route) {
+    console.warn("⚠️  Settlement carried no resource URL; nothing to attribute");
+    return;
+  }
+
+  console.log("✅ Settled", ctx.result.transaction, "for", route);
 
   try {
     const res = await fetch(`${ACCENSA_URL}/api/hook/settle`, {
@@ -52,7 +90,7 @@ resourceServer.onAfterSettle(async (ctx) => {
       },
       body: JSON.stringify({
         tx_hash: ctx.result.transaction,
-        route: ctx.paymentPayload?.path,
+        route,
         method: "GET",
         payer: ctx.result.payer
       })
@@ -74,8 +112,8 @@ const routesConfig = {
   "/api/hello": {
     accepts: {
       scheme: "exact",
-      price: "1000", // e.g. 1000 stroops
-      network: "stellar:testnet",
+      price: { asset: XLM_SAC, amount: "1000" }, // 1000 stroops = 0.0001 XLM
+      network: NETWORK,
       payTo: process.env.MERCHANT_ADDRESS || "GAQW...REPLACE_WITH_REAL_ADDRESS",
     },
   },

@@ -80,6 +80,15 @@ export async function ensureSchema(client: Client): Promise<void> {
     );
   `);
 
+  // Attribution reported by the merchant arrives before the indexer has seen
+  // the transfer — the sync job runs on a schedule, the hook fires the instant
+  // x402 settles. Those staged rows have no amount or payer yet, and inventing
+  // a zero to satisfy a constraint is exactly the fabrication this codebase
+  // exists to avoid. The chain fills them in.
+  for (const col of ['amount', 'payer']) {
+    await client.query(`ALTER TABLE payments ALTER COLUMN ${col} DROP NOT NULL;`);
+  }
+
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
@@ -125,9 +134,13 @@ export async function recordSettlement(
   // Not indexed yet. Stage the attribution so it is not lost; the sync job
   // completes the row when it reaches that ledger. ON CONFLICT guards the race
   // where the indexer inserts between the UPDATE and the INSERT.
+  // ts is explicitly NULL, not omitted: the column carries a CURRENT_TIMESTAMP
+  // default, and letting it fire would stamp a staged row with the time it was
+  // reported rather than the time the payment settled on chain — and would put
+  // it straight onto the dashboard, since that filters on ts IS NOT NULL.
   await client.query(
-    `INSERT INTO payments (tx_hash, payer, route, method, request_id, hook_reported_at)
-     VALUES ($1, $2, $3, $4, $5, now())
+    `INSERT INTO payments (tx_hash, payer, route, method, request_id, ts, hook_reported_at)
+     VALUES ($1, $2, $3, $4, $5, NULL, now())
      ON CONFLICT (tx_hash) DO UPDATE
        SET route = EXCLUDED.route,
            method = EXCLUDED.method,

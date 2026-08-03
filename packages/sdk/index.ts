@@ -3,6 +3,7 @@ import {
   SETTLEMENT_HEADER,
   parseSettlementHeader,
   settlementFromResult,
+  routeFromResourceUrl,
   type RequestFacts,
   type Settlement,
   type X402SettleResult,
@@ -13,6 +14,7 @@ export {
   SETTLEMENT_HEADER,
   parseSettlementHeader,
   settlementFromResult,
+  routeFromResourceUrl,
   type RequestFacts,
   type Settlement,
   type X402SettleResult,
@@ -110,6 +112,15 @@ export function attachAccensaHook(opts: AccensaHookOptions) {
   };
 }
 
+export interface SettleHookOptions extends AccensaHookOptions {
+  /**
+   * HTTP method to attribute. The x402 payment payload identifies the resource
+   * by URL and carries no method, so a server that paywalls more than one verb
+   * on the same path must supply this itself. Defaults to GET.
+   */
+  method?: string;
+}
+
 /**
  * Builds an `onAfterSettle` handler for an x402 resource server.
  *
@@ -120,15 +131,14 @@ export function attachAccensaHook(opts: AccensaHookOptions) {
  * resourceServer.onAfterSettle(createSettleHook({ indexerUrl, apiKey }));
  * ```
  */
-export function createSettleHook(opts: AccensaHookOptions) {
+export function createSettleHook(opts: SettleHookOptions) {
   return async function onAfterSettle(ctx: {
     result: X402SettleResult;
-    paymentPayload?: { path?: string; method?: string; requestId?: string };
+    paymentPayload?: { resource?: { url?: string } };
   }): Promise<void> {
     const settlement = settlementFromResult(ctx.result, {
-      route: ctx.paymentPayload?.path ?? '',
-      method: ctx.paymentPayload?.method ?? 'GET',
-      requestId: ctx.paymentPayload?.requestId,
+      route: routeFromResourceUrl(ctx.paymentPayload?.resource?.url),
+      method: opts.method ?? 'GET',
     });
     if (settlement) await reportSettlement(settlement, opts);
   };

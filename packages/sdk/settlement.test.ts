@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { parseSettlementHeader, settlementFromResult } from './settlement';
+import {
+  parseSettlementHeader,
+  settlementFromResult,
+  routeFromResourceUrl,
+} from './settlement';
 
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64');
 
@@ -131,5 +135,37 @@ describe('settlementFromResult', () => {
 
   it('returns null without a method', () => {
     expect(settlementFromResult(settled, { route: '/x', method: '' })).toBeNull();
+  });
+});
+
+describe('routeFromResourceUrl', () => {
+  // x402 identifies the paid resource by absolute URL, not by path — this was
+  // found by running a real payment end to end, where reading a `path` field
+  // that does not exist produced an unattributable settlement.
+  it('reduces an absolute resource URL to its path', () => {
+    expect(routeFromResourceUrl('http://localhost:3001/api/hello')).toBe('/api/hello');
+    expect(routeFromResourceUrl('https://api.example.com/v1/quotes')).toBe('/v1/quotes');
+  });
+
+  it('drops the query string and fragment', () => {
+    expect(routeFromResourceUrl('https://x.dev/api/hello?a=1#frag')).toBe('/api/hello');
+  });
+
+  it('returns / for a bare origin', () => {
+    expect(routeFromResourceUrl('https://x.dev')).toBe('/');
+  });
+
+  it('accepts a bare path unchanged', () => {
+    expect(routeFromResourceUrl('/api/hello')).toBe('/api/hello');
+  });
+
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['empty', ''],
+    ['whitespace', '   '],
+    ['a non-URL, non-path string', 'not a url'],
+  ])('returns empty string for %s', (_label, input) => {
+    expect(routeFromResourceUrl(input as string | undefined | null)).toBe('');
   });
 });

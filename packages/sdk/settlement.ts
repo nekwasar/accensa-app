@@ -49,6 +49,25 @@ export interface RequestFacts {
   requestId?: string;
 }
 
+/**
+ * Extracts the route from an x402 resource URL.
+ *
+ * x402 identifies the paid resource by absolute URL (`resource.url` on the
+ * payment payload). Attribution wants the path alone — the host is the
+ * merchant's own and grouping revenue by it would be noise. Returns an empty
+ * string when there is nothing usable, which callers treat as "cannot
+ * attribute".
+ */
+export function routeFromResourceUrl(url: string | undefined | null): string {
+  if (typeof url !== 'string' || url.trim() === '') return '';
+  try {
+    return new URL(url).pathname;
+  } catch {
+    // Already a bare path, which is a legitimate thing for a caller to pass.
+    return url.startsWith('/') ? url : '';
+  }
+}
+
 function decodeBase64(value: string): string | null {
   try {
     if (typeof globalThis.Buffer !== 'undefined') {

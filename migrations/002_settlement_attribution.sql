@@ -13,6 +13,17 @@ BEGIN;
 
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS hook_reported_at TIMESTAMPTZ;
 
+-- Attribution is reported the instant x402 settles; the indexer runs on a
+-- schedule. So a reported settlement almost always arrives before the transfer
+-- has been indexed, and the staged row genuinely has no amount or payer yet.
+--
+-- These columns were NOT NULL, which forced a choice between dropping the
+-- attribution or inventing a zero amount. Inventing one is precisely the
+-- fabrication this schema is meant to prevent, so the constraint goes instead.
+-- The chain remains the only writer of amount, asset, ledger, and ts.
+ALTER TABLE payments ALTER COLUMN amount DROP NOT NULL;
+ALTER TABLE payments ALTER COLUMN payer  DROP NOT NULL;
+
 -- A settlement can be reported before the indexer reaches that ledger. Those
 -- rows are staged with ledger, ts, amount, and asset all null, and completed on
 -- a later sync run.
