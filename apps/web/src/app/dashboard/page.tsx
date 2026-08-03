@@ -186,7 +186,7 @@ export default function Dashboard() {
                           onClick={() => setSelected(payment)}
                           className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group"
                         >
-                          <td className="px-8 py-5 font-mono text-emerald-600 dark:text-emerald-400 text-sm group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                          <td className="px-8 py-5 font-mono text-emerald-600 dark:text-emerald-400 text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                             {truncate(payment.tx_hash)}
                           </td>
                           <td className="px-8 py-5">
