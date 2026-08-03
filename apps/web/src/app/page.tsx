@@ -127,16 +127,16 @@ export default function Landing() {
             <ContractCard name="RefundVault" id={REFUND_VAULT_ID} />
           </div>
         </div>
-      </section>
+      </ScrollReveal>
 
       {/* Integration Code block */}
-      <section className="px-6 py-24 md:py-32 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-[#020508] transition-colors duration-300">
+      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
           <div className="mb-10">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Integration</p>
             <h2 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">SDK Drop-in</h2>
           </div>
-          <div className="rounded-2xl border border-slate-200/60 dark:border-white/20 bg-white/40 dark:bg-black/20 backdrop-blur-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] relative group transition-colors duration-300">
+          <div className="rounded-2xl bg-white/40 dark:bg-black/20 backdrop-blur-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] relative group transition-colors duration-300">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80 dark:opacity-50" />
             <div className="px-6 py-4 border-b border-slate-200/50 dark:border-white/10 flex gap-2 transition-colors duration-300 bg-white/20 dark:bg-white/5">
               <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20" />
