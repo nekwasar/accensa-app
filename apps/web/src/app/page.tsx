@@ -83,22 +83,22 @@ export default function Landing() {
                 Agents check their receipt against the anchored root - locally and directly against the smart contract. Zero trust required.
               </p>
               <div className="mt-8">
-                <Link href="/verify" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
+                <Link href="/verify" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
                   Try the Verifier →
                 </Link>
               </div>
             </BentoCard>
           </div>
         </div>
-      </section>
+      </ScrollReveal>
 
       {/* The Protocol Benefits */}
-      <section className="px-6 py-24 md:py-32 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.01] transition-colors duration-300">
+      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-10 mb-16">
             <div className="max-w-2xl">
               <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Protocol</p>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Why Stellar?</h2>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Why <span className="text-slate-400 dark:text-slate-500 italic font-normal">Stellar?</span></h2>
             </div>
             <p className="text-slate-600 dark:text-slate-400 font-medium max-w-md text-lg transition-colors duration-300">Built on a ledger designed specifically for high-throughput, low-latency financial settlement.</p>
           </div>
