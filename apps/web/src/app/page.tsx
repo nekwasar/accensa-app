@@ -207,16 +207,19 @@ function ContractCard({ name, id }: { name: string; id: string }) {
       href={explorer(id)}
       target="_blank"
       rel="noreferrer"
-      className="block rounded-2xl border border-slate-200/60 dark:border-white/20 bg-white/50 dark:bg-white/5 backdrop-blur-2xl p-8 hover:border-emerald-400 dark:hover:border-emerald-500/40 hover:shadow-2xl dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] dark:hover:bg-white/10 hover:-translate-y-1 transition-all group shadow-[0_4px_20px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]"
+      className="relative overflow-hidden group block rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/5 p-8 hover:border-emerald-400 dark:hover:border-emerald-500/40 hover:shadow-2xl dark:hover:shadow-[0_0_30px_rgba(255,255,255,0.02)] transition-all duration-500 shadow-sm dark:shadow-none"
     >
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-          {name}
-        </p>
-        <span className="text-emerald-600 dark:text-emerald-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all font-bold">↗</span>
-      </div>
-      <div className="inline-block bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 rounded-lg px-3 py-2 font-mono text-xs text-slate-500 dark:text-slate-400 break-all transition-colors duration-300">
-        {id}
+      <div className="absolute inset-0 bg-grid opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      <div className="relative z-10">
+        <div className="flex justify-between items-center mb-4">
+          <p className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+            {name}
+          </p>
+          <span className="text-emerald-600 dark:text-emerald-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all font-bold">↗</span>
+        </div>
+        <div className="inline-block bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 rounded-lg px-3 py-2 font-mono text-xs text-slate-500 dark:text-slate-400 break-all transition-colors duration-300 group-hover:dark:bg-black/70">
+          {id}
+        </div>
       </div>
     </a>
   );
