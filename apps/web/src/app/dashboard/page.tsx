@@ -123,35 +123,36 @@ export default function Dashboard() {
             )}
 
             {state.status === 'ready' && payments.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse whitespace-nowrap">
-                  <thead>
-                    <tr className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#04090f]/50 transition-colors duration-300">
-                      <th className="px-4 py-3 md:px-8 md:py-5">Transaction</th>
-                      <th className="px-4 py-3 md:px-8 md:py-5">Amount</th>
-                      <th className="px-4 py-3 md:px-8 md:py-5">Payer</th>
-                      <th className="px-4 py-3 md:px-8 md:py-5">Route</th>
-                      <th className="px-4 py-3 md:px-8 md:py-5">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {payments.map((payment) => (
-                      <tr
-                        key={payment.tx_hash}
-                        onClick={() => setSelected(payment)}
-                        className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group"
-                      >
-                        <td className="px-4 py-3 md:px-8 md:py-5 font-mono text-emerald-600 dark:text-emerald-400 text-sm group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
-                          {truncate(payment.tx_hash)}
-                        </td>
-                        <td className="px-4 py-3 md:px-8 md:py-5">
-                          <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white transition-colors duration-300">{formatAmount(payment.amount)}</span>
+              <>
+                {/* Mobile View */}
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
+                  {payments.map((payment) => (
+                    <div
+                      key={payment.tx_hash}
+                      onClick={() => setSelected(payment)}
+                      className="p-6 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group flex flex-col gap-4"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-black text-2xl tracking-tight text-slate-900 dark:text-white transition-colors duration-300">{formatAmount(payment.amount)}</span>
                           <span className="text-slate-400 dark:text-slate-500 ml-2 text-xs font-bold">{assetLabel(payment.asset)}</span>
-                        </td>
-                        <td className="px-4 py-3 md:px-8 md:py-5 font-mono text-slate-500 dark:text-slate-400 text-sm transition-colors duration-300">
-                          {truncate(payment.payer, 4, 4)}
-                        </td>
-                        <td className="px-4 py-3 md:px-8 md:py-5">
+                        </div>
+                        <div className="text-slate-500 text-xs text-right mt-1">
+                          {new Date(payment.ts).toLocaleString()}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transaction</p>
+                          <p className="font-mono text-emerald-600 dark:text-emerald-400 text-sm">{truncate(payment.tx_hash)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Payer</p>
+                          <p className="font-mono text-slate-500 dark:text-slate-400 text-sm">{truncate(payment.payer, 4, 4)}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Route</p>
                           {payment.route ? (
                             <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-2.5 py-1 rounded text-sm transition-colors duration-300">
                               {payment.method && <span className="text-emerald-600 dark:text-emerald-500/70 font-mono font-bold text-xs">{payment.method}</span>}
@@ -160,15 +161,60 @@ export default function Dashboard() {
                           ) : (
                             <span className="text-slate-400 dark:text-slate-600">-</span>
                           )}
-                        </td>
-                        <td className="px-4 py-3 md:px-8 md:py-5 text-slate-500 text-sm">
-                          {new Date(payment.ts).toLocaleString()}
-                        </td>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                      <tr className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#04090f]/50 transition-colors duration-300">
+                        <th className="px-8 py-5">Transaction</th>
+                        <th className="px-8 py-5">Amount</th>
+                        <th className="px-8 py-5">Payer</th>
+                        <th className="px-8 py-5">Route</th>
+                        <th className="px-8 py-5">Time</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                      {payments.map((payment) => (
+                        <tr
+                          key={payment.tx_hash}
+                          onClick={() => setSelected(payment)}
+                          className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                        >
+                          <td className="px-8 py-5 font-mono text-emerald-600 dark:text-emerald-400 text-sm group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                            {truncate(payment.tx_hash)}
+                          </td>
+                          <td className="px-8 py-5">
+                            <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white transition-colors duration-300">{formatAmount(payment.amount)}</span>
+                            <span className="text-slate-400 dark:text-slate-500 ml-2 text-xs font-bold">{assetLabel(payment.asset)}</span>
+                          </td>
+                          <td className="px-8 py-5 font-mono text-slate-500 dark:text-slate-400 text-sm transition-colors duration-300">
+                            {truncate(payment.payer, 4, 4)}
+                          </td>
+                          <td className="px-8 py-5">
+                            {payment.route ? (
+                              <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-2.5 py-1 rounded text-sm transition-colors duration-300">
+                                {payment.method && <span className="text-emerald-600 dark:text-emerald-500/70 font-mono font-bold text-xs">{payment.method}</span>}
+                                <span className="font-mono text-slate-600 dark:text-slate-300">{payment.route}</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-600">-</span>
+                            )}
+                          </td>
+                          <td className="px-8 py-5 text-slate-500 text-sm">
+                            {new Date(payment.ts).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </section>
