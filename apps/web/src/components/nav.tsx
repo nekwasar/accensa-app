@@ -2,34 +2,43 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import { Menu, X } from 'lucide-react';
 
 export function Nav() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
-    <nav className="px-6 py-4 md:py-6 border-b border-slate-200/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-3xl sticky top-0 z-50 transition-colors duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+    <nav className="px-6 py-4 md:py-6 fixed w-full top-0 z-50 bg-white/50 dark:bg-white/5 backdrop-blur-3xl border-b border-slate-200/50 dark:border-white/10 dark:shadow-[0_4px_30px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-colors duration-300">
       <div className="max-w-6xl mx-auto flex items-center justify-between relative">
-        <Link href="/" className="text-xl md:text-2xl font-black tracking-tighter text-slate-900 dark:text-white flex items-center gap-3 transition-colors duration-300 z-50">
-          <div className="w-5 h-5 md:w-6 md:h-6 rounded bg-emerald-500 shadow-sm dark:shadow-[0_0_15px_rgba(16,185,129,0.4)]" />
-          Accensa
+        <Link href="/" className="text-xl md:text-2xl font-harabara font-bold tracking-wider text-slate-900 dark:text-white flex items-center gap-3 transition-colors duration-300 z-50">
+          <img src="/accensa-logo-no-bg.png" alt="Accensa Logo" className="w-6 h-6 md:w-8 md:h-8 rounded-lg shadow-sm invert hue-rotate-180 dark:invert-0 dark:hue-rotate-0" />
+          <span>Accensa<span className="text-emerald-600 dark:text-emerald-400 text-[1.3em] inline-block -ml-[0.05em] leading-none">.</span></span>
         </Link>
         
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-          <Link href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>
-          <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>
+        {/* Desktop Nav (Centered) */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+          {pathname !== "/" && <Link href="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</Link>}
+          {pathname !== "/verify" && <Link href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>}
+          {pathname !== "/dashboard" && <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>}
+          <Link href="/docs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</Link>
           <a href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
-          <ThemeToggle />
         </div>
 
-        {/* Mobile Nav Toggle */}
-        <div className="flex md:hidden items-center gap-4 z-50">
+        {/* Right Nav (Theme Toggle & Mobile Menu) */}
+        <div className="flex items-center gap-4 z-50">
+          <Link 
+            href="/coming-soon"
+            className="hidden md:inline-flex px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider hover:bg-emerald-500/20 dark:hover:bg-emerald-400/20 transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-slate-50 dark:hover:bg-white/5"
+          >
+            Connect Wallet
+          </Link>
           <ThemeToggle />
           <button 
             onClick={() => setIsOpen(!isOpen)}
-            className="text-slate-500 dark:text-slate-400 p-2 md:hover:bg-slate-100 dark:md:hover:bg-white/5 active:bg-slate-100 dark:active:bg-white/5 rounded-lg transition-colors cursor-pointer"
+            className="md:hidden text-slate-500 dark:text-slate-400 p-2 hover:bg-slate-100 dark:hover:bg-white/5 active:bg-slate-100 dark:active:bg-white/5 rounded-lg transition-colors cursor-pointer"
             aria-label="Toggle Menu"
             type="button"
           >
