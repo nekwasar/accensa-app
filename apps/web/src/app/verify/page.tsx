@@ -59,7 +59,7 @@ export default function VerifyPage() {
   return (
     <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 transition-colors duration-300 p-6 md:p-12 lg:p-20">
       <div className="max-w-4xl mx-auto space-y-12">
-        <header className="space-y-6 text-center max-w-2xl mx-auto relative">
+        <header className="space-y-6 text-left md:text-center max-w-2xl mx-auto relative">
           <div className="flex justify-between items-center w-full mb-8">
             <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               <span>←</span> Back to Accensa
