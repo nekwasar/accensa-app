@@ -48,11 +48,14 @@ export function Nav() {
       </div>
 
       {/* Mobile Nav Menu */}
-      <div className={`md:hidden absolute top-full left-0 w-full bg-white/60 dark:bg-[#04090f]/60 backdrop-blur-3xl border-b border-slate-200/50 dark:border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-96 py-6 border-b' : 'max-h-0 py-0 border-transparent border-none'}`}>
+      <div className={`md:hidden absolute top-full left-0 w-full bg-white/60 dark:bg-[#04090f]/60 backdrop-blur-3xl shadow-[0_20px_40px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-96 py-6 border-b' : 'max-h-0 py-0 border-transparent border-none'}`}>
         <div className="px-6 flex flex-col gap-6 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-          <Link onClick={() => setIsOpen(false)} href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Verify</Link>
-          <Link onClick={() => setIsOpen(false)} href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Dashboard</Link>
+          {pathname !== "/" && <Link onClick={() => setIsOpen(false)} href="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Home</Link>}
+          {pathname !== "/verify" && <Link onClick={() => setIsOpen(false)} href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Verify</Link>}
+          {pathname !== "/dashboard" && <Link onClick={() => setIsOpen(false)} href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Dashboard</Link>}
+          <Link onClick={() => setIsOpen(false)} href="/docs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Docs</Link>
           <a onClick={() => setIsOpen(false)} href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">GitHub</a>
+          <Link onClick={() => setIsOpen(false)} href="/coming-soon" className="px-4 py-3 rounded-lg bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-slate-200/50 dark:border-white/20 text-slate-900 dark:text-white hover:bg-white/60 dark:hover:bg-white/20 transition-all block">Connect Wallet</Link>
         </div>
       </div>
     </nav>
