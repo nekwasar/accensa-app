@@ -44,7 +44,7 @@ export default function RootLayout({
           <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/20 dark:bg-teal-600/10 blur-[120px]" />
           <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] rounded-full bg-sky-300/10 dark:bg-sky-600/5 blur-[100px]" />
         </div>
-        <ThemeProvider attribute="class" defaultTheme="dark">
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <Nav />
           {children}
         </ThemeProvider>
