@@ -79,7 +79,7 @@ export default async function BatchPage({
           </p>
         </header>
 
-        <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/20 rounded-3xl p-6 md:p-12 mb-12 shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
+        <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-6 md:p-12 mb-12 shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
           <Detail label="Merkle root" mono>
             {batch.root}
           </Detail>
