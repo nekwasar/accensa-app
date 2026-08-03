@@ -149,10 +149,10 @@ export default function Landing() {
             </div>
             <pre className="p-8 overflow-x-auto text-sm">
               <code className="text-slate-700 dark:text-slate-300 font-mono leading-loose transition-colors duration-300">
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">import</span> {'{ verifyReceipt }'} <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">from</span> '@accensa/sdk/merkle';<br/><br/>
-                <span className="text-slate-400 dark:text-slate-500 italic dark:not-italic">// Verify locally or on-chain</span><br/>
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">import</span> {'{ verifyReceipt }'} <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">from</span> &apos;@accensa/sdk/merkle&apos;;<br/><br/>
+                <span className="text-slate-400 dark:text-slate-500 italic dark:not-italic">{'// Verify locally or on-chain'}</span><br/>
                 <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">const</span> ok = verifyReceipt(receiptHash, proof, anchoredRoot);<br/>
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">if</span> (!ok) <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">throw new</span> Error(<span className="text-teal-600 dark:text-teal-200">'Receipt is not in the anchored batch'</span>);
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">if</span> (!ok) <span className="text-emerald-700 dark:text-emerald-400 font-bold dark:font-normal">throw new</span> Error(&apos;Receipt is not in the anchored batch&apos;);
               </code>
             </pre>
           </div>

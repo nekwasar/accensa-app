@@ -144,7 +144,7 @@ export default function VerifyPage() {
 }
 
 function Result({ result }: { result: VerifyResponse }) {
-  const { local, onchain, verified, disagreement, batch } = result;
+  const { local, onchain, verified, batch } = result;
 
   return (
     <div className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
