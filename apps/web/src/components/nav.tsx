@@ -29,7 +29,7 @@ export function Nav() {
           <ThemeToggle />
           <button 
             onClick={() => setIsOpen(!isOpen)}
-            className="text-slate-500 dark:text-slate-400 p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+            className="text-slate-500 dark:text-slate-400 p-2 md:hover:bg-slate-100 dark:md:hover:bg-white/5 active:bg-slate-100 dark:active:bg-white/5 rounded-lg transition-colors cursor-pointer"
             aria-label="Toggle Menu"
             type="button"
           >
