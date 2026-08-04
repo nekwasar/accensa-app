@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
+import { describeSync, type SyncState } from '@/lib/sync-status';
 
 interface Payment {
   tx_hash: string;
@@ -16,7 +17,7 @@ interface Payment {
 
 type LoadState =
   | { status: 'loading' }
-  | { status: 'ready'; payments: Payment[]; fetchedAt: number }
+  | { status: 'ready'; payments: Payment[]; fetchedAt: number; sync: SyncState | null }
   | { status: 'error'; message: string };
 
 const POLL_INTERVAL_MS = 15_000;
@@ -41,7 +42,13 @@ export default function Dashboard() {
         const res = await fetch('/api/payments', { signal: controller.signal, cache: 'no-store' });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `Error ${res.status}`);
         const data = await res.json();
-        if (!controller.signal.aborted) setState({ status: 'ready', payments: data, fetchedAt: Date.now() });
+        // Tolerate both shapes: the endpoint used to return a bare array, and
+        // a deploy can briefly serve an older build to an already-open tab.
+        const payments: Payment[] = Array.isArray(data) ? data : (data.payments ?? []);
+        const sync: SyncState | null = Array.isArray(data) ? null : (data.sync ?? null);
+        if (!controller.signal.aborted) {
+          setState({ status: 'ready', payments, fetchedAt: Date.now(), sync });
+        }
       } catch (error) {
         if (!controller.signal.aborted) setState({ status: 'error', message: error instanceof Error ? error.message : 'Failed' });
       }
@@ -291,13 +298,46 @@ function StatusPill({ state, onRetry }: { state: LoadState; onRetry: () => void 
       <span className="w-2 h-2 rounded-full bg-red-500" /> Retry Connection
     </button>
   );
+  // Deliberately reports the indexer's timestamp, not state.fetchedAt. The poll
+  // succeeding says nothing about how current the data behind it is, and the
+  // sync job lands every 1-3 hours in practice.
+  const { level, age, detail } = describeSync(state.sync);
+
+  const tone = {
+    live: 'text-emerald-600 dark:text-emerald-400',
+    lagging: 'text-amber-600 dark:text-amber-400',
+    stale: 'text-red-600 dark:text-red-400',
+    unknown: 'text-slate-500 dark:text-slate-400',
+  }[level];
+
+  const dot = {
+    live: 'bg-emerald-500',
+    lagging: 'bg-amber-500',
+    stale: 'bg-red-500',
+    unknown: 'bg-slate-400',
+  }[level];
+
+  const label = {
+    live: `Live · synced ${age} ago`,
+    lagging: `Synced ${age} ago`,
+    stale: `Stale · ${age} old`,
+    unknown: 'Sync time unknown',
+  }[level];
+
   return (
-    <span className="flex gap-2 items-center text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 transition-colors duration-300">
+    <span
+      title={detail}
+      className={`flex gap-2 items-center text-[10px] font-bold uppercase tracking-widest transition-colors duration-300 ${tone}`}
+    >
       <span className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        {/* The ping animation claims activity; only show it when that is true. */}
+        {level === 'live' && (
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        )}
+        <span className={`relative inline-flex rounded-full h-2 w-2 ${dot}`} />
       </span>
-      Live · {new Date(state.fetchedAt).toLocaleTimeString()}
+      <span className="sr-only">{detail}</span>
+      <span aria-hidden="true">{label}</span>
     </span>
   );
 }
