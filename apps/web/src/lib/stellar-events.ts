@@ -20,6 +20,8 @@ export interface TransferEvent {
 
 /** Raw event as returned by Soroban RPC `getEvents`. */
 export interface RawEvent {
+  /** Paging cursor for this event, used when the page carries no cursor. */
+  id?: string;
   txHash?: string;
   ledger?: number;
   ledgerClosedAt?: string;
