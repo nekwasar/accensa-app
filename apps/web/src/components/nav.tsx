@@ -24,7 +24,7 @@ export function Nav() {
           {pathname !== "/" && <Link href="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</Link>}
           {pathname !== "/verify" && <Link href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>}
           {pathname !== "/dashboard" && <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>}
-          <Link href="/docs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</Link>
+          <a href="https://accensa-docs.vercel.app" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</a>
           <a href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
         </div>
 
@@ -54,7 +54,7 @@ export function Nav() {
           {pathname !== "/" && <Link onClick={() => setIsOpen(false)} href="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Home</Link>}
           {pathname !== "/verify" && <Link onClick={() => setIsOpen(false)} href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Verify</Link>}
           {pathname !== "/dashboard" && <Link onClick={() => setIsOpen(false)} href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Dashboard</Link>}
-          <Link onClick={() => setIsOpen(false)} href="/docs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Docs</Link>
+          <a onClick={() => setIsOpen(false)} href="https://accensa-docs.vercel.app" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Docs</a>
           <a onClick={() => setIsOpen(false)} href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">GitHub</a>
           <Link onClick={() => setIsOpen(false)} href="/coming-soon" className="px-4 py-3 rounded-lg bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-slate-200/50 dark:border-white/20 text-slate-900 dark:text-white hover:bg-white/60 dark:hover:bg-white/20 transition-all block">Connect Wallet</Link>
         </div>
