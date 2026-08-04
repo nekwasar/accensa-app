@@ -105,7 +105,10 @@ export default function Dashboard() {
         <section className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">
           <div className="px-8 py-6 flex justify-between items-center bg-white/30 dark:bg-black/30 backdrop-blur-xl transition-colors duration-300">
             <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Recent Settlements</h2>
-            <StatusPill state={state} onRetry={reload} />
+            <div className="flex items-center gap-4">
+              <StatusPill state={state} onRetry={reload} />
+              <SyncNowButton onSynced={reload} />
+            </div>
           </div>
 
           <div className="min-h-[400px]">
@@ -340,6 +343,109 @@ function StatusPill({ state, onRetry }: { state: LoadState; onRetry: () => void 
       <span className="sr-only">{detail}</span>
       <span aria-hidden="true">{label}</span>
     </span>
+  );
+}
+
+type SyncPhase =
+  | { phase: 'idle' }
+  | { phase: 'running' }
+  | { phase: 'done'; message: string }
+  | { phase: 'cooldown'; until: number }
+  | { phase: 'error'; message: string };
+
+/**
+ * Runs the indexer on demand.
+ *
+ * The scheduled sync is nominally every 5 minutes but GitHub drops most of
+ * those runs, so in practice the dashboard can sit hours behind with no way to
+ * catch up. This posts to /api/sync, which enforces its own cooldown - the
+ * button reflects that, it does not enforce it.
+ */
+function SyncNowButton({ onSynced }: { onSynced: () => void }) {
+  const [state, setState] = useState<SyncPhase>({ phase: 'idle' });
+  const [now, setNow] = useState(() => Date.now());
+
+  // Expiry is derived, not stored: a timer that writes state back on every tick
+  // would re-render the whole header once a second for no benefit.
+  const cooling = state.phase === 'cooldown' && now < state.until;
+
+  // Tick only while counting down. When `cooling` flips false the effect
+  // re-runs, returns early, and the interval is cleared.
+  useEffect(() => {
+    if (!cooling) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [cooling]);
+
+  // Clear a result message after a few seconds so it does not read as current.
+  useEffect(() => {
+    if (state.phase !== 'done' && state.phase !== 'error') return;
+    const timer = setTimeout(() => setState({ phase: 'idle' }), 6000);
+    return () => clearTimeout(timer);
+  }, [state.phase]);
+
+  const trigger = useCallback(async () => {
+    setState({ phase: 'running' });
+    try {
+      const res = await fetch('/api/sync', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 429) {
+        setState({ phase: 'cooldown', until: Date.now() + (data.retryAfterMs ?? 60_000) });
+        return;
+      }
+      if (!res.ok || data.success === false) {
+        setState({ phase: 'error', message: data.error ?? `Error ${res.status}` });
+        return;
+      }
+
+      const inserted = data.inserted ?? 0;
+      setState({
+        phase: 'done',
+        message: inserted > 0 ? `Indexed ${inserted} payment${inserted === 1 ? '' : 's'}` : 'Up to date',
+      });
+      // Refresh the table even when nothing was inserted - the sync timestamp
+      // moved, and the pill reads from that.
+      onSynced();
+    } catch (error) {
+      setState({ phase: 'error', message: error instanceof Error ? error.message : 'Failed' });
+    }
+  }, [onSynced]);
+
+  const secondsLeft = state.phase === 'cooldown' ? Math.max(0, Math.ceil((state.until - now) / 1000)) : 0;
+  const disabled = state.phase === 'running' || cooling;
+
+  const label =
+    state.phase === 'running'
+      ? 'Syncing…'
+      : state.phase === 'done'
+        ? state.message
+        : state.phase === 'error'
+          ? 'Retry sync'
+          : cooling
+            ? `Wait ${secondsLeft}s`
+            : 'Sync now';
+
+  return (
+    <button
+      type="button"
+      onClick={trigger}
+      disabled={disabled}
+      title={
+        state.phase === 'error'
+          ? state.message
+          : state.phase === 'cooldown'
+            ? 'A sync ran moments ago. The indexer is rate limited to avoid hammering the network.'
+            : 'Index new payments now instead of waiting for the scheduled run'
+      }
+      className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-colors cursor-pointer disabled:cursor-not-allowed ${
+        state.phase === 'error'
+          ? 'border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
+          : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 disabled:hover:bg-transparent'
+      }`}
+    >
+      <span aria-live="polite">{label}</span>
+    </button>
   );
 }
 

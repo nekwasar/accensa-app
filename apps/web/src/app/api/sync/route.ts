@@ -9,6 +9,7 @@ import {
   ensureSchema,
   getLastSyncedLedger,
   setLastSyncedLedger,
+  getSyncState,
 } from '@/lib/db';
 import {
   drainEvents,
@@ -16,6 +17,7 @@ import {
   EVENTS_PAGE_LIMIT,
   type EventPage,
 } from '@/lib/event-pager';
+import { cooldownRemaining } from '@/lib/sync-status';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -50,6 +52,18 @@ const MAX_LOOKBACK = 100_000;
  */
 const PAGING_BUDGET_MS = 45_000;
 
+/**
+ * Minimum gap between manual syncs.
+ *
+ * The dashboard is public and unauthenticated, so the POST entry point is too.
+ * Indexing is idempotent, so repeated calls cannot corrupt anything, but each
+ * one costs Soroban RPC round trips, a database connection and a function
+ * invocation. This bounds what a held-down button, or anyone with curl, can
+ * spend. A scheduled run counts too - if the data is already current, there is
+ * nothing for a manual sync to do.
+ */
+const MANUAL_COOLDOWN_MS = 60_000;
+
 async function rpc<T>(method: string, params: unknown): Promise<T> {
   const res = await fetch(RPC_URL, {
     method: 'POST',
@@ -63,33 +77,30 @@ async function rpc<T>(method: string, params: unknown): Promise<T> {
   return body.result as T;
 }
 
+/** Reports a cooldown rather than syncing, when one is in force. */
+interface CooldownResult {
+  cooldown: true;
+  retryAfterMs: number;
+}
+
 /**
  * Indexes Stellar Asset Contract transfers into the merchant's payment ledger.
  *
- * Invoked by Vercel Cron. Protected by CRON_SECRET when set - Vercel sends it
- * as a bearer token - so the endpoint cannot be driven by arbitrary callers.
+ * Shared by both entry points: the scheduled GET, and the POST behind the
+ * dashboard's manual trigger. `cooldownMs`, when set, makes the run a no-op if
+ * the last sync is more recent than that.
  */
-export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function runSync(merchant: string, opts: { cooldownMs?: number } = {}) {
+  return withClient(async (client) => {
+    await ensureSchema(client);
+
+    if (opts.cooldownMs) {
+      const state = await getSyncState(client);
+      const retryAfterMs = cooldownRemaining(state?.updatedAt, opts.cooldownMs);
+      if (retryAfterMs > 0) return { cooldown: true, retryAfterMs } as CooldownResult;
     }
-  }
 
-  const merchant = process.env.MERCHANT_ADDRESS;
-  if (!merchant) {
-    return NextResponse.json({ error: 'MERCHANT_ADDRESS is not configured' }, { status: 500 });
-  }
-  if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
-  }
-
-  try {
-    const result = await withClient(async (client) => {
-      await ensureSchema(client);
-
+    {
       const { sequence: latestLedger } = await rpc<{ sequence: number }>('getLatestLedger', {});
 
       const cursor = await getLastSyncedLedger(client);
@@ -200,11 +211,76 @@ export async function GET(request: Request) {
         decoded,
         inserted,
       };
-    });
+    }
+  });
+}
 
-    return NextResponse.json({ success: true, ...result });
+/** Maps a run to a response, so both entry points answer identically. */
+function respond(result: Awaited<ReturnType<typeof runSync>>) {
+  if ('cooldown' in result) {
+    const retryAfterMs = Math.ceil(result.retryAfterMs);
+    return NextResponse.json(
+      { success: true, cooldown: true, retryAfterMs },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(retryAfterMs / 1000)) } },
+    );
+  }
+  return NextResponse.json({ success: true, ...result });
+}
+
+function configError(): NextResponse | null {
+  if (!process.env.MERCHANT_ADDRESS) {
+    return NextResponse.json({ error: 'MERCHANT_ADDRESS is not configured' }, { status: 500 });
+  }
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
+  }
+  return null;
+}
+
+function failed(error: unknown) {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  return NextResponse.json({ success: false, error: message }, { status: 500 });
+}
+
+/**
+ * Scheduled entry point.
+ *
+ * Driven by Vercel Cron and by .github/workflows/sync.yml. Protected by
+ * CRON_SECRET when set - both senders pass it as a bearer token - so the
+ * endpoint cannot be driven by arbitrary callers. No cooldown: a scheduled run
+ * is already rate limited by its schedule.
+ */
+export async function GET(request: Request) {
+  const secret = process.env.CRON_SECRET;
+  if (secret && request.headers.get('authorization') !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const bad = configError();
+  if (bad) return bad;
+
+  try {
+    return respond(await runSync(process.env.MERCHANT_ADDRESS as string));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    return failed(error);
+  }
+}
+
+/**
+ * Manual entry point, behind the dashboard's "Sync now" button.
+ *
+ * Deliberately not behind CRON_SECRET: the dashboard is public and a browser
+ * cannot hold a secret. MANUAL_COOLDOWN_MS is what bounds the cost instead.
+ */
+export async function POST() {
+  const bad = configError();
+  if (bad) return bad;
+
+  try {
+    return respond(
+      await runSync(process.env.MERCHANT_ADDRESS as string, { cooldownMs: MANUAL_COOLDOWN_MS }),
+    );
+  } catch (error: unknown) {
+    return failed(error);
   }
 }
