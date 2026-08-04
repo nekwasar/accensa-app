@@ -32,6 +32,28 @@ export interface SyncStatus {
   detail: string;
 }
 
+/**
+ * Milliseconds left before a manual sync is allowed again, or 0 if it is.
+ *
+ * Guards a public, unauthenticated trigger, so it fails open only where failing
+ * closed would be worse: an absent or unreadable timestamp means the indexer's
+ * state is unknown, and refusing forever would leave no way to recover.
+ */
+export function cooldownRemaining(
+  updatedAt: string | null | undefined,
+  cooldownMs: number,
+  now: number = Date.now(),
+): number {
+  if (!updatedAt) return 0;
+  const updated = Date.parse(updatedAt);
+  if (Number.isNaN(updated)) return 0;
+  const since = now - updated;
+  // A timestamp in the future means clock skew, not a fresh sync; do not let it
+  // lock the button out for however long the skew happens to be.
+  if (since < 0) return 0;
+  return since >= cooldownMs ? 0 : cooldownMs - since;
+}
+
 /** Formats a duration as a single coarse unit: 4s, 12m, 3h, 2d. */
 export function formatAge(ms: number): string {
   if (ms < 0) return '0s';

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { describeSync, formatAge, LIVE_WITHIN_MS, LAGGING_WITHIN_MS } from './sync-status';
+import {
+  describeSync,
+  formatAge,
+  cooldownRemaining,
+  LIVE_WITHIN_MS,
+  LAGGING_WITHIN_MS,
+} from './sync-status';
 
 const NOW = Date.parse('2026-08-04T12:00:00Z');
 const ago = (ms: number) => ({ lastLedger: 3_741_196, updatedAt: new Date(NOW - ms).toISOString() });
@@ -73,5 +79,38 @@ describe('describeSync', () => {
     for (const hours of [2, 4, 12, 48]) {
       expect(describeSync(ago(hours * HOUR), NOW).level).not.toBe('live');
     }
+  });
+});
+
+describe('cooldownRemaining', () => {
+  const COOLDOWN = 60_000;
+  const at = (ms: number) => new Date(NOW - ms).toISOString();
+
+  it('blocks with the remaining time while inside the window', () => {
+    expect(cooldownRemaining(at(20_000), COOLDOWN, NOW)).toBe(40_000);
+  });
+
+  it('allows once the window has passed', () => {
+    expect(cooldownRemaining(at(COOLDOWN), COOLDOWN, NOW)).toBe(0);
+    expect(cooldownRemaining(at(COOLDOWN + 1), COOLDOWN, NOW)).toBe(0);
+  });
+
+  it('allows when the indexer has never run', () => {
+    // Refusing here would leave a cold database with no way to trigger a sync.
+    expect(cooldownRemaining(null, COOLDOWN, NOW)).toBe(0);
+    expect(cooldownRemaining(undefined, COOLDOWN, NOW)).toBe(0);
+  });
+
+  it('allows rather than locking out on an unreadable timestamp', () => {
+    expect(cooldownRemaining('not a date', COOLDOWN, NOW)).toBe(0);
+  });
+
+  it('allows when the stored time is in the future', () => {
+    // Clock skew, not a fresh sync. Blocking would last as long as the skew.
+    expect(cooldownRemaining(at(-5 * 60_000), COOLDOWN, NOW)).toBe(0);
+  });
+
+  it('never returns more than the cooldown itself', () => {
+    expect(cooldownRemaining(at(1), COOLDOWN, NOW)).toBeLessThanOrEqual(COOLDOWN);
   });
 });
