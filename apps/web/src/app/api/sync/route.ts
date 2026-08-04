@@ -3,7 +3,6 @@ import {
   decodeTransferEvent,
   transferTopicFilter,
   addressTopicFilter,
-  type RawEvent,
 } from '@/lib/stellar-events';
 import {
   withClient,
@@ -11,6 +10,12 @@ import {
   getLastSyncedLedger,
   setLastSyncedLedger,
 } from '@/lib/db';
+import {
+  drainEvents,
+  safeCursorLedger,
+  EVENTS_PAGE_LIMIT,
+  type EventPage,
+} from '@/lib/event-pager';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -35,6 +40,15 @@ const COLD_START_LOOKBACK = 2_000;
 
 /** Soroban RPC retains only a limited window of ledgers for getEvents. */
 const MAX_LOOKBACK = 100_000;
+
+/**
+ * Wall-clock budget for paging, in milliseconds.
+ *
+ * Held below `maxDuration` so that a backlog too large for one invocation stops
+ * cleanly and commits its progress, rather than being killed mid-range with
+ * nothing written. The next run resumes from the committed cursor.
+ */
+const PAGING_BUDGET_MS = 45_000;
 
 async function rpc<T>(method: string, params: unknown): Promise<T> {
   const res = await fetch(RPC_URL, {
@@ -86,28 +100,46 @@ export async function GET(request: Request) {
       );
 
       if (startLedger > latestLedger) {
-        return { latestLedger, startLedger, scanned: 0, decoded: 0, inserted: 0 };
+        return {
+          latestLedger,
+          startLedger,
+          syncedTo: startLedger - 1,
+          drained: true,
+          pages: 0,
+          scanned: 0,
+          decoded: 0,
+          inserted: 0,
+        };
       }
 
       // Filter server-side to transfers addressed to this merchant. The asset
       // topic is optional across protocol versions, so match both arities.
       const toTopic = addressTopicFilter(merchant);
       const transfer = transferTopicFilter();
-      const { events } = await rpc<{ events: RawEvent[] }>('getEvents', {
-        startLedger,
-        filters: [
-          {
-            type: 'contract',
-            contractIds: ASSET_CONTRACT_IDS,
-            topics: [
-              [transfer, '*', toTopic, '*'],
-              [transfer, '*', toTopic],
-            ],
-          },
-        ],
-        limit: 200,
-        xdrFormat: 'base64',
-      });
+      const filters = [
+        {
+          type: 'contract',
+          contractIds: ASSET_CONTRACT_IDS,
+          topics: [
+            [transfer, '*', toTopic, '*'],
+            [transfer, '*', toTopic],
+          ],
+        },
+      ];
+
+      // The limit belongs under `pagination`; sent at the top level the RPC
+      // ignores it and applies its own default.
+      const deadline = Date.now() + PAGING_BUDGET_MS;
+      const { events, drained, pages } = await drainEvents(
+        ({ startLedger: from, cursor: pageCursor }) =>
+          rpc<EventPage>('getEvents', {
+            ...(pageCursor ? {} : { startLedger: from }),
+            filters,
+            pagination: { limit: EVENTS_PAGE_LIMIT, ...(pageCursor ? { cursor: pageCursor } : {}) },
+            xdrFormat: 'base64',
+          }),
+        { startLedger, withinBudget: () => Date.now() < deadline },
+      );
 
       let inserted = 0;
       let decoded = 0;
@@ -153,10 +185,21 @@ export async function GET(request: Request) {
         inserted += res.rowCount ?? 0;
       }
 
-      // Only advance the cursor across the range actually examined.
-      await setLastSyncedLedger(client, Math.max(maxLedger, startLedger - 1));
+      // Only advance across ledgers known to be fully consumed. A partial read
+      // stops one ledger short so the remainder is picked up next run.
+      const syncedTo = safeCursorLedger(maxLedger, drained, startLedger);
+      await setLastSyncedLedger(client, syncedTo);
 
-      return { latestLedger, startLedger, scanned: events.length, decoded, inserted };
+      return {
+        latestLedger,
+        startLedger,
+        syncedTo,
+        drained,
+        pages,
+        scanned: events.length,
+        decoded,
+        inserted,
+      };
     });
 
     return NextResponse.json({ success: true, ...result });
