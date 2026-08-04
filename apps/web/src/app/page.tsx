@@ -50,8 +50,8 @@ export default function Landing() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-harabara font-bold tracking-wide leading-[1.05] text-slate-900 dark:text-white transition-colors duration-300">
-            Trustless payments, <br className="hidden md:block" />
-            <span className="text-slate-400 dark:text-slate-500 italic font-normal">
+            <span className="block">Trustless payments,</span>
+            <span className="block text-slate-400 dark:text-slate-500 italic font-normal">
               for AI agents.
             </span>
           </h1>
