@@ -56,19 +56,27 @@
   }
 }
 
-.scroll-reveal {
+/* The hidden state is scoped to html.js, which the inline script in layout.tsx
+   sets before first paint. Anything that stops that script from running -- JS
+   disabled, a blocking extension, a CSP rejection -- leaves the class off and
+   the sections render as plain static content instead of a blank page. The same
+   script clears the class if React has not mounted within 3s, which covers the
+   bundle failing to load after the inline script has already run. */
+.js .scroll-reveal {
   opacity: 0;
+  transform: translateY(28px);
 }
 
-.scroll-reveal.is-visible {
+.js .scroll-reveal.is-visible {
   animation: 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards scroll-reveal;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scroll-reveal {
+  .js .scroll-reveal {
     opacity: 1;
+    transform: none;
   }
-  .scroll-reveal.is-visible {
+  .js .scroll-reveal.is-visible {
     animation: none;
   }
 }

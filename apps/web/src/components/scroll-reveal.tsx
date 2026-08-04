@@ -14,6 +14,10 @@ export function ScrollReveal({ children, className = "", as: Component = "div" }
   const [isRevealed, setIsRevealed] = useState(false);
 
   useEffect(() => {
+    // Tells the failsafe timer in layout.tsx that the bundle made it. Until this
+    // is set, the timer assumes hydration failed and unhides everything.
+    document.documentElement.dataset.srReady = "1";
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -40,11 +44,13 @@ export function ScrollReveal({ children, className = "", as: Component = "div" }
   }, []);
 
   return (
-    <Component 
-      ref={ref as any} 
-      className={`transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:translate-y-0 ${
-        isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
-      } ${className}`}
+    // The hidden state lives in globals.css under `.js .scroll-reveal` rather
+    // than in Tailwind classes here, so that the server-rendered HTML is only
+    // hidden once the inline script has confirmed scripting works. Rendering
+    // `opacity-0` directly would leave the page blank whenever JS never runs.
+    <Component
+      ref={ref as any}
+      className={`scroll-reveal ${isRevealed ? "is-visible" : ""} ${className}`}
     >
       {children}
     </Component>
