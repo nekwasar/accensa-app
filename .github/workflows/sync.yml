@@ -47,3 +47,12 @@ jobs:
           if printf '%s' "$body" | grep -q '"success":false'; then
             echo "Sync reported failure"; exit 1
           fi
+
+          # A run can succeed having indexed only part of the backlog: paging
+          # stops against the function's time budget and commits what it has.
+          # That is correct behaviour, but it means the ledger is not caught up
+          # and the next run has more to do. Left unreported it looks identical
+          # to a clean sync, so surface it as a warning on the run.
+          if printf '%s' "$body" | grep -q '"drained":false'; then
+            echo "::warning::Incomplete sync: paging stopped against the time budget. The next run resumes from the committed cursor. If this repeats, the backlog is growing faster than the schedule drains it."
+          fi
