@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
+import { ArrowUpRight } from 'lucide-react';
 
 export function Nav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -128,9 +129,9 @@ export function Nav() {
             target="_blank"
             rel="noreferrer"
             onClick={() => setIsOpen(false)}
-            className="text-xl font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-2"
+            className="text-xl font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
           >
-            Documentation <span>↗</span>
+            Documentation <ArrowUpRight className="w-4 h-4 opacity-60" />
           </a>
 
           <a
@@ -138,9 +139,9 @@ export function Nav() {
             target="_blank"
             rel="noreferrer"
             onClick={() => setIsOpen(false)}
-            className="text-xl font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-2"
+            className="text-xl font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
           >
-            GitHub <span>↗</span>
+            GitHub <ArrowUpRight className="w-4 h-4 opacity-60" />
           </a>
         </div>
 
