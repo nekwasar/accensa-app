@@ -56,6 +56,15 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${bellavoir.variable} ${camiro.variable} ${harabara.variable} h-full antialiased`}
     >
+      <head>
+        {/* Runs before first paint so the reveal animation never flashes, and
+            gates it on scripting actually working. See globals.css. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var d=document.documentElement;d.classList.add('js');setTimeout(function(){if(d.dataset.srReady!=='1')d.classList.remove('js')},3000)})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#04090f] transition-colors duration-300 relative">
         {/* Global Ambient Background Blobs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
