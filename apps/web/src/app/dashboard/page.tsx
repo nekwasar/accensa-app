@@ -65,12 +65,12 @@ export default function Dashboard() {
   const totalAsset = assets.size === 1 ? [...assets][0] : '';
 
   return (
-    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-white dark:bg-[#04090f] bg-grid p-6 md:p-12 lg:p-20">
+    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid p-6 md:p-12 lg:p-20 pt-28 md:pt-32 lg:pt-32">
       <div className="max-w-7xl mx-auto space-y-12">
         
         {/* Header Grid */}
         <header className="grid lg:grid-cols-3 gap-8 items-end">
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 text-center lg:text-left">
             <div>
               <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-3">Dashboard</p>
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Settled Volume</h1>

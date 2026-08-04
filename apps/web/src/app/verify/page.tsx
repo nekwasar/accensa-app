@@ -55,9 +55,9 @@ export default function VerifyPage() {
   }
 
   return (
-    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-white dark:bg-[#04090f] bg-grid p-6 md:p-12 lg:p-20">
+    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid p-6 md:p-12 lg:p-20 pt-28 md:pt-32 lg:pt-32">
       <div className="max-w-4xl mx-auto space-y-12">
-        <header className="space-y-6 text-left md:text-center max-w-2xl mx-auto relative">
+        <header className="space-y-6 text-center max-w-2xl mx-auto relative">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
             Verify a Receipt
           </h1>
