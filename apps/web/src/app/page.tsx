@@ -39,7 +39,7 @@ export default function Landing() {
     <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid">
 
       {/* Hero Section */}
-      <section className="relative px-6 pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[85vh] relative">
+      <section className="relative px-6 pt-32 pb-12 md:pt-44 md:pb-16 overflow-hidden flex flex-col items-center justify-center min-h-[80vh]">
         <div className="absolute inset-0 bg-noise opacity-10 dark:opacity-20 pointer-events-none mix-blend-overlay z-0" />
         {/* Subtle radial glow matching emerald theme */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-transparent dark:bg-emerald-500/5 rounded-full blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300" />
@@ -50,8 +50,8 @@ export default function Landing() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-harabara font-bold tracking-wide leading-[1.05] text-slate-900 dark:text-white transition-colors duration-300">
-            Trustless payments, <br className="hidden md:block" />
-            <span className="text-slate-400 dark:text-slate-500 italic font-normal">
+            <span className="block">Trustless payments,</span>
+            <span className="block text-slate-400 dark:text-slate-500 italic font-normal">
               for AI agents.
             </span>
           </h1>
@@ -79,9 +79,9 @@ export default function Landing() {
       </section>
 
       {/* Bento Grid Architecture */}
-      <ScrollReveal as="section" className="px-6 py-24 md:py-32 relative">
+      <ScrollReveal as="section" className="px-6 py-12 md:py-16 relative">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-16 text-center">
+          <div className="mb-12 text-center">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Architecture</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">How it <span className="text-slate-400 dark:text-slate-500 italic font-normal">works.</span></h2>
           </div>
@@ -117,9 +117,9 @@ export default function Landing() {
       </ScrollReveal>
 
       {/* The Protocol Benefits */}
-      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
+      <ScrollReveal as="section" className="px-6 py-12 md:py-16 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-10 mb-16 text-center md:text-left">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-10 mb-12 text-center md:text-left">
             <div className="max-w-2xl">
               <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Protocol</p>
               <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Why <span className="text-slate-400 dark:text-slate-500 italic font-normal">Stellar?</span></h2>
@@ -137,9 +137,9 @@ export default function Landing() {
       </ScrollReveal>
 
       {/* Contracts Live */}
-      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
+      <ScrollReveal as="section" className="px-6 py-12 md:py-16 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Network</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Live <span className="text-slate-400 dark:text-slate-500 italic font-normal">Contracts.</span></h2>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed mt-6 text-lg font-medium max-w-2xl mx-auto transition-colors duration-300">
@@ -154,7 +154,7 @@ export default function Landing() {
       </ScrollReveal>
 
       {/* Integration Code block */}
-      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
+      <ScrollReveal as="section" className="px-6 py-12 md:py-16 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
           <div className="mb-10 text-center md:text-left">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Integration</p>
@@ -180,9 +180,9 @@ export default function Landing() {
       </ScrollReveal>
 
       {/* FAQ Section */}
-      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
+      <ScrollReveal as="section" className="px-6 py-12 md:py-16 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-16 text-center md:text-left">
+          <div className="mb-12 text-center md:text-left">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">FAQ</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Common <span className="text-slate-400 dark:text-slate-500 italic font-normal">Questions.</span></h2>
           </div>

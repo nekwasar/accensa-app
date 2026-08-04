@@ -16,7 +16,7 @@ export function FaqAccordion({ items }: { items: FaqData[] }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {items.map((item, index) => (
         <FaqItem
           key={index}
