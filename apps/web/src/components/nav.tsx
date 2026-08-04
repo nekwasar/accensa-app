@@ -38,7 +38,7 @@ export function Nav() {
             <a href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
           </div>
 
-          {/* Right Nav (Theme Toggle & Animated Mobile Menu Button) */}
+          {/* Right Nav (Theme Toggle & Connect Wallet) */}
           <div className="flex items-center gap-4">
             <Link 
               href="/coming-soon"
@@ -47,18 +47,24 @@ export function Nav() {
               Connect Wallet
             </Link>
             <ThemeToggle />
-            <button 
-              onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden w-10 h-10 rounded-full bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-              aria-label="Toggle Menu"
-              type="button"
-            >
-              <span className={`w-5 h-0.5 bg-slate-700 dark:bg-slate-200 rounded-full transition-all duration-300 ${isOpen ? 'rotate-45 translate-y-1' : ''}`} />
-              <span className={`w-5 h-0.5 bg-slate-700 dark:bg-slate-200 rounded-full transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-1' : ''}`} />
-            </button>
           </div>
         </div>
       </nav>
+
+      {/* Floating Thumb-Friendly Mobile Menu Button */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`md:hidden fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-full backdrop-blur-2xl border transition-all duration-300 active:scale-90 hover:scale-105 cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+          isOpen 
+            ? 'bg-emerald-500 text-white border-emerald-400 shadow-[0_8px_30px_rgba(16,185,129,0.3)]' 
+            : 'bg-white/80 dark:bg-[#04090f]/80 border-slate-200/80 dark:border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+        }`}
+        aria-label="Toggle Menu"
+        type="button"
+      >
+        <span className={`w-6 h-0.5 rounded-full transition-all duration-300 ${isOpen ? 'bg-white rotate-45 translate-y-1' : 'bg-slate-800 dark:bg-slate-100'}`} />
+        <span className={`w-6 h-0.5 rounded-full transition-all duration-300 ${isOpen ? 'bg-white -rotate-45 -translate-y-1' : 'bg-slate-800 dark:bg-slate-100'}`} />
+      </button>
 
       {/* Backdrop for Bottom Sheet Drawer */}
       <div 
@@ -71,7 +77,7 @@ export function Nav() {
 
       {/* Bottom Sheet Drawer with Mini-Bento Card Navigation */}
       <div 
-        className={`md:hidden fixed bottom-0 left-0 w-full z-50 bg-white/85 dark:bg-[#04090f]/90 backdrop-blur-3xl border-t border-slate-200/60 dark:border-white/10 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.6)] p-6 max-h-[85vh] overflow-y-auto transition-transform duration-500 ease-out ${
+        className={`md:hidden fixed bottom-0 left-0 w-full z-50 bg-white/85 dark:bg-[#04090f]/90 backdrop-blur-3xl border-t border-slate-200/60 dark:border-white/10 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.6)] p-6 pb-28 max-h-[85vh] overflow-y-auto transition-transform duration-500 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
