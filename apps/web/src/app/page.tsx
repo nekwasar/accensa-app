@@ -12,7 +12,7 @@ const explorer = (id: string) =>
 
 export default function Landing() {
   return (
-    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-white dark:bg-[#04090f] bg-grid">
+    <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid">
 
       {/* Hero Section */}
       <section className="relative px-6 pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[85vh] relative">
@@ -20,7 +20,7 @@ export default function Landing() {
         {/* Subtle radial glow matching emerald theme */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-transparent dark:bg-emerald-500/5 rounded-full blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300" />
         
-        <div className="max-w-5xl mx-auto text-left md:text-center space-y-8 relative z-10">
+        <div className="max-w-5xl mx-auto text-center space-y-8 relative z-10">
           <div className="inline-flex items-center mb-4 transition-colors duration-300">
             <span className="text-sm font-camiro font-bold tracking-[0.35em] text-emerald-600 dark:text-emerald-400 uppercase">— Live on Stellar Testnet —</span>
           </div>
@@ -37,7 +37,7 @@ export default function Landing() {
             custodian risk. Verifiable by anyone, anchored on Stellar.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-start md:justify-center pt-8">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Link
               href="/verify"
               className="px-8 py-4 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-slate-200/50 dark:border-white/20 text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider hover:bg-white/60 dark:hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none"
@@ -57,7 +57,7 @@ export default function Landing() {
       {/* Bento Grid Architecture */}
       <ScrollReveal as="section" className="px-6 py-24 md:py-32 relative">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-16 text-left md:text-center">
+          <div className="mb-16 text-center">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Architecture</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">How it <span className="text-slate-400 dark:text-slate-500 italic font-normal">works.</span></h2>
           </div>
@@ -95,7 +95,7 @@ export default function Landing() {
       {/* The Protocol Benefits */}
       <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-10 mb-16">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-10 mb-16 text-center md:text-left">
             <div className="max-w-2xl">
               <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Protocol</p>
               <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Why <span className="text-slate-400 dark:text-slate-500 italic font-normal">Stellar?</span></h2>
@@ -115,7 +115,7 @@ export default function Landing() {
       {/* Contracts Live */}
       <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
-          <div className="text-left md:text-center mb-16">
+          <div className="text-center mb-16">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Network</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Live <span className="text-slate-400 dark:text-slate-500 italic font-normal">Contracts.</span></h2>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed mt-6 text-lg font-medium max-w-2xl mx-auto transition-colors duration-300">
@@ -132,7 +132,7 @@ export default function Landing() {
       {/* Integration Code block */}
       <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-10">
+          <div className="mb-10 text-center md:text-left">
             <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Integration</p>
             <h2 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">SDK Drop-in</h2>
           </div>
