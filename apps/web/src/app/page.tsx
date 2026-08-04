@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollReveal } from "@/components/scroll-reveal";
+import { FaqAccordion } from "@/components/faq-accordion";
 import Link from 'next/link';
 import { RECEIPT_ANCHOR_ID } from '@/lib/receipt-anchor';
 
@@ -9,6 +10,29 @@ const REFUND_VAULT_ID =
 
 const explorer = (id: string) =>
   `https://stellar.expert/explorer/testnet/contract/${id}`;
+
+const faqItems = [
+  {
+    question: "What is Accensa?",
+    answer: "Accensa is a decentralized protocol that enables trustless, verifiable micro-payments for AI agents. It ensures that agents are only charged for what they use by anchoring receipts on the Stellar network."
+  },
+  {
+    question: "What exactly does Accensa solve?",
+    answer: "AI agents need to pay for resources, but current systems either require trusting a custodian or have transaction fees that exceed the micro-payments themselves. Accensa enables trustless, verifiable micro-payments using Stellar."
+  },
+  {
+    question: "Do I need to hold XLM to use this?",
+    answer: "No, payments settle natively in USDC. You only need a tiny amount of XLM to cover Stellar's sub-cent network fees, which can often be sponsored by the application."
+  },
+  {
+    question: "How are receipts verified?",
+    answer: "Receipts are batched and anchored to the Stellar network using Merkle trees. Anyone can independently verify that their receipt was included in the anchored root without trusting the merchant."
+  },
+  {
+    question: "Is this ready for mainnet?",
+    answer: "Currently, both contracts are deployed and initialized on the Stellar testnet for developers to integrate and test safely."
+  }
+];
 
 export default function Landing() {
   return (
@@ -152,6 +176,17 @@ export default function Landing() {
               </code>
             </pre>
           </div>
+        </div>
+      </ScrollReveal>
+
+      {/* FAQ Section */}
+      <ScrollReveal as="section" className="px-6 py-24 md:py-32 transition-colors duration-300">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-16 text-center md:text-left">
+            <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">FAQ</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Common <span className="text-slate-400 dark:text-slate-500 italic font-normal">Questions.</span></h2>
+          </div>
+          <FaqAccordion items={faqItems} />
         </div>
       </ScrollReveal>
 
