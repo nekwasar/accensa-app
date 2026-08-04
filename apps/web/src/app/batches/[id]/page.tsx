@@ -59,11 +59,6 @@ export default async function BatchPage({
 
   return (
     <main className="min-h-screen bg-grid text-slate-900 dark:text-white px-6 py-16 md:py-24 pt-28 md:pt-32 transition-colors duration-300">
-      <div className="fixed inset-0 overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-100/50 dark:bg-emerald-600/20 blur-[120px] transition-colors duration-300" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-100/50 dark:bg-teal-600/20 blur-[120px] transition-colors duration-300" />
-      </div>
-
       <div className="max-w-3xl mx-auto space-y-10 relative z-10">
         <header className="space-y-4">
           <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">

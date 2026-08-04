@@ -66,13 +66,6 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#04090f] transition-colors duration-300 relative">
-        {/* Global Ambient Background Blobs */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
-          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-300/40 dark:bg-emerald-600/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-teal-300/40 dark:bg-teal-600/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-          <div className="absolute top-[20%] left-[40%] w-[40%] h-[40%] rounded-full bg-sky-300/30 dark:bg-sky-600/15 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-          <div className="absolute bottom-[20%] left-[10%] w-[40%] h-[40%] rounded-full bg-indigo-300/20 dark:bg-indigo-600/15 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-        </div>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <Nav />
           {children}
