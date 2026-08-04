@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { FaqAccordion } from "@/components/faq-accordion";
 import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import { RECEIPT_ANCHOR_ID } from '@/lib/receipt-anchor';
 
 const REFUND_VAULT_ID =
@@ -250,7 +251,7 @@ function ContractCard({ name, id }: { name: string; id: string }) {
           <p className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
             {name}
           </p>
-          <span className="text-emerald-600 dark:text-emerald-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all font-bold">↗</span>
+          <ArrowUpRight className="w-5 h-5 text-emerald-600 dark:text-emerald-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
         </div>
         <div className="inline-block bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 rounded-lg px-3 py-2 font-mono text-xs text-slate-500 dark:text-slate-400 break-all transition-colors duration-300 group-hover:dark:bg-black/70">
           {id}

@@ -1,64 +1,162 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
-import { Menu, X } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
 export function Nav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
-    <nav className="px-6 py-4 md:py-6 fixed w-full top-0 z-50 bg-white/50 dark:bg-white/5 backdrop-blur-3xl border-b border-slate-200/50 dark:border-white/10 dark:shadow-[0_4px_30px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-colors duration-300">
-      <div className="max-w-6xl mx-auto flex items-center justify-between relative">
-        <Link href="/" className="text-xl md:text-2xl font-harabara font-bold tracking-wider text-slate-900 dark:text-white flex items-center gap-3 transition-colors duration-300 z-50">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/accensa-logo-no-bg.png" alt="Accensa Logo" className="w-6 h-6 md:w-8 md:h-8 rounded-lg shadow-sm invert hue-rotate-180 dark:invert-0 dark:hue-rotate-0" />
-          <span>Accensa<span className="text-emerald-600 dark:text-emerald-400 text-[1.3em] inline-block -ml-[0.05em] leading-none">.</span></span>
-        </Link>
-        
-        {/* Desktop Nav (Centered) */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-          {pathname !== "/" && <Link href="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</Link>}
-          {pathname !== "/verify" && <Link href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>}
-          {pathname !== "/dashboard" && <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>}
-          <a href="https://accensa-docs.vercel.app" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</a>
-          <a href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
+    <>
+      <nav className="px-6 py-4 md:py-6 fixed w-full top-0 z-50 bg-white/50 dark:bg-white/5 backdrop-blur-3xl border-b border-slate-200/50 dark:border-white/10 dark:shadow-[0_4px_30px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-colors duration-300">
+        <div className="max-w-6xl mx-auto flex items-center justify-between relative z-50">
+          <Link href="/" className="text-xl md:text-2xl font-harabara font-bold tracking-wider text-slate-900 dark:text-white flex items-center gap-3 transition-colors duration-300">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/accensa-logo-no-bg.png" alt="Accensa Logo" className="w-6 h-6 md:w-8 md:h-8 rounded-lg shadow-sm invert hue-rotate-180 dark:invert-0 dark:hue-rotate-0" />
+            <span>Accensa<span className="text-emerald-600 dark:text-emerald-400 text-[1.3em] inline-block -ml-[0.05em] leading-none">.</span></span>
+          </Link>
+          
+          {/* Desktop Nav (Centered) */}
+          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            {pathname !== "/" && <Link href="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</Link>}
+            {pathname !== "/verify" && <Link href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>}
+            {pathname !== "/dashboard" && <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>}
+            <a href="https://accensa-docs.vercel.app" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</a>
+            <a href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
+          </div>
+
+          {/* Right Nav (Theme Toggle & Connect Wallet) */}
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/coming-soon"
+              className="hidden md:inline-flex px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider hover:bg-emerald-500/20 dark:hover:bg-emerald-400/20 transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-slate-50 dark:hover:bg-white/5"
+            >
+              Connect Wallet
+            </Link>
+            <ThemeToggle />
+          </div>
+        </div>
+      </nav>
+
+      {/* Floating Thumb-Friendly Mobile Menu Button */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`md:hidden fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-full backdrop-blur-2xl border transition-all duration-300 active:scale-90 hover:scale-105 cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+          isOpen 
+            ? 'bg-emerald-500 text-white border-emerald-400 shadow-[0_8px_30px_rgba(16,185,129,0.3)]' 
+            : 'bg-white/80 dark:bg-[#04090f]/80 border-slate-200/80 dark:border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+        }`}
+        aria-label="Toggle Menu"
+        type="button"
+      >
+        <span className={`w-6 h-0.5 rounded-full transition-all duration-300 ${isOpen ? 'bg-white rotate-45 translate-y-1' : 'bg-slate-800 dark:bg-slate-100'}`} />
+        <span className={`w-6 h-0.5 rounded-full transition-all duration-300 ${isOpen ? 'bg-white -rotate-45 -translate-y-1' : 'bg-slate-800 dark:bg-slate-100'}`} />
+      </button>
+
+      {/* Full-Screen Frosted Glass Overlay (Minimalist Editorial Design) */}
+      <div 
+        className={`md:hidden fixed inset-0 z-50 bg-white/95 dark:bg-[#04090f]/95 backdrop-blur-3xl flex flex-col justify-between p-8 pb-28 transition-all duration-500 ease-out ${
+          isOpen 
+            ? 'opacity-100 scale-100 pointer-events-auto' 
+            : 'opacity-0 scale-95 pointer-events-none'
+        }`}
+      >
+        {/* Minimal Top Header */}
+        <div className="flex items-center justify-between pt-2">
+          <Link 
+            href="/" 
+            onClick={() => setIsOpen(false)}
+            className="text-2xl font-harabara font-bold tracking-wider text-slate-900 dark:text-white flex items-center gap-3"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/accensa-logo-no-bg.png" alt="Accensa Logo" className="w-7 h-7 rounded-lg shadow-sm invert hue-rotate-180 dark:invert-0 dark:hue-rotate-0" />
+            <span>Accensa<span className="text-emerald-600 dark:text-emerald-400 text-[1.3em] inline-block -ml-[0.05em] leading-none">.</span></span>
+          </Link>
         </div>
 
-        {/* Right Nav (Theme Toggle & Mobile Menu) */}
-        <div className="flex items-center gap-4 z-50">
-          <Link 
+        {/* Minimalist Editorial Navigation Links */}
+        <div className="my-auto flex flex-col gap-7">
+          <Link
+            href="/"
+            onClick={() => setIsOpen(false)}
+            className={`text-4xl font-bold tracking-tight transition-colors flex items-center gap-3.5 ${
+              pathname === '/' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white hover:text-emerald-500'
+            }`}
+          >
+            Home
+            {pathname === '/' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+          </Link>
+
+          <Link
+            href="/verify"
+            onClick={() => setIsOpen(false)}
+            className={`text-4xl font-bold tracking-tight transition-colors flex items-center gap-3.5 ${
+              pathname === '/verify' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white hover:text-emerald-500'
+            }`}
+          >
+            Verify
+            {pathname === '/verify' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+          </Link>
+
+          <Link
+            href="/dashboard"
+            onClick={() => setIsOpen(false)}
+            className={`text-4xl font-bold tracking-tight transition-colors flex items-center gap-3.5 ${
+              pathname === '/dashboard' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white hover:text-emerald-500'
+            }`}
+          >
+            Dashboard
+            {pathname === '/dashboard' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+          </Link>
+
+          <div className="h-px w-12 bg-slate-200 dark:bg-white/10 my-1" />
+
+          <a
+            href="https://accensa-docs.vercel.app"
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setIsOpen(false)}
+            className="text-xl font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
+          >
+            Documentation <ArrowUpRight className="w-4 h-4 opacity-60" />
+          </a>
+
+          <a
+            href="https://github.com/accensa"
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setIsOpen(false)}
+            className="text-xl font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
+          >
+            GitHub <ArrowUpRight className="w-4 h-4 opacity-60" />
+          </a>
+        </div>
+
+        {/* Minimal Bottom CTA Button */}
+        <div>
+          <Link
             href="/coming-soon"
-            className="hidden md:inline-flex px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider hover:bg-emerald-500/20 dark:hover:bg-emerald-400/20 transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-slate-50 dark:hover:bg-white/5"
+            onClick={() => setIsOpen(false)}
+            className="w-full py-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:opacity-95 transition-opacity active:scale-[0.99]"
           >
             Connect Wallet
           </Link>
-          <ThemeToggle />
-          <button 
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-slate-500 dark:text-slate-400 p-2 hover:bg-slate-100 dark:hover:bg-white/5 active:bg-slate-100 dark:active:bg-white/5 rounded-lg transition-colors cursor-pointer"
-            aria-label="Toggle Menu"
-            type="button"
-          >
-            {isOpen ? <X className="w-6 h-6 pointer-events-none" /> : <Menu className="w-6 h-6 pointer-events-none" />}
-          </button>
         </div>
       </div>
-
-      {/* Mobile Nav Menu */}
-      <div className={`md:hidden absolute top-full left-0 w-full bg-white/60 dark:bg-[#04090f]/60 backdrop-blur-3xl shadow-[0_20px_40px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-96 py-6 border-b' : 'max-h-0 py-0 border-transparent border-none'}`}>
-        <div className="px-6 flex flex-col gap-6 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-          {pathname !== "/" && <Link onClick={() => setIsOpen(false)} href="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Home</Link>}
-          {pathname !== "/verify" && <Link onClick={() => setIsOpen(false)} href="/verify" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Verify</Link>}
-          {pathname !== "/dashboard" && <Link onClick={() => setIsOpen(false)} href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Dashboard</Link>}
-          <a onClick={() => setIsOpen(false)} href="https://accensa-docs.vercel.app" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">Docs</a>
-          <a onClick={() => setIsOpen(false)} href="https://github.com/accensa" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">GitHub</a>
-          <Link onClick={() => setIsOpen(false)} href="/coming-soon" className="px-4 py-3 rounded-lg bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-slate-200/50 dark:border-white/20 text-slate-900 dark:text-white hover:bg-white/60 dark:hover:bg-white/20 transition-all block">Connect Wallet</Link>
-        </div>
-      </div>
-    </nav>
+    </>
   );
 }
+
