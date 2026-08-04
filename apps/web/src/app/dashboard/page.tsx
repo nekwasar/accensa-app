@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
 import { describeSync, type SyncState } from '@/lib/sync-status';
+import { ArrowUpRight } from 'lucide-react';
 
 interface Payment {
   tx_hash: string;
@@ -269,9 +270,9 @@ export default function Dashboard() {
                   href={explorerUrl(selected.tx_hash)}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-center w-full py-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 shadow-sm dark:shadow-none transition-all font-bold text-sm tracking-wide uppercase"
+                  className="flex items-center justify-center gap-1.5 w-full py-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 shadow-sm dark:shadow-none transition-all font-bold text-sm tracking-wide uppercase"
                 >
-                  View on Explorer ↗
+                  View on Explorer <ArrowUpRight className="w-4 h-4 opacity-70" />
                 </a>
               </div>
             </div>

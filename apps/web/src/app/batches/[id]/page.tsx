@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getBatch, RECEIPT_ANCHOR_ID, type BatchRecord } from '@/lib/receipt-anchor';
+import { ArrowUpRight } from 'lucide-react';
 
 /**
  * A batch is immutable once anchored, so this can be cached hard. Revalidating
@@ -99,9 +100,9 @@ export default async function BatchPage({
             href={`https://stellar.expert/explorer/testnet/contract/${RECEIPT_ANCHOR_ID}`}
             target="_blank"
             rel="noreferrer"
-            className="px-6 py-3 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-transparent text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm dark:shadow-none"
+            className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-transparent text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm dark:shadow-none"
           >
-            View contract on Stellar Expert ↗
+            View contract on Stellar Expert <ArrowUpRight className="w-4 h-4 opacity-70" />
           </a>
         </section>
 
