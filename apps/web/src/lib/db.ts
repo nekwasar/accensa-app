@@ -159,6 +159,26 @@ export async function getLastSyncedLedger(client: Client): Promise<number | null
   return res.rows.length ? Number(res.rows[0].last_ledger) : null;
 }
 
+/**
+ * The indexer's own record of when it last committed progress.
+ *
+ * Read by /api/payments so the dashboard can say how current its data is,
+ * rather than implying the freshness of its own poll.
+ */
+export async function getSyncState(
+  client: Client,
+): Promise<{ lastLedger: number; updatedAt: string } | null> {
+  const res = await client.query<{ last_ledger: string; updated_at: Date | string }>(
+    `SELECT last_ledger, updated_at FROM sync_state WHERE id = 1`,
+  );
+  if (!res.rows.length) return null;
+  const { last_ledger, updated_at } = res.rows[0];
+  return {
+    lastLedger: Number(last_ledger),
+    updatedAt: updated_at instanceof Date ? updated_at.toISOString() : String(updated_at),
+  };
+}
+
 export async function setLastSyncedLedger(client: Client, ledger: number): Promise<void> {
   await client.query(
     `INSERT INTO sync_state (id, last_ledger, updated_at) VALUES (1, $1, now())
