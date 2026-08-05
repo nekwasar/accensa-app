@@ -2,8 +2,20 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
-  '@swc/core': set this to true or false
-  core-js: set this to true or false
-  esbuild: set this to true or false
+  '@swc/core': true
+  core-js: true
+  esbuild: true
   sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - esbuild@0.24.3
+  - serialize-javascript@7.0.3 || 7.0.5
+  - vite@6.4.2 || 6.4.3
+  - postcss@8.5.10 || 8.5.12 || 8.5.18 || 8.5.23
+  - uuid@11.1.1
+  - vitest@3.2.6
+  - axios@1.18.0
+  - fast-uri@3.1.4 || 3.1.5
+  - sharp@0.35.0
+  - next@16.2.11
+  - brace-expansion@1.1.17 || 1.1.18 || 5.0.8 || 5.0.9
