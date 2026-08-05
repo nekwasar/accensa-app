@@ -45,7 +45,7 @@ export default function Landing() {
  {/* Subtle radial glow matching emerald theme */}
  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-transparent dark:bg-emerald-500/5 blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300"/>
  
- <div className="max-w-5xl mx-auto text-center space-y-8 relative z-10">
+ <div className="w-full mx-auto text-center space-y-8 relative z-10">
  <div className="inline-flex items-center mb-4 transition-colors duration-300">
  <span className="text-sm font-camiro font-bold tracking-[0.35em] text-emerald-600 dark:text-emerald-400 uppercase">— Live on Stellar Testnet —</span>
  </div>
@@ -81,7 +81,7 @@ export default function Landing() {
 
  {/* Bento Grid Architecture */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 relative">
- <div className="max-w-6xl mx-auto">
+ <div className="w-full mx-auto">
  <div className="mb-12 text-center">
  <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Architecture</p>
  <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">How it <span className="text-slate-400 dark:text-slate-500 italic font-normal">works.</span></h2>
@@ -119,7 +119,7 @@ export default function Landing() {
 
  {/* The Protocol Benefits */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="max-w-6xl mx-auto">
+ <div className="w-full mx-auto">
  <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-10 mb-12 text-center md:text-left">
  <div className="max-w-2xl">
  <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Protocol</p>
@@ -139,7 +139,7 @@ export default function Landing() {
 
  {/* Contracts Live */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="max-w-4xl mx-auto">
+ <div className="w-full mx-auto">
  <div className="text-center mb-12">
  <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Network</p>
  <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Live <span className="text-slate-400 dark:text-slate-500 italic font-normal">Contracts.</span></h2>
@@ -156,7 +156,7 @@ export default function Landing() {
 
  {/* Integration Code block */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="max-w-4xl mx-auto">
+ <div className="w-full mx-auto">
  <div className="mb-10 text-center md:text-left">
  <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Integration</p>
  <h2 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">SDK Drop-in</h2>
@@ -182,7 +182,7 @@ export default function Landing() {
 
  {/* FAQ Section */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="max-w-4xl mx-auto">
+ <div className="w-full mx-auto">
  <div className="mb-12 text-center md:text-left">
  <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">FAQ</p>
  <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Common <span className="text-slate-400 dark:text-slate-500 italic font-normal">Questions.</span></h2>
@@ -192,7 +192,7 @@ export default function Landing() {
  </ScrollReveal>
 
  <footer className="px-6 py-12 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#04090f] transition-colors duration-300">
- <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-center gap-8 md:gap-6 text-center md:text-left">
+ <div className="w-full mx-auto flex flex-col md:flex-row justify-between items-center md:items-center gap-8 md:gap-6 text-center md:text-left">
  <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
  Accensa
  </span>
