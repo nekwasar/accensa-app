@@ -136,7 +136,7 @@ export default function VerifyPage() {
  </div>
 
  {state.status === 'error' && (
- <div className="border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-6 flex gap-4 items-start shadow-sm dark:shadow-none transition-colors duration-300">
+ <div className="border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-[#0a111a] p-6 flex gap-4 items-start shadow-sm dark:shadow-none transition-colors duration-300">
  <div className="w-8 h-8 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">✕</div>
  <div>
  <p className="text-red-700 dark:text-red-400 font-bold transition-colors duration-300">Verification Error</p>
@@ -156,12 +156,12 @@ function Result({ result }: { result: VerifyResponse }) {
 
  return (
  <div className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
- <div className={` border p-6 md:p-12 transition-colors duration-300 ${verified ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/5 shadow-lg shadow-emerald-600/10 dark:shadow-[0_0_50px_rgba(16,185,129,0.1)]' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 shadow-lg dark:shadow-none'}`}>
+ <div className={` border p-6 md:p-12 transition-colors duration-300 ${verified ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-[#0a111a] shadow-lg shadow-emerald-600/10 dark:shadow-[0_0_50px_rgba(16,185,129,0.1)]' : 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-[#0a111a] shadow-lg shadow-red-600/10 dark:shadow-[0_0_50px_rgba(239,68,68,0.1)]'}`}>
  <div className="flex items-center gap-4 mb-4">
- <div className={`w-12 h-12 flex items-center justify-center text-xl font-bold transition-colors duration-300 ${verified ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white'}`}>
+ <div className={`w-12 h-12 flex items-center justify-center text-xl font-bold transition-colors duration-300 ${verified ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black' : 'bg-red-600 dark:bg-red-500 text-white dark:text-black'}`}>
  {verified ? '✓' : '✕'}
  </div>
- <p className={`text-3xl font-black tracking-tight transition-colors duration-300 ${verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+ <p className={`text-3xl font-black tracking-tight transition-colors duration-300 ${verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
  {verified ? 'Proof Verified' : 'Proof Rejected'}
  </p>
  </div>
@@ -176,7 +176,7 @@ function Result({ result }: { result: VerifyResponse }) {
  </div>
 
  {batch && (
- <div className="border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-6 md:p-8 space-y-6 shadow-md dark:shadow-none transition-colors duration-300">
+ <div className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a111a] p-6 md:p-8 space-y-6 shadow-md dark:shadow-none transition-colors duration-300">
  <p className="uppercase tracking-widest font-bold text-xs text-slate-400 dark:text-slate-500 mb-2 transition-colors duration-300">Anchored Batch Metadata</p>
  <div className="grid sm:grid-cols-2 gap-8">
  <Detail label="Batch ID"value={`#${batch.id}`} />
@@ -201,9 +201,10 @@ function CheckCard({ title, source, result }: { title: string; source: string; r
  <p className="text-slate-900 dark:text-white font-bold text-lg transition-colors duration-300">{title}</p>
  <p className="text-slate-500 text-xs mt-1 transition-colors duration-300">{source}</p>
  </div>
- <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${result.ok ? 'bg-emerald-400 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}>
- {result.ok ? 'Valid' : 'Failed'}
- </span>
+ <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-colors duration-300 ${result.ok ? 'bg-emerald-50 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-red-50 dark:bg-red-500/5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-500/20'}`}>
+ {result.ok ? <span className="w-1.5 h-1.5 bg-emerald-500 dark:bg-emerald-400 animate-pulse" /> : <span className="w-1.5 h-1.5 bg-red-500 dark:bg-red-400" />}
+ <span>{result.ok ? 'Valid' : 'Failed'}</span>
+ </div>
  </div>
  {result.error && <p className="text-xs text-red-600 dark:text-red-400/80 font-mono mt-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-transparent p-3 dark:p-2 dark: transition-colors duration-300">{result.error}</p>}
  </div>
