@@ -17,49 +17,49 @@ export const dynamic = 'force-dynamic';
  * Ledger-owned fields (ledger, amount, asset, ts) are never written here.
  */
 export async function POST(request: Request) {
-  const expected = process.env.HOOK_API_KEY;
-  if (!expected) {
-    return NextResponse.json(
-      { error: 'Settlement reporting is not configured' },
-      { status: 503 },
-    );
-  }
+ const expected = process.env.HOOK_API_KEY;
+ if (!expected) {
+ return NextResponse.json(
+ { error: 'Settlement reporting is not configured' },
+ { status: 503 },
+ );
+ }
 
-  if (!bearerMatches(request.headers.get('authorization'), expected)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+ if (!bearerMatches(request.headers.get('authorization'), expected)) {
+ return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+ }
 
-  if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
-  }
+ if (!process.env.DATABASE_URL) {
+ return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
+ }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Request body must be JSON' }, { status: 400 });
-  }
+ let body: unknown;
+ try {
+ body = await request.json();
+ } catch {
+ return NextResponse.json({ error: 'Request body must be JSON' }, { status: 400 });
+ }
 
-  const parsed = parseSettlementReport(body);
-  if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: 400 });
-  }
+ const parsed = parseSettlementReport(body);
+ if (!parsed.ok) {
+ return NextResponse.json({ error: parsed.error }, { status: 400 });
+ }
 
-  try {
-    const { matchedExistingPayment } = await withClient(async (client) => {
-      await ensureSchema(client);
-      return recordSettlement(client, parsed.report);
-    });
+ try {
+ const { matchedExistingPayment } = await withClient(async (client) => {
+ await ensureSchema(client);
+ return recordSettlement(client, parsed.report);
+ });
 
-    return NextResponse.json({
-      recorded: true,
-      txHash: parsed.report.txHash,
-      // False means the transfer has not been indexed yet and the attribution
-      // was staged. The sync job completes the row when it reaches that ledger.
-      matchedExistingPayment,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: `Could not record settlement: ${message}` }, { status: 500 });
-  }
+ return NextResponse.json({
+ recorded: true,
+ txHash: parsed.report.txHash,
+ // False means the transfer has not been indexed yet and the attribution
+ // was staged. The sync job completes the row when it reaches that ledger.
+ matchedExistingPayment,
+ });
+ } catch (error) {
+ const message = error instanceof Error ? error.message : 'Unknown error';
+ return NextResponse.json({ error: `Could not record settlement: ${message}` }, { status: 500 });
+ }
 }

@@ -5,21 +5,21 @@ export const EVENTS_PAGE_LIMIT = 200;
 
 /** One page of `getEvents` output. */
 export interface EventPage {
-  events: RawEvent[];
-  /** Opaque cursor for the next page. Absent once the range is exhausted. */
-  cursor?: string;
+ events: RawEvent[];
+ /** Opaque cursor for the next page. Absent once the range is exhausted. */
+ cursor?: string;
 }
 
 export interface DrainResult {
-  events: RawEvent[];
-  /**
-   * True when the range was consumed to the end. False when paging stopped
-   * early against the deadline, which means the final ledger seen may be only
-   * partially consumed and the sync cursor must not advance past it.
-   */
-  drained: boolean;
-  /** Number of RPC round trips made. */
-  pages: number;
+ events: RawEvent[];
+ /**
+ * True when the range was consumed to the end. False when paging stopped
+ * early against the deadline, which means the final ledger seen may be only
+ * partially consumed and the sync cursor must not advance past it.
+ */
+ drained: boolean;
+ /** Number of RPC round trips made. */
+ pages: number;
 }
 
 /**
@@ -35,31 +35,31 @@ export interface DrainResult {
  * the caller is told, via `drained: false`, that it is holding a partial result.
  */
 export async function drainEvents(
-  fetchPage: (params: { startLedger?: number; cursor?: string }) => Promise<EventPage>,
-  opts: { startLedger: number; withinBudget?: () => boolean },
+ fetchPage: (params: { startLedger?: number; cursor?: string }) => Promise<EventPage>,
+ opts: { startLedger: number; withinBudget?: () => boolean },
 ): Promise<DrainResult> {
-  const { startLedger, withinBudget } = opts;
-  const events: RawEvent[] = [];
-  let cursor: string | undefined;
-  let pages = 0;
+ const { startLedger, withinBudget } = opts;
+ const events: RawEvent[] = [];
+ let cursor: string | undefined;
+ let pages = 0;
 
-  for (;;) {
-    // A cursor supersedes startLedger; sending both is rejected by the RPC.
-    const page = await fetchPage(cursor ? { cursor } : { startLedger });
-    pages++;
-    events.push(...page.events);
+ for (;;) {
+ // A cursor supersedes startLedger; sending both is rejected by the RPC.
+ const page = await fetchPage(cursor ? { cursor } : { startLedger });
+ pages++;
+ events.push(...page.events);
 
-    // A short page means the range is exhausted, whether or not a cursor came
-    // back with it. Trusting the cursor alone would loop forever against an
-    // RPC that always returns one.
-    if (page.events.length < EVENTS_PAGE_LIMIT) return { events, drained: true, pages };
+ // A short page means the range is exhausted, whether or not a cursor came
+ // back with it. Trusting the cursor alone would loop forever against an
+ // RPC that always returns one.
+ if (page.events.length < EVENTS_PAGE_LIMIT) return { events, drained: true, pages };
 
-    const next = page.cursor ?? page.events[page.events.length - 1]?.id;
-    if (!next) return { events, drained: true, pages };
-    cursor = next;
+ const next = page.cursor ?? page.events[page.events.length - 1]?.id;
+ if (!next) return { events, drained: true, pages };
+ cursor = next;
 
-    if (withinBudget && !withinBudget()) return { events, drained: false, pages };
-  }
+ if (withinBudget && !withinBudget()) return { events, drained: false, pages };
+ }
 }
 
 /**
@@ -75,11 +75,11 @@ export async function drainEvents(
  * never a value below it.
  */
 export function safeCursorLedger(
-  maxLedgerSeen: number,
-  drained: boolean,
-  startLedger: number,
+ maxLedgerSeen: number,
+ drained: boolean,
+ startLedger: number,
 ): number {
-  const floor = startLedger - 1;
-  if (maxLedgerSeen < startLedger) return floor;
-  return Math.max(floor, drained ? maxLedgerSeen : maxLedgerSeen - 1);
+ const floor = startLedger - 1;
+ if (maxLedgerSeen < startLedger) return floor;
+ return Math.max(floor, drained ? maxLedgerSeen : maxLedgerSeen - 1);
 }
