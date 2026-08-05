@@ -226,9 +226,9 @@ function BentoCard({ title, children, className = '' }: { title: string; childre
 function FeatureCard({ title, desc }: { title: string; desc: string }) {
  return (
  <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/60 dark:border-white/5 p-8 hover:bg-white/70 dark:hover:bg-white/10 hover:shadow-2xl dark:hover:shadow-sm dark:shadow-none">
- <div className="w-10 h-10 bg-emerald-400 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm dark:shadow-none">
- <svg className="w-5 h-5"fill="none"viewBox="0 0 24 24"stroke="currentColor">
- <path strokeLinecap="round"strokeLinejoin="round"strokeWidth={2} d="M5 13l4 4L19 7"/>
+ <div className="text-emerald-600 dark:text-emerald-400 mb-6 group-hover:scale-110 transition-transform origin-left">
+ <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7"/>
  </svg>
  </div>
  <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white mb-3 transition-colors duration-300">{title}</h3>
