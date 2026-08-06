@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { EventEmitter } from 'node:events';
+import { generateKeyPairSync } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import {
   SETTLEMENT_HEADER,
@@ -21,9 +22,23 @@ const settlement: Settlement = {
   network: 'stellar:testnet',
 };
 
+/**
+ * A real Ed25519 seed. `reportSettlement` signs the body with node:crypto, so
+ * an arbitrary hex string would throw inside the signer and every test would
+ * fail for a reason unrelated to what it is checking.
+ */
+const PRIVATE_KEY_HEX = createPrivateKey().toString('hex');
+
+function createPrivateKey(): Buffer {
+  const { privateKey } = generateKeyPairSync('ed25519');
+  const der = privateKey.export({ format: 'der', type: 'pkcs8' }) as Buffer;
+  // Strip the 16-byte PKCS#8 header the SDK re-adds when it rebuilds the key.
+  return der.subarray(16);
+}
+
 const opts = (over: Partial<Parameters<typeof reportSettlement>[1]> = {}) => ({
   indexerUrl: 'https://accensa.test',
-  apiKey: 'secret',
+  privateKeyHex: PRIVATE_KEY_HEX,
   onError: vi.fn(),
   ...over,
 });
@@ -94,7 +109,7 @@ describe('toSettleHookPayload', () => {
 });
 
 describe('reportSettlement', () => {
-  it('posts the payload to the settle endpoint with bearer auth', async () => {
+  it('posts the signed payload to the settle endpoint', async () => {
     const fetchImpl = okFetch();
     const result = await reportSettlement(settlement, opts({ fetchImpl }));
 
@@ -102,7 +117,11 @@ describe('reportSettlement', () => {
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(`https://accensa.test${SETTLE_ENDPOINT}`);
     expect(init.method).toBe('POST');
-    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer secret');
+    // The report is authenticated by an Ed25519 signature over the exact body
+    // bytes, so the header must be present and hex — the server rejects with
+    // 401 otherwise.
+    const signature = (init.headers as Record<string, string>)['X-Signature'];
+    expect(signature).toMatch(/^[0-9a-f]+$/);
     expect(JSON.parse(init.body as string)).toEqual(toSettleHookPayload(settlement));
   });
 
@@ -152,7 +171,7 @@ describe('reportSettlement', () => {
     await expect(
       reportSettlement(settlement, {
         indexerUrl: 'https://accensa.test',
-        apiKey: 'secret',
+        privateKeyHex: PRIVATE_KEY_HEX,
         fetchImpl,
       }),
     ).resolves.toBe(false);

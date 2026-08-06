@@ -26,14 +26,14 @@ pnpm dev
 
 | Variable | Required | What it is |
 |---|---|---|
-| `HOOK_API_KEY` | **yes** | Shared secret. Must match `HOOK_API_KEY` on your Accensa deployment, or reports are rejected with 401. |
+| `ACCENSA_PRIVATE_KEY_HEX` | **yes** | Ed25519 private key, hex. Reports are signed with it; your Accensa deployment verifies against the matching public key and rejects anything else with 401. |
 | `MERCHANT_ADDRESS` | **yes** | Stellar address that receives payment (`G...`). |
 | `ACCENSA_URL` | no | Your Accensa deployment. Defaults to `http://localhost:3000`. |
 | `TOKEN_ADDRESS` | no | Asset contract to price in. Defaults to native XLM's testnet SAC. Must match an asset your Accensa indexer watches, or the settled transfer is never picked up. |
 | `ADMIN_TOKEN` | no | Bearer token for the example's own `/admin/stats` route. Unrelated to x402. |
 | `PORT` | no | Defaults to `3001`. |
 
-`HOOK_API_KEY` and `MERCHANT_ADDRESS` are checked at boot, not at settlement
+`ACCENSA_PRIVATE_KEY_HEX` and `MERCHANT_ADDRESS` are checked at boot, not at settlement
 time. A server that takes payments while silently dropping every attribution is
 worse than one that refuses to start — the failure would otherwise surface days
 later as an empty routes column.

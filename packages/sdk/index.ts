@@ -56,55 +56,13 @@ export function withX402(handler: Function, options: { amount: number, asset: st
 /** Path the Accensa app exposes for merchant-reported route attribution. */
 export const SETTLE_ENDPOINT = '/api/hook/settle';
 
-/**
- * How long a report may take before it is abandoned, in milliseconds.
- *
- * Reporting happens after the response has already been sent, so a hung socket
- * costs the merchant nothing visible — but it does pin a request object and an
- * open connection for as long as the OS lets it, which under load is how a
- * seller's process runs out of sockets. Five seconds is far longer than the
- * endpoint needs and far shorter than the default TCP timeout.
- */
-export const DEFAULT_TIMEOUT_MS = 5_000;
-
-/**
- * The body POSTed to `/api/hook/settle`.
- *
- * Snake-cased because it is a wire format, not an in-process value; this is the
- * shape `parseSettlementReport` validates on the Accensa side. Declaring it
- * here means a change to either end that the other does not follow is a
- * compile error in this package rather than a 400 discovered in production.
- */
-export interface SettleHookPayload {
-  tx_hash: string;
-  route: string;
-  method: string;
-  request_id?: string;
-  payer?: string;
-  amount?: string;
-  network?: string;
-}
-
-/**
- * The request surface the middleware reads.
- *
- * Express's `Request` satisfies it structurally, and so does anything shaped
- * like it — which is why {@link attachAccensaHook} is generic over the request
- * rather than pinned to Express. A caller with a typed `Request<Params, ...>`
- * or a framework of its own keeps that type through to its own callbacks.
- */
-export interface AttributableRequest {
-  method?: string;
-  path?: string;
-  route?: { path?: string };
-  headers?: Record<string, string | string[] | undefined>;
-}
-
 export interface AccensaHookOptions {
   /** Base URL of your Accensa deployment, e.g. https://accensa-dashboard.vercel.app */
   indexerUrl: string;
   /** Ed25519 private key in hex format to sign the settlement report. */
   privateKeyHex: string;
+  /** Abandon a report after this many milliseconds. Defaults to 5000. */
+  timeoutMs?: number;
   /** Injected in tests. Defaults to global fetch. */
   fetchImpl?: typeof fetch;
   /**
@@ -114,6 +72,34 @@ export interface AccensaHookOptions {
    * than swallowed. Defaults to `console.error`.
    */
   onError?: (error: unknown, payload?: SettleHookPayload) => void;
+}
+
+/**
+ * How long a report may take before it is abandoned, in milliseconds.
+ *
+ * Reporting happens after the response has already been sent, so a hung socket
+ * costs the merchant nothing visible — but it does pin a request object and an
+ * open connection for as long as the OS allows, which under load is how a
+ * seller's process runs out of sockets. Five seconds is far longer than the
+ * endpoint needs and far shorter than the default TCP timeout.
+ */
+export const DEFAULT_TIMEOUT_MS = 5_000;
+
+/**
+ * The body POSTed to `/api/hook/settle`, and the exact bytes that get signed.
+ *
+ * Snake-cased because it is a wire format, not an in-process value. Declaring
+ * it here means a change to either end that the other does not follow is a
+ * compile error in this package rather than a 401 or 400 found in production.
+ */
+export interface SettleHookPayload {
+  tx_hash: string;
+  route: string;
+  method: string;
+  request_id?: string;
+  payer?: string;
+  amount?: string;
+  network?: string;
 }
 
 /** Builds the wire body for one settlement. */
@@ -130,39 +116,47 @@ export function toSettleHookPayload(settlement: Settlement): SettleHookPayload {
 }
 
 /**
+ * The request surface the middleware reads.
+ *
+ * Express's `Request` satisfies it structurally, and so does anything shaped
+ * like it — which is why {@link attachAccensaHook} is generic over the request
+ * rather than pinned to Express. A caller with a typed `Request<Params, ...>`
+ * keeps that type through to its own handlers.
+ */
+export interface AttributableRequest {
+  method?: string;
+  path?: string;
+  route?: { path?: string };
+  headers?: Record<string, string | string[] | undefined>;
+}
+
+/**
  * Reports one settlement to Accensa.
  *
  * Best-effort: resolves false rather than throwing, so a caller in a request
- * path can ignore the result safely. Nothing here can reject — the middleware
- * calls it without awaiting, and a rejection from an un-awaited promise takes
- * the seller's whole process down under Node's default `unhandledRejection`
- * behaviour. A dropped network must never do that.
+ * path can ignore the result safely.
  */
 export async function reportSettlement(
   settlement: Settlement,
   opts: AccensaHookOptions,
 ): Promise<boolean> {
   const report = opts.onError ?? reportToConsole;
-  const payload = toSettleHookPayload(settlement);
+  const body = toSettleHookPayload(settlement);
 
   const doFetch = opts.fetchImpl ?? globalThis.fetch;
   if (typeof doFetch !== 'function') {
-    report(new Error('No fetch implementation available'), payload);
+    report(new Error('No fetch implementation available'), body);
     return false;
   }
 
-  const { webcrypto } = globalThis.crypto || await import('node:crypto');
-  
+  // Abort rather than wait forever. `finally` clears the timer on every exit,
+  // including the success path, so a resolved report does not hold the process
+  // open for the remainder of the window.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+
   try {
-    const payload = JSON.stringify({
-      tx_hash: settlement.txHash,
-      route: settlement.route,
-      method: settlement.method,
-      request_id: settlement.requestId,
-      payer: settlement.payer,
-      amount: settlement.amount,
-      network: settlement.network,
-    });
+    const payload = JSON.stringify(body);
     
     let signatureHex = '';
     if (typeof process !== 'undefined' && process.versions && process.versions.node) {
@@ -183,22 +177,23 @@ export async function reportSettlement(
       throw new Error('Ed25519 signing requires Node.js crypto in this version');
     }
 
-    const response = await doFetch(`${opts.indexerUrl.replace(/\\/$/, '')}${SETTLE_ENDPOINT}`, {
+    const response = await doFetch(`${opts.indexerUrl.replace(/\/$/, '')}${SETTLE_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Signature': signatureHex,
       },
       body: payload,
+      signal: controller.signal,
     });
 
     if (!response.ok) {
-      report(new Error(`Accensa returned ${response.status} for ${settlement.txHash}`), payload);
+      report(new Error(`Accensa returned ${response.status} for ${settlement.txHash}`), body);
       return false;
     }
     return true;
   } catch (error) {
-    report(error, payload);
+    report(error, body);
     return false;
   } finally {
     clearTimeout(timer);
@@ -208,19 +203,6 @@ export async function reportSettlement(
 /** Default {@link AccensaHookOptions.onError}: loud enough to find, quiet enough to ignore. */
 function reportToConsole(error: unknown, payload?: SettleHookPayload): void {
   console.error('[accensa] could not report settlement', payload?.tx_hash ?? '', error);
-}
-
-export interface AttachHookOptions<TRequest extends AttributableRequest = Request>
-  extends AccensaHookOptions {
-  /**
-   * Reads the route, method, and request id off the request.
-   *
-   * Defaults to Express semantics (`req.route.path`, falling back to
-   * `req.path`). Supply this when your router does not expose the route
-   * template Express does — attributing every request to its literal URL turns
-   * one paid endpoint into thousands of one-payment routes.
-   */
-  attribute?: (req: TRequest) => RequestFacts;
 }
 
 /**
@@ -233,35 +215,49 @@ export interface AttachHookOptions<TRequest extends AttributableRequest = Reques
  * Mount this *after* your x402 payment middleware, so the header exists by the
  * time the response finishes.
  *
- * Generic over the request type so a caller with a typed
- * `Request<Params, ResBody, ReqBody, Query>` — or a framework of its own — sees
- * that type inside {@link AttachHookOptions.attribute} instead of a widened one.
- *
  * If your server uses `@x402/core`'s resource server directly, prefer
  * {@link createSettleHook} — it receives the settle result as ground truth
  * rather than reading it back off the wire.
  */
-export function attachAccensaHook<TRequest extends AttributableRequest = Request>(
-  opts: AttachHookOptions<TRequest>,
-) {
-  const attribute = opts.attribute ?? requestFacts;
+export interface AccensaMiddlewareOptions<Req extends AttributableRequest = Request>
+  extends AccensaHookOptions {
+  /**
+   * Derives what to attribute the payment to.
+   *
+   * The default reads `req.route.path`, `req.path`, and `x-request-id`, which
+   * is right for plain Express. A server whose router exposes its template
+   * elsewhere — or one that paywalls several verbs on a path — supplies this
+   * instead. Typing the hook with your own request shape gives the callback
+   * that type.
+   */
+  attribute?: (req: Req) => RequestFacts;
+}
 
-  return function accensaHook(req: TRequest, res: Response, next: NextFunction) {
+export function attachAccensaHook<Req extends AttributableRequest = Request>(
+  opts: AccensaMiddlewareOptions<Req>,
+) {
+  const report = opts.onError ?? reportToConsole;
+
+  return function accensaHook(req: Req, res: Response, next: NextFunction) {
     res.on('finish', () => {
-      // Everything in here runs after the response has been sent, so a throw
-      // would surface as an uncaught exception with no request to fail. The
-      // work is wrapped rather than trusted: attribution is never worth taking
-      // the seller's process down for.
+      // `attribute` is caller code running on a response that has already been
+      // sent. A bug in it must surface through onError, not as an uncaught
+      // exception on a 'finish' listener — which Node turns into a process
+      // crash by default.
+      let facts: RequestFacts;
       try {
-        const header = res.getHeader(SETTLEMENT_HEADER);
-        const settlement = settlementFromResult(
-          parseSettlementHeader(typeof header === 'string' ? header : undefined),
-          attribute(req),
-        );
-        if (settlement) void reportSettlement(settlement, opts);
+        facts = opts.attribute ? opts.attribute(req) : requestFacts(req);
       } catch (error) {
-        (opts.onError ?? reportToConsole)(error);
+        report(error);
+        return;
       }
+
+      const header = res.getHeader(SETTLEMENT_HEADER);
+      const settlement = settlementFromResult(
+        parseSettlementHeader(typeof header === 'string' ? header : undefined),
+        facts,
+      );
+      if (settlement) void reportSettlement(settlement, opts);
     });
 
     next();
@@ -284,7 +280,7 @@ export interface SettleHookOptions extends AccensaHookOptions {
  * the facilitator, so nothing has to be parsed back out of a response.
  *
  * ```ts
- * resourceServer.onAfterSettle(createSettleHook({ indexerUrl, apiKey }));
+ * resourceServer.onAfterSettle(createSettleHook({ indexerUrl, privateKeyHex }));
  * ```
  */
 export function createSettleHook(opts: SettleHookOptions) {
@@ -301,7 +297,7 @@ export function createSettleHook(opts: SettleHookOptions) {
 }
 
 function requestFacts(req: AttributableRequest): RequestFacts {
-  const requestId = req.headers?.['x-request-id'];
+  const requestId = req.headers['x-request-id'];
   return {
     route: req.route?.path ?? req.path ?? '',
     method: req.method ?? '',

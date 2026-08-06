@@ -35,7 +35,10 @@ const XLM_SAC =
 
 const accensa = {
  indexerUrl: process.env.ACCENSA_URL ?? 'http://localhost:3000',
- apiKey: required('HOOK_API_KEY'),
+ // Reports are authenticated by an Ed25519 signature over the exact body
+ // bytes, not a shared bearer token. The Accensa deployment holds the matching
+ // public key and rejects anything it cannot verify with 401.
+ privateKeyHex: required('ACCENSA_PRIVATE_KEY_HEX'),
 };
 
 // ---------------------------------------------------------------------------
@@ -152,7 +155,7 @@ app.listen(PORT, () => {
 /**
  * Fails at boot rather than at settlement time.
  *
- * Without this, a missing `HOOK_API_KEY` produces a server that takes payments
+ * Without this, a missing signing key produces a server that takes payments
  * happily and silently drops every attribution — the failure would only show
  * up as an empty routes column in the dashboard days later.
  */
