@@ -5,6 +5,8 @@ import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
 import { describeSync, type SyncState } from '@/lib/sync-status';
 import { ArrowUpRight } from 'lucide-react';
 import { PageContainer } from '@/components/page-container';
+import { useOnline } from '@/components/network-status';
+import { describeFailure, isAbortError } from '@/lib/network-status';
 
 interface Payment {
  tx_hash: string;
@@ -34,10 +36,16 @@ export default function Dashboard() {
  const [selected, setSelected] = useState<Payment | null>(null);
  const closeButtonRef = useRef<HTMLButtonElement>(null);
  const [reloadToken, setReloadToken] = useState(0);
+ const online = useOnline();
 
  const reload = useCallback(() => setReloadToken((n) => n + 1), []);
 
+ // `online` is a dependency, not just a guard: polling stops while the browser
+ // has no connection - every request would fail and overwrite a good table with
+ // an error - and reconnecting re-runs the effect, which refetches immediately
+ // rather than waiting out the remainder of a 15s tick.
  useEffect(() => {
+ if (!online) return;
  const controller = new AbortController();
  async function fetchPayments() {
  try {
@@ -52,13 +60,18 @@ export default function Dashboard() {
  setState({ status: 'ready', payments, fetchedAt: Date.now(), sync });
  }
  } catch (error) {
- if (!controller.signal.aborted) setState({ status: 'error', message: error instanceof Error ? error.message : 'Failed' });
+ // Re-read navigator.onLine here rather than closing over `online`: the
+ // connection can drop between the request going out and it failing,
+ // and that is exactly the case worth naming correctly.
+ if (!controller.signal.aborted && !isAbortError(error)) {
+ setState({ status: 'error', message: describeFailure(error, navigator.onLine) });
+ }
  }
  }
  void fetchPayments();
  const timer = setInterval(fetchPayments, POLL_INTERVAL_MS);
  return () => { controller.abort(); clearInterval(timer); };
- }, [reloadToken]);
+ }, [reloadToken, online]);
 
  useEffect(() => {
  if (!selected) return;
@@ -365,6 +378,7 @@ type SyncPhase =
 function SyncNowButton({ onSynced }: { onSynced: () => void }) {
  const [state, setState] = useState<SyncPhase>({ phase: 'idle' });
  const [now, setNow] = useState(() => Date.now());
+ const online = useOnline();
 
  // Expiry is derived, not stored: a timer that writes state back on every tick
  // would re-render the whole header once a second for no benefit.
@@ -414,10 +428,15 @@ function SyncNowButton({ onSynced }: { onSynced: () => void }) {
  }, [onSynced]);
 
  const secondsLeft = state.phase === 'cooldown' ? Math.max(0, Math.ceil((state.until - now) / 1000)) : 0;
- const disabled = state.phase === 'running' || cooling;
+ // Offline is a hard disable: the POST cannot reach the indexer, and letting
+ // it fail would burn the server-side cooldown on a request that never left
+ // the browser - the merchant would then be told to wait before retrying
+ // something that never ran.
+ const disabled = state.phase === 'running' || cooling || !online;
 
- const label =
- state.phase === 'running'
+ const label = !online
+ ? 'Offline'
+ : state.phase === 'running'
  ? 'Syncing…'
  : state.phase === 'done'
  ? state.message
@@ -433,7 +452,9 @@ function SyncNowButton({ onSynced }: { onSynced: () => void }) {
  onClick={trigger}
  disabled={disabled}
  title={
- state.phase === 'error'
+ !online
+ ? 'No connection. Reconnect to trigger a sync.'
+ : state.phase === 'error'
  ? state.message
  : state.phase === 'cooldown'
  ? 'A sync ran moments ago. The indexer is rate limited to avoid hammering the network.'
