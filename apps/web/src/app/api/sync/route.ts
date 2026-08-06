@@ -64,7 +64,11 @@ const PAGING_BUDGET_MS = 45_000;
  */
 const MANUAL_COOLDOWN_MS = 60_000;
 
-async function rpc<T>(method: string, params: unknown): Promise<T> {
+async function rpc<T>(method: string, params: unknown, maxAttempts = 3): Promise<T> {
+ let attempt = 0;
+ while (attempt < maxAttempts) {
+ attempt++;
+ try {
  const res = await fetch(RPC_URL, {
  method: 'POST',
  headers: { 'Content-Type': 'application/json' },
@@ -75,6 +79,12 @@ async function rpc<T>(method: string, params: unknown): Promise<T> {
  const body = await res.json();
  if (body.error) throw new Error(`RPC ${method}: ${body.error.message ?? 'unknown error'}`);
  return body.result as T;
+ } catch (error) {
+ if (attempt >= maxAttempts) throw error;
+ await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 100)); // Exponential backoff
+ }
+ }
+ throw new Error('Unreachable');
 }
 
 /** Reports a cooldown rather than syncing, when one is in force. */
@@ -174,26 +184,44 @@ async function runSync(merchant: string, opts: { cooldownMs?: number } = {}) {
  //
  // Only ledger-owned columns are written. route, method, request_id and
  // hook_reported_at belong to the merchant's report and are left alone.
- const res = await client.query(
- `INSERT INTO payments (tx_hash, ledger, payer, amount, asset, ts)
- VALUES ($1, $2, $3, $4::numeric, $5, $6::timestamptz)
- ON CONFLICT (tx_hash) DO UPDATE
- SET ledger = EXCLUDED.ledger,
- payer = EXCLUDED.payer,
- amount = EXCLUDED.amount,
- asset = EXCLUDED.asset,
- ts = EXCLUDED.ts
- WHERE payments.ledger IS NULL`,
- [
- transferEvent.txHash,
- transferEvent.ledger,
- transferEvent.from,
- transferEvent.amount, // string - never a float
- transferEvent.asset,
- transferEvent.ledgerClosedAt,
- ],
- );
- inserted += res.rowCount ?? 0;
+  const res = await client.query(
+  `INSERT INTO payments (tx_hash, ledger, payer, amount, asset, ts)
+  VALUES ($1, $2, $3, $4::numeric, $5, $6::timestamptz)
+  ON CONFLICT (tx_hash) DO UPDATE
+  SET ledger = EXCLUDED.ledger,
+  payer = EXCLUDED.payer,
+  amount = EXCLUDED.amount,
+  asset = EXCLUDED.asset,
+  ts = EXCLUDED.ts
+  WHERE payments.ledger IS NULL RETURNING *`,
+  [
+  transferEvent.txHash,
+  transferEvent.ledger,
+  transferEvent.from,
+  transferEvent.amount, // string - never a float
+  transferEvent.asset,
+  transferEvent.ledgerClosedAt,
+  ],
+  );
+  if (res.rowCount && res.rowCount > 0 && process.env.WEBHOOK_URL) {
+    const payment = res.rows[0];
+    const timeoutMs = 2000;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        const webhookRes = await fetch(process.env.WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payment),
+          signal: controller.signal
+        });
+        clearTimeout(id);
+        if (webhookRes.ok || webhookRes.status < 500) break;
+      } catch (e) {}
+    }
+  }
+  inserted += res.rowCount ?? 0;
  }
 
  // Only advance across ledgers known to be fully consumed. A partial read
