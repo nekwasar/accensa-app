@@ -20,31 +20,40 @@ export interface PaymentsResponse {
  payments: PaymentRow[];
  /** Null until the indexer has run at least once. */
  sync: SyncState | null;
+ next_cursor?: string | null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
  if (!process.env.DATABASE_URL) {
  return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
  }
 
+ const { searchParams } = new URL(request.url);
+ const limit = Math.min(Number(searchParams.get('limit') || '100'), 1000);
+ const cursor = searchParams.get('cursor');
+
  try {
  const { rows, sync } = await withClient(async (client) => {
  await ensureSchema(client);
- const result = await client.query(
- `SELECT tx_hash, ledger, payer, amount::text AS amount, asset,
- ts, route, method
- FROM payments
- WHERE ts IS NOT NULL
- ORDER BY ts DESC
- LIMIT 100`,
- );
+ 
+ let query = `SELECT tx_hash, ledger, payer, amount::text AS amount, asset, ts, route, method FROM payments WHERE ts IS NOT NULL`;
+ const params: any[] = [];
+ 
+ if (cursor) {
+  const [ts, txHash] = Buffer.from(cursor, 'base64').toString().split('|');
+  query += ` AND (ts < $1 OR (ts = $1 AND tx_hash < $2))`;
+  params.push(ts, txHash);
+ }
+ 
+ query += ` ORDER BY ts DESC, tx_hash DESC LIMIT $${params.length + 1}`;
+ params.push(limit);
+
+ const result = await client.query(query, params);
  return { rows: result.rows, sync: await getSyncState(client) };
  });
 
- // amount is cast to text in SQL and stays a string all the way to the
- // client. node-postgres already returns NUMERIC as a string to avoid
- // precision loss; making that explicit stops anyone"fixing"it into a
- // Number later, which is how money silently loses cents.
+ const next_cursor = rows.length === limit ? Buffer.from(`${(rows[rows.length - 1].ts instanceof Date ? rows[rows.length - 1].ts.toISOString() : rows[rows.length - 1].ts)}|${rows[rows.length - 1].tx_hash}`).toString('base64') : null;
+
  const body: PaymentsResponse = {
  payments: rows.map(
  (row): PaymentRow => ({
@@ -59,6 +68,7 @@ export async function GET() {
  }),
  ),
  sync,
+ next_cursor,
  };
  return NextResponse.json(body);
  } catch (error: unknown) {
