@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
 import { describeSync, type SyncState } from '@/lib/sync-status';
 import { CSV_BOM, paymentsCsvFilename, paymentsToCsv } from '@/lib/payments-csv';
+import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { PageContainer } from '@/components/page-container';
 import { useOnline } from '@/components/network-status';
@@ -97,6 +98,12 @@ export default function Dashboard() {
  <div>
  <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-3">Dashboard</p>
  <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Settled Volume</h1>
+ <Link
+ href="/dashboard/routes"
+ className="inline-block mt-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+ >
+ Revenue by route →
+ </Link>
  </div>
  </div>
  
