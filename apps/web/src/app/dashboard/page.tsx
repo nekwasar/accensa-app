@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
 import { describeSync, type SyncState } from '@/lib/sync-status';
+import { CSV_BOM, paymentsCsvFilename, paymentsToCsv } from '@/lib/payments-csv';
 import { ArrowUpRight } from 'lucide-react';
 import { PageContainer } from '@/components/page-container';
 import { useOnline } from '@/components/network-status';
@@ -121,6 +122,7 @@ export default function Dashboard() {
  <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Recent Settlements</h2>
  <div className="flex items-center gap-4">
  <StatusPill state={state} onRetry={reload} />
+ <ExportCsvButton payments={payments} />
  <SyncNowButton onSynced={reload} />
  </div>
  </div>
@@ -467,6 +469,64 @@ function SyncNowButton({ onSynced }: { onSynced: () => void }) {
  }`}
  >
  <span aria-live="polite">{label}</span>
+ </button>
+ );
+}
+
+/**
+ * Downloads the payment history the table is showing as a CSV file.
+ *
+ * Exports what is on screen rather than re-fetching: /api/payments is already
+ * the whole set the dashboard has (newest 100), and re-requesting would mean
+ * the file could disagree with the rows the merchant was looking at.
+ *
+ * Serialization lives in lib/payments-csv so it can be tested without a DOM;
+ * this only turns the text into a download.
+ */
+function ExportCsvButton({ payments }: { payments: Payment[] }) {
+ const [error, setError] = useState<string | null>(null);
+
+ const download = useCallback(() => {
+ try {
+ // The BOM is what makes Excel read the file as UTF-8.
+ const blob = new Blob([CSV_BOM + paymentsToCsv(payments)], {
+ type: 'text/csv;charset=utf-8',
+ });
+ const url = URL.createObjectURL(blob);
+ const link = document.createElement('a');
+ link.href = url;
+ link.download = paymentsCsvFilename();
+ link.click();
+ // Safari needs the click to have been dispatched before the object URL
+ // goes away, so revoke on the next frame rather than immediately.
+ requestAnimationFrame(() => URL.revokeObjectURL(url));
+ setError(null);
+ } catch (e) {
+ setError(e instanceof Error ? e.message : 'Export failed');
+ }
+ }, [payments]);
+
+ const empty = payments.length === 0;
+
+ return (
+ <button
+ type="button"
+ onClick={download}
+ disabled={empty}
+ title={
+ error
+ ? error
+ : empty
+ ? 'Nothing to export yet'
+ : `Download these ${payments.length} payment${payments.length === 1 ? '' : 's'} as CSV`
+ }
+ className={`px-3 py-2 text-[10px] font-bold uppercase tracking-widest border transition-colors cursor-pointer disabled:cursor-not-allowed ${
+ error
+ ? 'border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
+ : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 disabled:hover:bg-transparent'
+ }`}
+ >
+ <span aria-live="polite">{error ? 'Export failed' : 'Export CSV'}</span>
  </button>
  );
 }
