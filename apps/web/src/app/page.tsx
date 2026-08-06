@@ -4,6 +4,9 @@ import { FaqAccordion } from"@/components/faq-accordion";
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { RECEIPT_ANCHOR_ID } from '@/lib/receipt-anchor';
+import { PageContainer } from '@/components/page-container';
+import { SectionHeading } from '@/components/section-heading';
+import { CtaButton } from '@/components/cta-button';
 
 const REFUND_VAULT_ID =
  process.env.NEXT_PUBLIC_REFUND_VAULT_ID ??
@@ -45,7 +48,7 @@ export default function Landing() {
  {/* Subtle radial glow matching emerald theme */}
  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-transparent dark:bg-emerald-500/5 blur-[100px] dark:blur-[120px] pointer-events-none transition-colors duration-300"/>
  
- <div className="w-full mx-auto text-center space-y-8 relative z-10">
+ <PageContainer className="text-center space-y-8 relative z-10">
  <div className="inline-flex items-center mb-4 transition-colors duration-300">
  <span className="text-sm font-camiro font-bold tracking-[0.35em] text-emerald-600 dark:text-emerald-400 uppercase">— Live on Stellar Testnet —</span>
  </div>
@@ -63,29 +66,16 @@ export default function Landing() {
  </p>
 
  <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
- <Link
- href="/verify"
- className="px-8 py-4 bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-slate-200/50 dark:border-white/20 text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider hover:bg-white/60 dark:hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none"
- >
- Verify a Receipt
- </Link>
- <Link
- href="/dashboard"
- className="px-8 py-4 bg-white dark:bg-white/[0.02] dark:backdrop-blur-md text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-all hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
- >
- View Dashboard
- </Link>
+ <CtaButton href="/verify">Verify a Receipt</CtaButton>
+ <CtaButton href="/dashboard"variant="secondary">View Dashboard</CtaButton>
  </div>
- </div>
+ </PageContainer>
  </section>
 
  {/* Bento Grid Architecture */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 relative">
- <div className="w-full mx-auto">
- <div className="mb-12 text-center">
- <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Architecture</p>
- <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">How it <span className="text-slate-400 dark:text-slate-500 italic font-normal">works.</span></h2>
- </div>
+ <PageContainer>
+ <SectionHeading eyebrow="Architecture"tail="works."className="mb-12 text-center">How it</SectionHeading>
 
  <div className="grid md:grid-cols-3 gap-6">
  <BentoCard className="md:col-span-2 transition-all duration-300"title="1. The Agent Pays">
@@ -114,17 +104,14 @@ export default function Landing() {
  </div>
  </BentoCard>
  </div>
- </div>
+ </PageContainer>
  </ScrollReveal>
 
  {/* The Protocol Benefits */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="w-full mx-auto">
+ <PageContainer>
  <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-10 mb-12 text-center md:text-left">
- <div className="max-w-2xl">
- <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Protocol</p>
- <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Why <span className="text-slate-400 dark:text-slate-500 italic font-normal">Stellar?</span></h2>
- </div>
+ <SectionHeading eyebrow="Protocol"tail="Stellar?"className="max-w-2xl">Why</SectionHeading>
  <p className="text-slate-600 dark:text-slate-400 font-medium max-w-md text-lg transition-colors duration-300">Built on a ledger designed specifically for high-throughput, low-latency financial settlement.</p>
  </div>
 
@@ -134,15 +121,14 @@ export default function Landing() {
  <FeatureCard title="Native USDC"desc="Means float and refunds settle in the asset merchants actually price in, with absolutely no bridging."/>
  <FeatureCard title="Predictable Gas"desc="Lets a merchant definitively bound the cost of their refund policy in advance rather than guessing."/>
  </div>
- </div>
+ </PageContainer>
  </ScrollReveal>
 
  {/* Contracts Live */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="w-full mx-auto">
+ <PageContainer>
  <div className="text-center mb-12">
- <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Network</p>
- <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Live <span className="text-slate-400 dark:text-slate-500 italic font-normal">Contracts.</span></h2>
+ <SectionHeading eyebrow="Network"tail="Contracts.">Live</SectionHeading>
  <p className="text-slate-600 dark:text-slate-400 leading-relaxed mt-6 text-lg font-medium max-w-2xl mx-auto transition-colors duration-300">
  Both contracts are deployed and initialized on Stellar testnet, and batch #1 is anchored. Verify receipts against it right now.
  </p>
@@ -151,16 +137,13 @@ export default function Landing() {
  <ContractCard name="ReceiptAnchor"id={RECEIPT_ANCHOR_ID} />
  <ContractCard name="RefundVault"id={REFUND_VAULT_ID} />
  </div>
- </div>
+ </PageContainer>
  </ScrollReveal>
 
  {/* Integration Code block */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="w-full mx-auto">
- <div className="mb-10 text-center md:text-left">
- <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">Integration</p>
- <h2 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">SDK Drop-in</h2>
- </div>
+ <PageContainer>
+ <SectionHeading eyebrow="Integration"tail="Drop-in."className="mb-10 text-center md:text-left">SDK</SectionHeading>
  <div className="bg-white/40 dark:bg-black/20 backdrop-blur-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] relative group transition-colors duration-300">
  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80 dark:opacity-50"/>
  <div className="px-6 py-4 border-b border-slate-200/50 dark:border-white/10 flex gap-2 transition-colors duration-300 bg-white/20 dark:bg-white/5">
@@ -177,33 +160,17 @@ export default function Landing() {
  </code>
  </pre>
  </div>
- </div>
+ </PageContainer>
  </ScrollReveal>
 
  {/* FAQ Section */}
  <ScrollReveal as="section"className="px-6 py-12 md:py-16 transition-colors duration-300">
- <div className="w-full mx-auto">
- <div className="mb-12 text-center md:text-left">
- <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-4">FAQ</p>
- <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Common <span className="text-slate-400 dark:text-slate-500 italic font-normal">Questions.</span></h2>
- </div>
+ <PageContainer>
+ <SectionHeading eyebrow="FAQ"tail="Questions."className="mb-12 text-center md:text-left">Common</SectionHeading>
  <FaqAccordion items={faqItems} />
- </div>
+ </PageContainer>
  </ScrollReveal>
 
- <footer className="px-6 py-12 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#04090f] transition-colors duration-300">
- <div className="w-full mx-auto flex flex-col md:flex-row justify-between items-center md:items-center gap-8 md:gap-6 text-center md:text-left">
- <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
- Accensa
- </span>
- <div className="flex flex-wrap gap-8 justify-center text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
- <Link href="/dashboard"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>
- <Link href="/verify"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>
- <a href="https://accensa-docs.vercel.app"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</a>
- <a href="https://github.com/accensa"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
- </div>
- </div>
- </footer>
  </main>
  );
 }

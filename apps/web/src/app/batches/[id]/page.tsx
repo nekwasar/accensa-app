@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getBatch, RECEIPT_ANCHOR_ID, type BatchRecord } from '@/lib/receipt-anchor';
 import { ArrowUpRight } from 'lucide-react';
+import { PageContainer } from '@/components/page-container';
 
 /**
  * A batch is immutable once anchored, so this can be cached hard. Revalidating
@@ -60,7 +61,7 @@ export default async function BatchPage({
 
  return (
  <main className="min-h-screen bg-grid text-slate-900 dark:text-white px-6 py-16 md:py-24 pt-28 md:pt-32 transition-colors duration-300">
- <div className="max-w-3xl mx-auto space-y-10 relative z-10">
+ <PageContainer width="narrow"className="space-y-10 relative z-10">
  <header className="space-y-4">
  <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">
  Batch{' '}
@@ -121,7 +122,7 @@ export default async function BatchPage({
  </pre>
  </div>
  </section>
- </div>
+ </PageContainer>
  </main>
  );
 }
