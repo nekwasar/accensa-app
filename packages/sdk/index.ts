@@ -20,6 +20,39 @@ export {
   type X402SettleResult,
 } from './settlement';
 
+// MOCK MIDDLEWARE FOR DEMO ONLY
+export function withX402(handler: Function, options: { amount: number, asset: string }) {
+  return async function(req: Request) {
+    const receipt = req.headers.get('x-payment-receipt');
+    if (!receipt) {
+      return new Response(JSON.stringify({ error: 'Payment Required' }), { 
+        status: 402,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Simulate verifying the receipt and reporting settlement
+    // We mock a Settlement object to report to the dashboard
+    const settlement: Settlement = {
+      txHash: 'mock-tx-hash-' + Date.now(),
+      route: new URL(req.url).pathname,
+      method: req.method,
+      requestId: 'mock-req-' + Date.now(),
+      payer: 'G-MOCK-PAYER',
+      amount: options.amount.toString(),
+      network: 'TESTNET'
+    };
+    
+    // Report it to the dashboard indexer url (assumed localhost:3000 for demo)
+    await reportSettlement(settlement, {
+      indexerUrl: process.env.INDEXER_URL || 'http://localhost:3000',
+      apiKey: process.env.HOOK_API_KEY || 'test-secret'
+    });
+
+    return handler(req);
+  };
+}
+
 /** Path the Accensa app exposes for merchant-reported route attribution. */
 export const SETTLE_ENDPOINT = '/api/hook/settle';
 
