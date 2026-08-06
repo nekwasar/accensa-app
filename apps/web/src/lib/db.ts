@@ -180,9 +180,12 @@ export async function getSyncState(
 }
 
 export async function setLastSyncedLedger(client: Client, ledger: number): Promise<void> {
- await client.query(
- `INSERT INTO sync_state (id, last_ledger, updated_at) VALUES (1, $1, now())
- ON CONFLICT (id) DO UPDATE SET last_ledger = EXCLUDED.last_ledger, updated_at = now()`,
- [ledger],
- );
+  // Use advisory lock to prevent concurrent double-processing of ranges
+  await client.query('SELECT pg_advisory_xact_lock(1)');
+  await client.query(
+    `INSERT INTO sync_state (id, last_ledger, updated_at) VALUES (1, $1, now())
+     ON CONFLICT (id) DO UPDATE SET last_ledger = EXCLUDED.last_ledger, updated_at = now()
+     WHERE sync_state.last_ledger < EXCLUDED.last_ledger`,
+    [ledger],
+  );
 }
