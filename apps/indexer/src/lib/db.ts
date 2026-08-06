@@ -1,0 +1,192 @@
+import { Pool, Client } from 'pg';
+
+let pool: Pool | null = null;
+
+export function connectionString(): string {
+ const url = process.env.DATABASE_URL;
+ if (!url) throw new Error('DATABASE_URL is not configured');
+ return url;
+}
+
+export function getPool(): Pool {
+  if (!pool) {
+    pool = new Pool({ connectionString: connectionString() });
+  }
+  return pool;
+}
+
+export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
+  const p = getPool();
+  const client = await p.connect();
+  try {
+    return await fn(client as unknown as Client);
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Brings the schema up to the canonical shape.
+ *
+ * Idempotent, and safe against either historical layout - see
+ * migrations/001_unify_payments.sql for the full reasoning. Kept in code as
+ * well so a fresh database works without a manual migration step.
+ */
+export async function ensureSchema(client: Client): Promise<void> {
+ await client.query(`
+ CREATE TABLE IF NOT EXISTS payments (
+ tx_hash VARCHAR(64) PRIMARY KEY,
+ ledger BIGINT,
+ payer VARCHAR(56),
+ amount NUMERIC,
+ asset VARCHAR(64),
+ ts TIMESTAMPTZ,
+ route VARCHAR(255),
+ method VARCHAR(10),
+ request_id VARCHAR(64)
+ );
+ `);
+
+ // Older four-column layout keyed the time column"timestamp".
+ await client.query(`
+ DO $$
+ BEGIN
+ IF EXISTS (SELECT 1 FROM information_schema.columns
+ WHERE table_name='payments' AND column_name='timestamp')
+ AND NOT EXISTS (SELECT 1 FROM information_schema.columns
+ WHERE table_name='payments' AND column_name='ts') THEN
+ ALTER TABLE payments RENAME COLUMN"timestamp"TO ts;
+ END IF;
+ END $$;
+ `);
+
+ for (const [col, type] of [
+ ['ledger', 'BIGINT'],
+ ['asset', 'VARCHAR(64)'],
+ ['ts', 'TIMESTAMPTZ'],
+ ['route', 'VARCHAR(255)'],
+ ['method', 'VARCHAR(10)'],
+ ['request_id', 'VARCHAR(64)'],
+ ['hook_reported_at', 'TIMESTAMPTZ'],
+ ]) {
+ await client.query(`ALTER TABLE payments ADD COLUMN IF NOT EXISTS ${col} ${type};`);
+ }
+
+ await client.query(`
+ CREATE TABLE IF NOT EXISTS sync_state (
+ id INT PRIMARY KEY DEFAULT 1,
+ last_ledger BIGINT NOT NULL,
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+ CONSTRAINT sync_state_singleton CHECK (id = 1)
+ );
+ `);
+
+ // Attribution reported by the merchant arrives before the indexer has seen
+ // the transfer — the sync job runs on a schedule, the hook fires the instant
+ // x402 settles. Those staged rows have no amount or payer yet, and inventing
+ // a zero to satisfy a constraint is exactly the fabrication this codebase
+ // exists to avoid. The chain fills them in.
+ for (const col of ['amount', 'payer']) {
+ await client.query(`ALTER TABLE payments ALTER COLUMN ${col} DROP NOT NULL;`);
+ }
+
+ await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
+ await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
+ await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
+}
+
+/**
+ * Records merchant-reported route attribution against a payment.
+ *
+ * Attribution is the one fact the chain cannot supply: a SAC `transfer` event
+ * has no notion of an HTTP route. It therefore arrives from the seller's own
+ * process and is trusted only as far as the shared secret guarding this path.
+ *
+ * `hook_reported_at` marks the row as carrying merchant-reported data, so the
+ * two provenances stay distinguishable downstream. Ledger fields are never
+ * written here — if the transfer has not been indexed yet, the row is staged
+ * with a null ledger and the sync job fills in the on-chain truth later.
+ *
+ * A staged row also has a null `ts`, which is what keeps it out of the
+ * dashboard: /api/payments filters on `ts IS NOT NULL`, so an attribution can
+ * never be presented as revenue before the chain confirms the transfer.
+ *
+ * Returns whether the settlement matched an already-indexed payment.
+ */
+export async function recordSettlement(
+ client: Client,
+ s: {
+ txHash: string;
+ route: string;
+ method: string;
+ requestId?: string | null;
+ payer?: string | null;
+ },
+): Promise<{ matchedExistingPayment: boolean }> {
+ const updated = await client.query(
+ `UPDATE payments
+ SET route = $2, method = $3, request_id = $4, hook_reported_at = now()
+ WHERE tx_hash = $1`,
+ [s.txHash, s.route, s.method, s.requestId ?? null],
+ );
+
+ if ((updated.rowCount ?? 0) > 0) return { matchedExistingPayment: true };
+
+ // Not indexed yet. Stage the attribution so it is not lost; the sync job
+ // completes the row when it reaches that ledger. ON CONFLICT guards the race
+ // where the indexer inserts between the UPDATE and the INSERT.
+ // ts is explicitly NULL, not omitted: the column carries a CURRENT_TIMESTAMP
+ // default, and letting it fire would stamp a staged row with the time it was
+ // reported rather than the time the payment settled on chain — and would put
+ // it straight onto the dashboard, since that filters on ts IS NOT NULL.
+ await client.query(
+ `INSERT INTO payments (tx_hash, payer, route, method, request_id, ts, hook_reported_at)
+ VALUES ($1, $2, $3, $4, $5, NULL, now())
+ ON CONFLICT (tx_hash) DO UPDATE
+ SET route = EXCLUDED.route,
+ method = EXCLUDED.method,
+ request_id = EXCLUDED.request_id,
+ hook_reported_at = now()`,
+ [s.txHash, s.payer ?? null, s.route, s.method, s.requestId ?? null],
+ );
+
+ return { matchedExistingPayment: false };
+}
+
+export async function getLastSyncedLedger(client: Client): Promise<number | null> {
+ const res = await client.query<{ last_ledger: string }>(
+ `SELECT last_ledger FROM sync_state WHERE id = 1`,
+ );
+ return res.rows.length ? Number(res.rows[0].last_ledger) : null;
+}
+
+/**
+ * The indexer's own record of when it last committed progress.
+ *
+ * Read by /api/payments so the dashboard can say how current its data is,
+ * rather than implying the freshness of its own poll.
+ */
+export async function getSyncState(
+ client: Client,
+): Promise<{ lastLedger: number; updatedAt: string } | null> {
+ const res = await client.query<{ last_ledger: string; updated_at: Date | string }>(
+ `SELECT last_ledger, updated_at FROM sync_state WHERE id = 1`,
+ );
+ if (!res.rows.length) return null;
+ const { last_ledger, updated_at } = res.rows[0];
+ return {
+ lastLedger: Number(last_ledger),
+ updatedAt: updated_at instanceof Date ? updated_at.toISOString() : String(updated_at),
+ };
+}
+
+export async function setLastSyncedLedger(client: Client, ledger: number): Promise<void> {
+  // Use advisory lock to prevent concurrent double-processing of ranges
+  await client.query('SELECT pg_advisory_xact_lock(1)');
+  await client.query(
+    `INSERT INTO sync_state (id, last_ledger, updated_at) VALUES (1, $1, now())
+     ON CONFLICT (id) DO UPDATE SET last_ledger = EXCLUDED.last_ledger, updated_at = now()
+     WHERE sync_state.last_ledger < EXCLUDED.last_ledger`,
+    [ledger],
+  );
+}
