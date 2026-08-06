@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { withClient, ensureSchema, setLastSyncedLedger, getLastSyncedLedger } from './db';
-import { Client } from 'pg';
 
 describe('Database Integration', () => {
   it('should ensure schema and perform basic operations', async () => {

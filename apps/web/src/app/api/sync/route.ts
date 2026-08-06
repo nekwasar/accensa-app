@@ -218,7 +218,7 @@ async function runSync(merchant: string, opts: { cooldownMs?: number } = {}) {
         });
         clearTimeout(id);
         if (webhookRes.ok || webhookRes.status < 500) break;
-      } catch (e) {}
+      } catch (_e) {}
     }
   }
   inserted += res.rowCount ?? 0;

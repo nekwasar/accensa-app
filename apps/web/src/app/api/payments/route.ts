@@ -37,7 +37,7 @@ export async function GET(request: Request) {
  await ensureSchema(client);
  
  let query = `SELECT tx_hash, ledger, payer, amount::text AS amount, asset, ts, route, method FROM payments WHERE ts IS NOT NULL`;
- const params: any[] = [];
+ const params: (string | number)[] = [];
  
  if (cursor) {
   const [ts, txHash] = Buffer.from(cursor, 'base64').toString().split('|');

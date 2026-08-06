@@ -20,7 +20,7 @@ export async function GET(request: Request) {
  FROM payments
  WHERE ts IS NOT NULL
  `;
- const params: any[] = [];
+ const params: string[] = [];
  
  if (from) {
  params.push(from);
