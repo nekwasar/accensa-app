@@ -48,6 +48,20 @@ jobs:
   test-web:
     name: test (web)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: accensa_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -60,6 +74,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Test web
         working-directory: ./apps/web
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/accensa_test
         run: pnpm test
 
   typecheck:

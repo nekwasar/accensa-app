@@ -191,3 +191,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security policy in [SECURITY.md](SECURIT
 ## License
 
 MIT — see [LICENSE](LICENSE).
+## Setup
+See [db-setup.md](db-setup.md) for database setup instructions.
