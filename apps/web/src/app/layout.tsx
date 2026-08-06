@@ -5,6 +5,7 @@ import"./globals.css";
 import { ThemeProvider } from"@/components/theme-provider";
 import { Nav } from"@/components/nav";
 import { Footer } from"@/components/footer";
+import { OfflineBanner } from"@/components/network-status";
 
 const geistSans = Geist({
  variable:"--font-geist-sans",
@@ -67,10 +68,17 @@ export default function RootLayout({
  />
  </head>
  <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#04090f] transition-colors duration-300 relative">
- <ThemeProvider attribute="class"defaultTheme="dark"disableTransitionOnChange>
+ {/* defaultTheme is the fallback used only when localStorage holds no
+ choice, so"system"gives a first-time visitor whatever their OS is set
+ to while an explicit pick from the toggle still wins on every visit.
+ It was"dark", which ignored prefers-color-scheme entirely. */}
+ <ThemeProvider attribute="class"defaultTheme="system"enableSystem disableTransitionOnChange>
  <Nav />
  {children}
  <Footer />
+ {/* Outside the page tree so it survives navigation and stays visible
+ when a page-level error boundary takes over the content area. */}
+ <OfflineBanner />
  </ThemeProvider>
  </body>
  </html>
