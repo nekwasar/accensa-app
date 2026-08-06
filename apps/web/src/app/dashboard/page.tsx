@@ -6,6 +6,7 @@ import { describeSync, type SyncState } from '@/lib/sync-status';
 import { CSV_BOM, paymentsCsvFilename, paymentsToCsv } from '@/lib/payments-csv';
 import { ArrowUpRight } from 'lucide-react';
 import { PageContainer } from '@/components/page-container';
+import { RefundPanel } from '@/components/refund-panel';
 import { useOnline } from '@/components/network-status';
 import { describeFailure, isAbortError } from '@/lib/network-status';
 
@@ -37,6 +38,14 @@ export default function Dashboard() {
  const [selected, setSelected] = useState<Payment | null>(null);
  const closeButtonRef = useRef<HTMLButtonElement>(null);
  const [reloadToken, setReloadToken] = useState(0);
+ // Refunds issued in this session. The indexer does not watch RefundVault
+ // events yet, so a refund is otherwise invisible until someone opens the
+ // payment again and the contract is re-read.
+ const [refunded, setRefunded] = useState<ReadonlySet<string>>(() => new Set());
+ const markRefunded = useCallback(
+ (txHash: string) => setRefunded((prev) => new Set(prev).add(txHash)),
+ [],
+ );
  const online = useOnline();
 
  const reload = useCallback(() => setReloadToken((n) => n + 1), []);
@@ -215,6 +224,14 @@ export default function Dashboard() {
  >
  <td className="px-8 py-5 font-mono text-emerald-600 dark:text-emerald-400 text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
  {truncate(payment.tx_hash)}
+ {refunded.has(payment.tx_hash) && (
+ <span
+ className="ml-2 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest border border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 align-middle"
+ title="Refunded from the vault in this session"
+ >
+ Refunded
+ </span>
+ )}
  </td>
  <td className="px-8 py-5">
  <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white transition-colors duration-300">{formatAmount(payment.amount)}</span>
@@ -293,6 +310,13 @@ export default function Dashboard() {
  >
  View on Explorer <ArrowUpRight className="w-4 h-4 opacity-70"/>
  </a>
+ </div>
+
+ <div className="pt-6 mt-6 border-t border-slate-100 dark:border-white/10 transition-colors duration-300">
+ <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
+ Refund
+ </p>
+ <RefundPanel payment={selected} onRefunded={markRefunded} />
  </div>
  </div>
  </div>

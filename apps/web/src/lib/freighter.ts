@@ -19,6 +19,10 @@ interface InjectedFreighter {
  getAddress?: () => Promise<unknown>;
  requestAccess?: () => Promise<unknown>;
  getNetwork?: () => Promise<unknown>;
+ signTransaction?: (
+ xdr: string,
+ opts?: { networkPassphrase?: string; address?: string },
+ ) => Promise<unknown>;
 }
 
 declare global {
@@ -138,6 +142,44 @@ export async function connect(): Promise<WalletStatus> {
  } catch (error) {
  return { kind: 'error', message: message(error) };
  }
+}
+
+/**
+ * Reads a signed envelope out of whatever shape the extension returned.
+ *
+ * Same tolerance as {@link readAddress}, and the same refusal to guess: a
+ * malformed envelope here would be submitted to the network as a transaction,
+ * so an unrecognised shape must be an error, never a best effort.
+ */
+export function readSignedXdr(value: unknown): string | null {
+ if (typeof value === 'string') return value.length > 0 ? value : null;
+ if (value && typeof value === 'object') {
+ const envelope = value as { signedTxXdr?: unknown; error?: unknown };
+ if (typeof envelope.error === 'string' && envelope.error.length > 0) return null;
+ if (typeof envelope.signedTxXdr === 'string' && envelope.signedTxXdr.length > 0) {
+ return envelope.signedTxXdr;
+ }
+ }
+ return null;
+}
+
+/**
+ * Asks the extension to sign a transaction envelope.
+ *
+ * Throws rather than resolving null on refusal, because every caller is in the
+ * middle of a money-moving flow where "no signature" must stop the flow rather
+ * than fall through to a submit.
+ */
+export async function signTransaction(
+ xdr: string,
+ opts: { networkPassphrase: string; address?: string },
+): Promise<string> {
+ const api = typeof window === 'undefined' ? undefined : window.freighterApi;
+ if (!api?.signTransaction) throw new Error('No Stellar wallet available to sign with');
+
+ const signed = readSignedXdr(await api.signTransaction(xdr, opts));
+ if (!signed) throw new Error('The wallet did not return a signed transaction');
+ return signed;
 }
 
 /** Where a merchant installs the extension, for the unavailable state. */
