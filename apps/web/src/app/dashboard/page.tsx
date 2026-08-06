@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
 import { describeSync, type SyncState } from '@/lib/sync-status';
 import { ArrowUpRight } from 'lucide-react';
+import { PageContainer } from '@/components/page-container';
 
 interface Payment {
  tx_hash: string;
@@ -74,7 +75,7 @@ export default function Dashboard() {
 
  return (
  <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid p-6 md:p-12 lg:p-20 pt-28 md:pt-32 lg:pt-32">
- <div className="max-w-7xl mx-auto space-y-12">
+ <PageContainer className="space-y-12">
  
  {/* Header Grid */}
  <header className="grid lg:grid-cols-3 gap-8 items-end">
@@ -229,7 +230,7 @@ export default function Dashboard() {
  )}
  </div>
  </section>
- </div>
+ </PageContainer>
 
  {/* Modal Dialog */}
  {selected && (
