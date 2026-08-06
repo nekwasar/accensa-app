@@ -192,4 +192,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security policy in [SECURITY.md](SECURIT
 
 MIT — see [LICENSE](LICENSE).
 ## Setup
-See [db-setup.md](db-setup.md) for database setup instructions.
+See [db-setup.md](db-setup.md) for database setup instructions, and
+[DEPLOYMENT.md](DEPLOYMENT.md) for the deployed topology — how Vercel, Supabase,
+and the GitHub Actions indexer fit together, which environment variables live
+where, and the traps that have cost time here (the alias that `--prod` does not
+move, the Hobby cron limit, and the IPv6-only Direct connection string).
