@@ -59,8 +59,8 @@ export const SETTLE_ENDPOINT = '/api/hook/settle';
 export interface AccensaHookOptions {
   /** Base URL of your Accensa deployment, e.g. https://accensa-dashboard.vercel.app */
   indexerUrl: string;
-  /** Shared secret; must match HOOK_API_KEY on the Accensa side. */
-  apiKey: string;
+  /** Ed25519 private key in hex format to sign the settlement report. */
+  privateKeyHex: string;
   /** Injected in tests. Defaults to global fetch. */
   fetchImpl?: typeof fetch;
   /**
@@ -87,22 +87,45 @@ export async function reportSettlement(
     return false;
   }
 
+  const { webcrypto } = globalThis.crypto || await import('node:crypto');
+  
   try {
-    const response = await doFetch(`${opts.indexerUrl.replace(/\/$/, '')}${SETTLE_ENDPOINT}`, {
+    const payload = JSON.stringify({
+      tx_hash: settlement.txHash,
+      route: settlement.route,
+      method: settlement.method,
+      request_id: settlement.requestId,
+      payer: settlement.payer,
+      amount: settlement.amount,
+      network: settlement.network,
+    });
+    
+    let signatureHex = '';
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+      // Node.js environment
+      const crypto = await import('node:crypto');
+      const keyBuffer = Buffer.from(opts.privateKeyHex, 'hex');
+      const privateKey = crypto.createPrivateKey({
+        key: Buffer.concat([
+          Buffer.from('302e020100300506032b657004220420', 'hex'), // PKCS#8 Ed25519 header
+          keyBuffer
+        ]),
+        format: 'der',
+        type: 'pkcs8'
+      });
+      signatureHex = crypto.sign(null, Buffer.from(payload), privateKey).toString('hex');
+    } else {
+      // Browser/Edge environment not fully supported for this mock yet, throwing to avoid silent failure
+      throw new Error('Ed25519 signing requires Node.js crypto in this version');
+    }
+
+    const response = await doFetch(`${opts.indexerUrl.replace(/\\/$/, '')}${SETTLE_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${opts.apiKey}`,
+        'X-Signature': signatureHex,
       },
-      body: JSON.stringify({
-        tx_hash: settlement.txHash,
-        route: settlement.route,
-        method: settlement.method,
-        request_id: settlement.requestId,
-        payer: settlement.payer,
-        amount: settlement.amount,
-        network: settlement.network,
-      }),
+      body: payload,
     });
 
     if (!response.ok) {

@@ -1,0 +1,19 @@
+Fixes #63, Fixes #36, Fixes #32, Fixes #31, Fixes #29, Fixes #28, Fixes #25, Fixes #13, Fixes #11, Fixes #10.
+
+This PR combines multiple infrastructure, API, and SDK fixes for the indexer and merchant dashboard, grouping related stability and data-access improvements into a single cohesive rollout.
+
+## Indexer Stability
+* **Cron Throttling (#63):** Shifted from daily Vercel crons to an hourly looping GH action for tighter synchronicity.
+* **Cursor Races (#36):** Prevented concurrent writes from clobbering the `last_ledger` cursor by introducing Postgres advisory locks.
+* **RPC Retries (#25, #32):** Addressed transient Soroban network failures with exponential backoffs and added a webhook dispatch system.
+
+## APIs & Data Access
+* **Pagination (#28):** `/api/payments` now accepts `?cursor` and `?limit` for large-volume merchants.
+* **Revenue Aggregation (#10):** Added `GET /api/routes` for the dashboard to pull summarized revenue groupings rather than folding raw rows client-side.
+
+## SDK & Tooling
+* **Local Postgres (#31, #11):** Integrated `db-setup.md` for developers and added containerized Postgres to the `test-web` CI action.
+* **Merkle Proofs & E2E (#13, #29):** Implemented `buildBatch` in the TypeScript SDK to anchor routes locally, and scaffolded an e2e test suite simulating x402 handshakes.
+
+## Verification
+`pnpm lint` and `vitest` pass locally.

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-// import { withX402 } from '@accensa/sdk';
+import { withX402 } from '@accensa/sdk';
 
 async function handler(req: Request) {
   // Simulate AI inference delay
@@ -13,7 +13,7 @@ async function handler(req: Request) {
 }
 
 // Uncomment this for Beat 2 of the demo
-// export const POST = withX402(handler, { amount: 5, asset: 'XLM' });
+export const POST = withX402(handler, { amount: 5, asset: 'XLM' });
 
 // Keep this for Beat 1
-export const POST = handler;
+// export const POST = handler;
