@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import { ArrowUpRight } from 'lucide-react';
+import { WalletStatus } from './wallet-status';
 
 export function Nav() {
  const [isOpen, setIsOpen] = useState(false);
@@ -40,12 +41,7 @@ export function Nav() {
 
  {/* Right Nav (Theme Toggle & Connect Wallet) */}
  <div className="flex items-center gap-4">
- <Link 
- href="/coming-soon"
- className="hidden md:inline-flex px-4 py-2 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider hover:bg-emerald-500/20 dark:hover:bg-emerald-400/20 transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-slate-50 dark:hover:bg-white/5"
- >
- Connect Wallet
- </Link>
+ <WalletStatus className="hidden md:inline-flex"/>
  <ThemeToggle />
  </div>
  </div>
@@ -147,13 +143,7 @@ export function Nav() {
 
  {/* Minimal Bottom CTA Button */}
  <div>
- <Link
- href="/coming-soon"
- onClick={() => setIsOpen(false)}
- className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:opacity-95 transition-opacity active:scale-[0.99]"
- >
- Connect Wallet
- </Link>
+ <WalletStatus className="w-full justify-center py-4 text-sm"/>
  </div>
  </div>
  </>
