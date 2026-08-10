@@ -1,71 +1,39 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { truncateAddress, readStatus, connect, signTransaction } from './freighter';
 import {
- readAddress,
- readBoolean,
- readNetwork,
- truncateAddress,
- readStatus,
- connect,
-} from './freighter';
+ isConnected,
+ getAddress,
+ getNetwork,
+ requestAccess,
+ signTransaction as freighterSign,
+} from '@stellar/freighter-api';
+
+/**
+ * The extension is mocked at the package boundary rather than by faking a
+ * window global. That is the whole point of this suite: the previous version
+ * installed a `window.freighterApi` object that Freighter has never provided,
+ * so every test passed against a wallet that could not exist, while the real
+ * integration was inert in every browser.
+ */
+vi.mock('@stellar/freighter-api', () => ({
+ isConnected: vi.fn(),
+ getAddress: vi.fn(),
+ getNetwork: vi.fn(),
+ requestAccess: vi.fn(),
+ signTransaction: vi.fn(),
+}));
 
 const G = 'GCALKSGAZRJLSUEJT3M5W6LN4R7XQOLIRCOS6ZA6EDZVTZDBIIPPFKJ6';
 
-afterEach(() => {
- delete (globalThis as { window?: unknown }).window;
-});
+/** The shape Freighter returns when a call succeeds with nothing to say. */
+const NO_NETWORK = { network: '', networkPassphrase: '' };
 
-/** Installs a fake extension on a fake window for one test. */
-function install(api: Record<string, unknown> | undefined) {
- (globalThis as { window?: unknown }).window = api === undefined ? {} : { freighterApi: api };
-}
-
-describe('readAddress', () => {
- it('accepts the legacy bare-string shape', () => {
- expect(readAddress(G)).toBe(G);
- });
-
- it('accepts the current envelope shape', () => {
- expect(readAddress({ address: G })).toBe(G);
- });
-
- it('returns null when the envelope carries an error', () => {
- expect(readAddress({ address: G, error: 'User declined access' })).toBeNull();
- });
-
- it('returns null rather than guessing at an unknown shape', () => {
- expect(readAddress({ publicKey: G })).toBeNull();
- expect(readAddress(42)).toBeNull();
- expect(readAddress(null)).toBeNull();
- expect(readAddress(undefined)).toBeNull();
- });
-
- it('treats an empty string as no address', () => {
- expect(readAddress('')).toBeNull();
- expect(readAddress({ address: '' })).toBeNull();
- });
-});
-
-describe('readBoolean', () => {
- it('accepts both shapes', () => {
- expect(readBoolean(true)).toBe(true);
- expect(readBoolean({ isConnected: true })).toBe(true);
- expect(readBoolean({ isAllowed: true })).toBe(true);
- });
-
- it('defaults to false on anything unrecognised', () => {
- expect(readBoolean({ connected: true })).toBe(false);
- expect(readBoolean('yes')).toBe(false);
- expect(readBoolean(undefined)).toBe(false);
- });
-});
-
-describe('readNetwork', () => {
- it('accepts both shapes and rejects the rest', () => {
- expect(readNetwork('TESTNET')).toBe('TESTNET');
- expect(readNetwork({ network: 'PUBLIC' })).toBe('PUBLIC');
- expect(readNetwork({ net: 'PUBLIC' })).toBeUndefined();
- expect(readNetwork('')).toBeUndefined();
- });
+beforeEach(() => {
+ vi.mocked(isConnected).mockReset();
+ vi.mocked(getAddress).mockReset();
+ vi.mocked(getNetwork).mockReset();
+ vi.mocked(requestAccess).mockReset();
+ vi.mocked(freighterSign).mockReset();
 });
 
 describe('truncateAddress', () => {
@@ -74,12 +42,11 @@ describe('truncateAddress', () => {
  });
 
  it('honours custom window sizes', () => {
- expect(truncateAddress(G, 6, 6)).toBe('GCALKS…PPFKJ6');
+ expect(truncateAddress(G, 6, 2)).toBe('GCALKS…J6');
  });
 
  it('returns short input whole rather than making it longer', () => {
  expect(truncateAddress('GABC')).toBe('GABC');
- expect(truncateAddress('')).toBe('');
  });
 
  it('rejects negative windows', () => {
@@ -88,57 +55,123 @@ describe('truncateAddress', () => {
 });
 
 describe('readStatus', () => {
- it('reports unavailable when no extension is injected', async () => {
- install(undefined);
+ it('reports unavailable when the extension is not installed', async () => {
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: false });
+
  expect(await readStatus()).toEqual({ kind: 'unavailable' });
+ // The whole bug in one assertion: an installed wallet must not be
+ // mistaken for a missing one, so nothing else may be consulted first.
+ expect(getAddress).not.toHaveBeenCalled();
  });
 
- it('reports unavailable when the extension says it is not connected', async () => {
- install({ isConnected: async () => false, getAddress: async () => G });
- expect(await readStatus()).toEqual({ kind: 'unavailable' });
+ it('reports disconnected when installed but the site is not approved', async () => {
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: true });
+ // Freighter answers an unapproved site with an empty address, not an error.
+ vi.mocked(getAddress).mockResolvedValue({ address: '' });
+
+ expect(await readStatus()).toEqual({ kind: 'disconnected' });
  });
 
- it('reports disconnected when present but no address is approved', async () => {
- install({ isConnected: async () => true, getAddress: async () => ({ address: '' }) });
+ it('treats an error from getAddress as disconnected, not as a fault', async () => {
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: true });
+ vi.mocked(getAddress).mockResolvedValue({
+ address: '',
+ error: { code: -1, message: 'User declined access' },
+ });
+
  expect(await readStatus()).toEqual({ kind: 'disconnected' });
  });
 
  it('reports the address and network when connected', async () => {
- install({
- isConnected: async () => ({ isConnected: true }),
- getAddress: async () => ({ address: G }),
- getNetwork: async () => ({ network: 'TESTNET' }),
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: true });
+ vi.mocked(getAddress).mockResolvedValue({ address: G });
+ vi.mocked(getNetwork).mockResolvedValue({
+ network: 'TESTNET',
+ networkPassphrase: 'Test SDF Network ; September 2015',
  });
+
  expect(await readStatus()).toEqual({ kind: 'connected', address: G, network: 'TESTNET' });
  });
 
- it('surfaces a thrown error as a renderable message instead of rejecting', async () => {
- install({
- isConnected: async () => true,
- getAddress: async () => {
- throw new Error('extension locked');
- },
+ it('still reports connected when the network cannot be read', async () => {
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: true });
+ vi.mocked(getAddress).mockResolvedValue({ address: G });
+ vi.mocked(getNetwork).mockRejectedValue(new Error('extension went away'));
+
+ expect(await readStatus()).toEqual({ kind: 'connected', address: G, network: undefined });
  });
- expect(await readStatus()).toEqual({ kind: 'error', message: 'extension locked' });
+
+ it('surfaces an isConnected error as a renderable message', async () => {
+ vi.mocked(isConnected).mockResolvedValue({
+ isConnected: false,
+ error: { code: -1, message: 'Extension is locked' },
+ });
+
+ expect(await readStatus()).toEqual({ kind: 'error', message: 'Extension is locked' });
+ });
+
+ it('does not reject when a call throws outright', async () => {
+ vi.mocked(isConnected).mockRejectedValue(new Error('boom'));
+
+ expect(await readStatus()).toEqual({ kind: 'error', message: 'boom' });
  });
 });
 
 describe('connect', () => {
- it('reports unavailable when the extension cannot be asked', async () => {
- install(undefined);
+ it('reports unavailable rather than prompting when nothing is installed', async () => {
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: false });
+
  expect(await connect()).toEqual({ kind: 'unavailable' });
+ expect(requestAccess).not.toHaveBeenCalled();
  });
 
- it('reports disconnected when the user declines', async () => {
- install({ requestAccess: async () => ({ error: 'User declined access' }) });
+ it('reports disconnected when the user declines the prompt', async () => {
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: true });
+ vi.mocked(requestAccess).mockResolvedValue({
+ address: '',
+ error: { code: -1, message: 'User declined access' },
+ });
+
+ // A declined prompt is a choice, not a fault - it must not render as an error.
  expect(await connect()).toEqual({ kind: 'disconnected' });
  });
 
  it('reports connected on approval', async () => {
- install({
- requestAccess: async () => ({ address: G }),
- getNetwork: async () => 'TESTNET',
+ vi.mocked(isConnected).mockResolvedValue({ isConnected: true });
+ vi.mocked(requestAccess).mockResolvedValue({ address: G });
+ vi.mocked(getNetwork).mockResolvedValue(NO_NETWORK);
+
+ expect(await connect()).toEqual({ kind: 'connected', address: G, network: undefined });
  });
- expect(await connect()).toEqual({ kind: 'connected', address: G, network: 'TESTNET' });
+});
+
+describe('signTransaction', () => {
+ it('returns the signed envelope', async () => {
+ vi.mocked(freighterSign).mockResolvedValue({
+ signedTxXdr: 'AAAA-signed',
+ signerAddress: G,
+ });
+
+ expect(await signTransaction('AAAA-unsigned', { networkPassphrase: 'x' })).toBe('AAAA-signed');
+ });
+
+ it('throws when the user refuses, so a refund flow cannot continue unsigned', async () => {
+ vi.mocked(freighterSign).mockResolvedValue({
+ signedTxXdr: '',
+ signerAddress: '',
+ error: { code: -1, message: 'User declined to sign' },
+ });
+
+ await expect(signTransaction('AAAA', { networkPassphrase: 'x' })).rejects.toThrow(
+ 'User declined to sign',
+ );
+ });
+
+ it('throws rather than returning an empty envelope', async () => {
+ vi.mocked(freighterSign).mockResolvedValue({ signedTxXdr: '', signerAddress: G });
+
+ await expect(signTransaction('AAAA', { networkPassphrase: 'x' })).rejects.toThrow(
+ 'did not return a signed transaction',
+ );
  });
 });

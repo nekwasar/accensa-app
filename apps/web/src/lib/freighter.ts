@@ -1,35 +1,32 @@
+import {
+ isConnected as freighterIsConnected,
+ getAddress as freighterGetAddress,
+ getNetwork as freighterGetNetwork,
+ requestAccess as freighterRequestAccess,
+ signTransaction as freighterSignTransaction,
+} from '@stellar/freighter-api';
+
 /**
- * Thin wrapper over the Freighter browser extension's injected API.
+ * Wallet access, over the official `@stellar/freighter-api`.
  *
- * Deliberately dependency-free. The obvious alternative is `@stellar/freighter-api`
- * or Stellar Wallets Kit, but both are npm additions and this reads the same
- * `window.freighterApi` object those packages wrap. If a second wallet is ever
- * supported, replace this module rather than spreading `window` access through
- * components.
+ * This module previously read `window.freighterApi` directly, on the stated
+ * reasoning that the npm package was only a wrapper over that global and
+ * therefore an avoidable dependency. That was wrong, and it made every wallet
+ * feature inert: Freighter injects `window.freighter` — a *boolean* — and
+ * exposes no methods on the page at all. The real API is content-script
+ * messaging, which is what this package wraps and what a page cannot
+ * reasonably speak on its own. Reading `window.freighterApi` therefore found
+ * `undefined` in every browser, so the navbar showed"Install Wallet"to
+ * everyone including people who had Freighter installed, and refunds could
+ * never be signed.
  *
- * Freighter has changed its return shapes across versions: older builds resolve
- * bare values (`string`, `boolean`), newer ones resolve `{ address, error }`
- * envelopes. Every reader below accepts both, because a merchant's installed
- * extension version is not something the app controls.
+ * The lesson worth keeping: a dependency is not automatically the expensive
+ * choice. Reimplementing an undocumented, version-coupled message protocol is.
+ *
+ * Every call below returns an `{ ..., error? }` envelope rather than throwing,
+ * so each one is checked. The `WalletStatus` union is unchanged, so components
+ * that consume this module did not have to change with it.
  */
-
-/** What the extension exposes. Every method is optional — versions differ. */
-interface InjectedFreighter {
- isConnected?: () => Promise<unknown>;
- getAddress?: () => Promise<unknown>;
- requestAccess?: () => Promise<unknown>;
- getNetwork?: () => Promise<unknown>;
- signTransaction?: (
- xdr: string,
- opts?: { networkPassphrase?: string; address?: string },
- ) => Promise<unknown>;
-}
-
-declare global {
- interface Window {
- freighterApi?: InjectedFreighter;
- }
-}
 
 export type WalletStatus =
  /** No extension detected in this browser. */
@@ -40,48 +37,6 @@ export type WalletStatus =
  | { kind: 'connected'; address: string; network?: string }
  /** A call failed. Carries a message fit to render. */
  | { kind: 'error'; message: string };
-
-/**
- * Pulls an address out of whatever shape the extension returned.
- *
- * Returns null rather than guessing: an unrecognised shape means "we do not
- * know the address", and rendering a wrong or truncated-from-garbage address
- * next to a payment UI would be worse than rendering none.
- */
-export function readAddress(value: unknown): string | null {
- if (typeof value === 'string') return value.length > 0 ? value : null;
- if (value && typeof value === 'object') {
- const envelope = value as { address?: unknown; error?: unknown };
- if (typeof envelope.error === 'string' && envelope.error.length > 0) return null;
- if (typeof envelope.address === 'string' && envelope.address.length > 0) {
- return envelope.address;
- }
- }
- return null;
-}
-
-/** Same tolerance for the boolean-ish `isConnected` / `isAllowed` results. */
-export function readBoolean(value: unknown): boolean {
- if (typeof value === 'boolean') return value;
- if (value && typeof value === 'object') {
- const envelope = value as { isConnected?: unknown; isAllowed?: unknown };
- if (typeof envelope.isConnected === 'boolean') return envelope.isConnected;
- if (typeof envelope.isAllowed === 'boolean') return envelope.isAllowed;
- }
- return false;
-}
-
-/** Same tolerance for `getNetwork`. */
-export function readNetwork(value: unknown): string | undefined {
- if (typeof value === 'string' && value.length > 0) return value;
- if (value && typeof value === 'object') {
- const envelope = value as { network?: unknown };
- if (typeof envelope.network === 'string' && envelope.network.length > 0) {
- return envelope.network;
- }
- }
- return undefined;
-}
 
 /**
  * `GBXQ…4TQK` — enough of both ends to compare against an explorer, short
@@ -96,10 +51,32 @@ export function truncateAddress(address: string, lead = 4, tail = 4): string {
  return `${address.slice(0, lead)}…${address.slice(-tail)}`;
 }
 
+/**
+ * Normalises anything the API or the runtime can hand back into a message fit
+ * to put in front of a merchant.
+ *
+ * Freighter's errors arrive as `{ message, code }` in the envelope; a thrown
+ * exception is still possible if the extension goes away mid-call.
+ */
 function message(error: unknown): string {
  if (error instanceof Error && error.message) return error.message;
  if (typeof error === 'string' && error) return error;
+ if (error && typeof error === 'object') {
+ const detail = (error as { message?: unknown }).message;
+ if (typeof detail === 'string' && detail) return detail;
+ }
  return 'Wallet request failed';
+}
+
+/** Reads the network name, treating its absence as"unknown"rather than a fault. */
+async function readNetwork(): Promise<string | undefined> {
+ try {
+ const result = await freighterGetNetwork();
+ if (result.error || !result.network) return undefined;
+ return result.network;
+ } catch {
+ return undefined;
+ }
 }
 
 /**
@@ -107,21 +84,23 @@ function message(error: unknown): string {
  *
  * Safe to call on mount: `isConnected` and `getAddress` do not raise the
  * extension's approval dialog, so a visitor who has never connected sees no
- * popup just for loading the page.
+ * popup just for loading the page. `getAddress` returns an empty address
+ * rather than an error when the site has not been approved, which is what
+ * distinguishes `disconnected` from `unavailable`.
  */
 export async function readStatus(): Promise<WalletStatus> {
- const api = typeof window === 'undefined' ? undefined : window.freighterApi;
- if (!api) return { kind: 'unavailable' };
-
  try {
- if (api.isConnected && !readBoolean(await api.isConnected())) {
- return { kind: 'unavailable' };
- }
- const address = api.getAddress ? readAddress(await api.getAddress()) : null;
- if (!address) return { kind: 'disconnected' };
- const network = api.getNetwork ? readNetwork(await api.getNetwork()) : undefined;
- return { kind: 'connected', address, network };
- } catch (error) {
+ const connection = await freighterIsConnected();
+ if (connection.error) return { kind: 'error', message: message(connection.error) };
+ if (!connection.isConnected) return { kind: 'unavailable' };
+
+ const account = await freighterGetAddress();
+ // Not an error worth showing: an unapproved site is the normal state for a
+ // first-time visitor, and the extension reports it this way.
+ if (account.error || !account.address) return { kind: 'disconnected' };
+
+ return { kind: 'connected', address: account.address, network: await readNetwork() };
+ } catch (error: unknown) {
  return { kind: 'error', message: message(error) };
  }
 }
@@ -129,38 +108,23 @@ export async function readStatus(): Promise<WalletStatus> {
 /**
  * Prompts the extension for access. Only call from a user gesture — Freighter
  * ignores or blocks approval dialogs raised without one.
+ *
+ * A declined prompt comes back as an error envelope, not a rejection, and is
+ * reported as `disconnected`: the user made a choice, and showing them a red
+ * error for having made it would be wrong.
  */
 export async function connect(): Promise<WalletStatus> {
- const api = typeof window === 'undefined' ? undefined : window.freighterApi;
- if (!api?.requestAccess) return { kind: 'unavailable' };
-
  try {
- const address = readAddress(await api.requestAccess());
- if (!address) return { kind: 'disconnected' };
- const network = api.getNetwork ? readNetwork(await api.getNetwork()) : undefined;
- return { kind: 'connected', address, network };
- } catch (error) {
+ const connection = await freighterIsConnected();
+ if (!connection.isConnected) return { kind: 'unavailable' };
+
+ const access = await freighterRequestAccess();
+ if (access.error || !access.address) return { kind: 'disconnected' };
+
+ return { kind: 'connected', address: access.address, network: await readNetwork() };
+ } catch (error: unknown) {
  return { kind: 'error', message: message(error) };
  }
-}
-
-/**
- * Reads a signed envelope out of whatever shape the extension returned.
- *
- * Same tolerance as {@link readAddress}, and the same refusal to guess: a
- * malformed envelope here would be submitted to the network as a transaction,
- * so an unrecognised shape must be an error, never a best effort.
- */
-export function readSignedXdr(value: unknown): string | null {
- if (typeof value === 'string') return value.length > 0 ? value : null;
- if (value && typeof value === 'object') {
- const envelope = value as { signedTxXdr?: unknown; error?: unknown };
- if (typeof envelope.error === 'string' && envelope.error.length > 0) return null;
- if (typeof envelope.signedTxXdr === 'string' && envelope.signedTxXdr.length > 0) {
- return envelope.signedTxXdr;
- }
- }
- return null;
 }
 
 /**
@@ -174,13 +138,11 @@ export async function signTransaction(
  xdr: string,
  opts: { networkPassphrase: string; address?: string },
 ): Promise<string> {
- const api = typeof window === 'undefined' ? undefined : window.freighterApi;
- if (!api?.signTransaction) throw new Error('No Stellar wallet available to sign with');
-
- const signed = readSignedXdr(await api.signTransaction(xdr, opts));
- if (!signed) throw new Error('The wallet did not return a signed transaction');
- return signed;
+ const result = await freighterSignTransaction(xdr, opts);
+ if (result.error) throw new Error(message(result.error));
+ if (!result.signedTxXdr) throw new Error('The wallet did not return a signed transaction');
+ return result.signedTxXdr;
 }
 
 /** Where a merchant installs the extension, for the unavailable state. */
-export const FREIGHTER_INSTALL_URL = 'https://www.freighter.app/';
+export const FREIGHTER_INSTALL_URL = 'https://freighter.app/';
