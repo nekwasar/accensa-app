@@ -51,6 +51,29 @@ declared schedule, so a normal gap is not reported to the merchant as a fault.
 If you move off Hobby, raise the `vercel.json` cron and retire the Actions
 workflow — do not run both, or the cursor gets contention from two writers.
 
+**The cadence is not cosmetic.** Soroban RPC serves `getEvents` for roughly the
+last 121,000 ledgers, about a week of testnet. If the cursor stops advancing for
+longer than that it falls outside the retained window, and the ledgers in between
+are unrecoverable — no later run can reach them. A sync that skipped ledgers this
+way reports `skippedLedgers` in its response and `sync.yml` raises a warning; it
+is the one failure here that cannot be fixed by running the job again.
+
+## Reading a sync response
+
+```json
+{ "success": true, "latestLedger": 4067288, "startLedger": 3967288,
+  "syncedTo": 4067288, "skippedLedgers": 0, "drained": true,
+  "pages": 11, "windows": 11, "scanned": 1, "decoded": 1, "inserted": 1 }
+```
+
+| Field | Meaning |
+|---|---|
+| `syncedTo` | Where the cursor now stands. A reply without this field is not the indexer — `sync.yml` fails the run on it. |
+| `drained` | False when paging stopped against the time budget. Not a fault; the next run resumes from `syncedTo`. |
+| `windows` | `getEvents` calls made. Requests are bounded to 10,000 ledgers because the RPC silently truncates wider ranges. |
+| `skippedLedgers` | Ledgers lost to the retention window. Should always be 0. |
+| `scanned` / `decoded` / `inserted` | Events matched, decoded as transfers, and written. |
+
 ## Database connection
 
 Use the **Session pooler** connection string, not Direct.

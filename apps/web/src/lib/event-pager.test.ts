@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { drainEvents, safeCursorLedger, EVENTS_PAGE_LIMIT, type EventPage } from './event-pager';
+import {
+ drainEvents,
+ sweepLedgerRange,
+ EVENTS_PAGE_LIMIT,
+ LEDGER_WINDOW,
+ type EventPage,
+} from './event-pager';
 import type { RawEvent } from './stellar-events';
 
 /** Builds `count` events spread across ledgers, ids ascending from `from`. */
@@ -101,23 +107,117 @@ describe('drainEvents', () => {
  });
 });
 
-describe('safeCursorLedger', () => {
- it('advances to the last ledger seen on a complete read', () => {
- expect(safeCursorLedger(520, true, 500)).toBe(520);
+/**
+ * A fake RPC that honours the ledger window, the way Soroban RPC does.
+ *
+ * Deliberately returns nothing for events outside `[startLedger, endLedger]`:
+ * the bug this guards against is a caller assuming an unbounded request was
+ * answered in full.
+ */
+function windowedSource(all: RawEvent[]) {
+ const windows: Array<{ startLedger?: number; endLedger?: number }> = [];
+ const fetchPage = async (params: {
+ startLedger?: number;
+ endLedger?: number;
+ cursor?: string;
+ }): Promise<EventPage> => {
+ if (!params.cursor) windows.push({ startLedger: params.startLedger, endLedger: params.endLedger });
+ const from = params.startLedger ?? 0;
+ const to = params.endLedger ?? Number.MAX_SAFE_INTEGER;
+ const inRange = all.filter((e) => (e.ledger ?? 0) >= from && (e.ledger ?? 0) <= to);
+ const offset = params.cursor ? inRange.findIndex((e) => e.id === params.cursor) + 1 : 0;
+ const events = inRange.slice(offset, offset + EVENTS_PAGE_LIMIT);
+ return { events, cursor: events.length ? events[events.length - 1].id : undefined };
+ };
+ return { fetchPage, windows };
+}
+
+describe('sweepLedgerRange', () => {
+ it('covers the whole range in windows the RPC will honour', async () => {
+ const { fetchPage, windows } = windowedSource([]);
+
+ const result = await sweepLedgerRange(fetchPage, {
+ startLedger: 1_000,
+ endLedger: 1_000 + LEDGER_WINDOW * 2,
  });
 
- it('stops one short on a partial read, so the split ledger is replayed', () => {
- expect(safeCursorLedger(520, false, 500)).toBe(519);
+ expect(result.complete).toBe(true);
+ expect(result.sweptThrough).toBe(1_000 + LEDGER_WINDOW * 2);
+ expect(result.windows).toBe(3);
+ // Contiguous, non-overlapping, and never wider than one window.
+ expect(windows[0]).toEqual({ startLedger: 1_000, endLedger: 1_000 + LEDGER_WINDOW - 1 });
+ expect(windows[1].startLedger).toBe(windows[0].endLedger! + 1);
+ expect(windows[2].endLedger).toBe(1_000 + LEDGER_WINDOW * 2);
  });
 
- it('makes no progress when nothing decodable was seen', () => {
- expect(safeCursorLedger(0, true, 500)).toBe(499);
- expect(safeCursorLedger(0, false, 500)).toBe(499);
+ it('advances through a range that held no events at all', async () => {
+ // The regression that stranded the indexer. A quiet merchant used to leave
+ // the cursor where it was, so the gap to the chain head grew until it passed
+ // the RPC retention window and new payments stopped being seen entirely.
+ const { fetchPage } = windowedSource([]);
+
+ const result = await sweepLedgerRange(fetchPage, { startLedger: 500, endLedger: 40_000 });
+
+ expect(result.events).toHaveLength(0);
+ expect(result.sweptThrough).toBe(40_000);
+ expect(result.complete).toBe(true);
  });
 
- it('never regresses below the start of the range', () => {
- // A partial read whose only ledger is the first in range must not rewind.
- expect(safeCursorLedger(500, false, 500)).toBe(499);
- expect(safeCursorLedger(499, true, 500)).toBe(499);
+ it('finds an event that a single unbounded request would have missed', async () => {
+ // The event sits near the head, far past what one getEvents call scans.
+ const { fetchPage } = windowedSource(makeEvents(1, () => 99_000));
+
+ const result = await sweepLedgerRange(fetchPage, { startLedger: 1, endLedger: 100_000 });
+
+ expect(result.events.map((e) => e.ledger)).toEqual([99_000]);
+ expect(result.complete).toBe(true);
+ });
+
+ it('stops on a window boundary when the budget runs out', async () => {
+ const { fetchPage } = windowedSource([]);
+ let calls = 0;
+
+ const result = await sweepLedgerRange(fetchPage, {
+ startLedger: 1,
+ endLedger: 100_000,
+ withinBudget: () => ++calls <= 2,
+ });
+
+ expect(result.complete).toBe(false);
+ // Two windows cleared before the budget went. The cursor lands on that
+ // boundary, so the next run resumes cleanly rather than inside a window it
+ // only partly read.
+ expect(result.sweptThrough).toBe(LEDGER_WINDOW * 2);
+ expect(result.windows).toBe(2);
+ });
+
+ it('makes no progress when the budget runs out before the first window', async () => {
+ const { fetchPage } = windowedSource([]);
+
+ const result = await sweepLedgerRange(fetchPage, {
+ startLedger: 5_000,
+ endLedger: 100_000,
+ withinBudget: () => false,
+ });
+
+ expect(result.complete).toBe(false);
+ expect(result.sweptThrough).toBe(4_999);
+ expect(result.windows).toBe(0);
+ });
+
+ it('never advances past a window it did not finish', async () => {
+ // 250 events in one ledger: the window needs two pages, and the budget dies
+ // between them. The cursor must not step over the half it never read.
+ const { fetchPage } = windowedSource(makeEvents(250, () => 2_000));
+ let calls = 0;
+
+ const result = await sweepLedgerRange(fetchPage, {
+ startLedger: 1,
+ endLedger: 100_000,
+ withinBudget: () => ++calls <= 1,
+ });
+
+ expect(result.complete).toBe(false);
+ expect(result.sweptThrough).toBe(0);
  });
 });
