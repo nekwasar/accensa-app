@@ -5,7 +5,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import { ArrowUpRight } from 'lucide-react';
-import { WalletStatus } from './wallet-status';
+
+/**
+ * Shared styling for the navbar's wallet entry point.
+ *
+ * It points at `/coming-soon` rather than at the live wallet control. The
+ * connection code works and is exercised by the refund panel, but the
+ * navbar-level"connect"affordance is not being presented as shipped until the
+ * connected path has been used on real hardware with the extension installed.
+ * Advertising a connect button that has not been driven end to end is how the
+ * previous version of this stayed broken for weeks without anyone noticing.
+ */
+const WALLET_CTA =
+ 'px-4 py-2 border font-bold text-xs uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5';
 
 export function Nav() {
  const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +53,7 @@ export function Nav() {
 
  {/* Right Nav (Theme Toggle & Connect Wallet) */}
  <div className="flex items-center gap-4">
- <WalletStatus className="hidden md:inline-flex"/>
+ <Link href="/coming-soon"className={`hidden md:inline-flex ${WALLET_CTA}`}>Connect Wallet</Link>
  <ThemeToggle />
  </div>
  </div>
@@ -143,7 +155,13 @@ export function Nav() {
 
  {/* Minimal Bottom CTA Button */}
  <div>
- <WalletStatus className="w-full justify-center py-4 text-sm"/>
+ <Link
+ href="/coming-soon"
+ onClick={() => setIsOpen(false)}
+ className={`w-full justify-center py-4 text-sm inline-flex ${WALLET_CTA}`}
+ >
+ Connect Wallet
+ </Link>
  </div>
  </div>
  </>
