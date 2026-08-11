@@ -20,38 +20,21 @@ export {
   type X402SettleResult,
 } from './settlement';
 
-// MOCK MIDDLEWARE FOR DEMO ONLY
-export function withX402(handler: Function, options: { amount: number, asset: string }) {
-  return async function(req: Request) {
-    const receipt = req.headers.get('x-payment-receipt');
-    if (!receipt) {
-      return new Response(JSON.stringify({ error: 'Payment Required' }), { 
-        status: 402,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    
-    // Simulate verifying the receipt and reporting settlement
-    // We mock a Settlement object to report to the dashboard
-    const settlement: Settlement = {
-      txHash: 'mock-tx-hash-' + Date.now(),
-      route: new URL(req.url).pathname,
-      method: req.method,
-      requestId: 'mock-req-' + Date.now(),
-      payer: 'G-MOCK-PAYER',
-      amount: options.amount.toString(),
-      network: 'TESTNET'
-    };
-    
-    // Report it to the dashboard indexer url (assumed localhost:3000 for demo)
-    await reportSettlement(settlement, {
-      indexerUrl: process.env.INDEXER_URL || 'http://localhost:3000',
-      apiKey: process.env.HOOK_API_KEY || 'test-secret'
-    });
-
-    return handler(req);
-  };
-}
+/**
+ * This package deliberately ships no paywall middleware.
+ *
+ * Gating a route behind x402 is `@x402/express` (or another x402 server
+ * binding) talking to a facilitator — not something Accensa reimplements. This
+ * SDK's job starts after that: take the settlement the x402 layer reports and
+ * attribute it to the route that earned it, via `attachAccensaHook` below.
+ * `apps/demo-merchant` shows the two composed.
+ *
+ * An earlier `withX402` export stood in for the x402 layer by synthesising a
+ * settlement — a fabricated transaction hash and payer, reported to the
+ * dashboard as though a payment had occurred. It was removed rather than fixed:
+ * a mock that writes to the merchant's payment history is precisely what the
+ * contract documented at the top of `settlement.ts` forbids.
+ */
 
 /** Path the Accensa app exposes for merchant-reported route attribution. */
 export const SETTLE_ENDPOINT = '/api/hook/settle';
@@ -173,7 +156,9 @@ export async function reportSettlement(
       });
       signatureHex = crypto.sign(null, Buffer.from(payload), privateKey).toString('hex');
     } else {
-      // Browser/Edge environment not fully supported for this mock yet, throwing to avoid silent failure
+      // Browser/Edge has no node:crypto. Fail loudly rather than skip signing:
+      // an unsigned report is rejected with 401 by the hook anyway, and a
+      // silent no-op here would look like a delivered report that never landed.
       throw new Error('Ed25519 signing requires Node.js crypto in this version');
     }
 

@@ -3,16 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"demo-merchant is an example server; no tests\""
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "Example x402 seller reporting route attribution to Accensa",
   "dependencies": {
-    "@x402/core": "^2.18.0",
-    "@x402/express": "^2.18.0",
-    "@x402/stellar": "^2.18.0",
+    "@x402/core": "^2.21.0",
+    "@x402/express": "^2.21.0",
+    "@x402/stellar": "^2.21.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"
   },
