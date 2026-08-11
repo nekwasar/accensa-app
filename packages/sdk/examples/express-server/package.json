@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@accensa/sdk": "workspace:^",
-    "@x402/core": "^2.18.0",
-    "@x402/express": "^2.18.0",
-    "@x402/stellar": "^2.18.0",
+    "@x402/core": "^2.21.0",
+    "@x402/express": "^2.21.0",
+    "@x402/stellar": "^2.21.0",
     "express": "^5.2.1"
   },
   "devDependencies": {
