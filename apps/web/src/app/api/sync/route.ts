@@ -61,8 +61,7 @@ const PAGING_BUDGET_MS = 40_000;
 /**
  * Minimum gap between manual syncs.
  *
- * The dashboard is public and unauthenticated, so the POST entry point is too.
- * Indexing is idempotent, so repeated calls cannot corrupt anything, but each
+ * The dashboard is now authenticated. Indexing is idempotent, so repeated calls
  * one costs Soroban RPC round trips, a database connection and a function
  * invocation. This bounds what a held-down button, or anyone with curl, can
  * spend. A scheduled run counts too - if the data is already current, there is
@@ -310,8 +309,7 @@ export async function GET(request: Request) {
 /**
  * Manual entry point, behind the dashboard's"Sync now"button.
  *
- * Deliberately not behind CRON_SECRET: the dashboard is public and a browser
- * cannot hold a secret. MANUAL_COOLDOWN_MS is what bounds the cost instead.
+ * Protected by session authentication via middleware. MANUAL_COOLDOWN_MS bounds the cost.
  */
 export async function POST() {
  const bad = configError();
