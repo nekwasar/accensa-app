@@ -83,10 +83,10 @@ export default function Landing() {
  Every request acts as an isolated transaction. The payment settles natively on Stellar as a Stellar Asset Contract transfer, leaving an immutable footprint.
  </p>
  </BentoCard>
- <BentoCard className="md:row-span-2"title="2. Accensa Indexes">
+ <BentoCard className="md:row-span-2"title="2. Facilitator Processes">
  <div className="space-y-4 mt-4">
  <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium transition-colors duration-300">
- The indexer decodes transfers to your address in real-time, grouping them into cryptographically secure batches.
+ The facilitator handles x402 payments to your address in real-time, allowing Accensa to group them into cryptographically secure batches.
  </p>
  <div className="p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/5 font-mono text-xs text-emerald-600 dark:text-emerald-400 break-all transition-colors duration-300">
  root: 7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1
