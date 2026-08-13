@@ -29,6 +29,7 @@ function HomepageHeader() {
           fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
           lineHeight: 1.1,
           letterSpacing: '0.025em',
+          fontWeight: 'bold',
           marginBottom: '1.5rem',
           color: 'var(--accensa-title-color)'
         }}>

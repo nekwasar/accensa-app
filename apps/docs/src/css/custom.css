@@ -31,8 +31,17 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
   --ifm-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
   --ifm-heading-font-family: 'Harabara', sans-serif;
+  --ifm-background-color: #f8fafc;
+  --ifm-button-border-radius: 0px;
   --accensa-title-color: #0f172a; /* slate-900 */
   --accensa-text-color: #475569; /* slate-600 */
+}
+
+.button {
+  text-transform: uppercase;
+  letter-spacing: 0.05em !important;
+  font-weight: bold !important;
+  border-radius: 0 !important;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -44,10 +53,10 @@
   --ifm-color-primary-light: #28c08d;
   --ifm-color-primary-lighter: #34c393;
   --ifm-color-primary-lightest: #58cda4;
-  --ifm-background-color: #0f172a; /* slate-900 */
-  --ifm-background-surface-color: #1e293b; /* slate-800 */
-  --ifm-navbar-background-color: #0f172a;
-  --ifm-footer-background-color: #0f172a;
+  --ifm-background-color: #04090f;
+  --ifm-background-surface-color: #04090f;
+  --ifm-navbar-background-color: #04090f;
+  --ifm-footer-background-color: #04090f;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
   --accensa-title-color: #ffffff;
   --accensa-text-color: #94a3b8; /* slate-400 */
