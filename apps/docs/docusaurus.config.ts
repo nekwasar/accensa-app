@@ -7,7 +7,6 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Accensa',
   tagline: 'Merchant back-office for x402 sellers on Stellar',
-  favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -76,10 +75,6 @@ const config: Config = {
     },
     navbar: {
       title: 'Accensa',
-      logo: {
-        alt: 'Accensa Logo',
-        src: 'img/logo.svg',
-      },
       items: [
         {
           type: 'docSidebar',
@@ -130,7 +125,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Accensa. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Accensa.`,
     },
     prism: {
       theme: prismThemes.github,
