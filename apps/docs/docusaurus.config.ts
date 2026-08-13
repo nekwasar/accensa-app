@@ -88,6 +88,11 @@ const config: Config = {
           label: 'Documentation',
         },
         {
+          href: 'https://accensa-dashboard.vercel.app',
+          label: 'Dashboard',
+          position: 'right',
+        },
+        {
           href: 'https://github.com/accensa/accensa-app',
           label: 'GitHub',
           position: 'right',
@@ -103,6 +108,15 @@ const config: Config = {
             {
               label: 'Introduction',
               to: '/docs/introduction',
+            },
+          ],
+        },
+        {
+          title: 'App',
+          items: [
+            {
+              label: 'Dashboard',
+              href: 'https://accensa-dashboard.vercel.app',
             },
           ],
         },
