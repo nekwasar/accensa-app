@@ -72,6 +72,10 @@
 
 .font-harabara {
   font-family: 'Harabara', sans-serif !important;
+  letter-spacing: 0.05em;
+}
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: 0.05em;
 }
 .font-camiro {
   font-family: 'Camiro', sans-serif !important;

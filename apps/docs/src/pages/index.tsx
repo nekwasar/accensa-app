@@ -28,7 +28,7 @@ function HomepageHeader() {
         <h1 className="font-harabara" style={{
           fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
           lineHeight: 1.1,
-          letterSpacing: '0.025em',
+          letterSpacing: '0.05em',
           fontWeight: 'bold',
           marginBottom: '1.5rem',
           color: 'var(--accensa-title-color)'
