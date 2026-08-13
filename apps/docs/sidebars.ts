@@ -17,7 +17,7 @@ const sidebars: SidebarsConfig = {
     'introduction',
     {
       type: 'category',
-      label: 'Accensa App',
+      label: 'accensa-app',
       items: [
         'app/overview',
         'onboarding',
@@ -31,7 +31,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Smart Contracts',
+      label: 'accensa-contracts',
       items: [
         'contracts/overview',
         {
@@ -53,7 +53,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Facilitator Middleware',
+      label: 'x402-facilitator-stellar',
       items: [
         'facilitator/overview',
         {
