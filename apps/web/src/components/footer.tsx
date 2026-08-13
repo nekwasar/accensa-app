@@ -27,7 +27,7 @@ export function Footer() {
  Verify
  </Link>
  <a
- href="https://accensa-docs.vercel.app"
+ href="https://accensa.github.io/docs"
  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
  >
  Docs
