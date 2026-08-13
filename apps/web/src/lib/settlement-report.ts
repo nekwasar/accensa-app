@@ -13,6 +13,7 @@ export interface SettlementReport {
  method: string;
  requestId: string | null;
  payer: string | null;
+ reportedAt: string | null;
 }
 
 export type ParseResult =
@@ -81,7 +82,34 @@ export function parseSettlementReport(body: unknown): ParseResult {
  payer = trimmed === '' ? null : trimmed;
  }
 
- return { ok: true, report: { txHash: txHash.toLowerCase(), route, method, requestId, payer } };
+ let reportedAt: string | null = null;
+ if (b.reported_at !== undefined && b.reported_at !== null) {
+   if (typeof b.reported_at !== 'string') {
+     return { ok: false, error: 'reported_at must be a string' };
+   }
+   const d = new Date(b.reported_at);
+   if (Number.isNaN(d.getTime())) {
+     return { ok: false, error: 'reported_at must be an ISO-8601 timestamp' };
+   }
+   const maxAgeMs = process.env.HOOK_MAX_AGE_MS ? Number(process.env.HOOK_MAX_AGE_MS) : 3600000;
+   const now = Date.now();
+   const age = now - d.getTime();
+   if (age > maxAgeMs) {
+     return { ok: false, error: 'report_too_old' };
+   }
+   // 5 minutes clock skew
+   if (d.getTime() > now + 300000) {
+     return { ok: false, error: 'report_future_dated' };
+   }
+   reportedAt = b.reported_at;
+ } else {
+   // transition window
+   if (Date.now() > new Date('2027-01-01T00:00:00Z').getTime()) {
+     return { ok: false, error: 'reported_at is required' };
+   }
+ }
+
+ return { ok: true, report: { txHash: txHash.toLowerCase(), route, method, requestId, payer, reportedAt } };
 }
 
 /**

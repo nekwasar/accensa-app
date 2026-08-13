@@ -120,33 +120,29 @@ export async function recordSettlement(
  method: string;
  requestId?: string | null;
  payer?: string | null;
+ reportedAt?: string | null;
  },
 ): Promise<{ matchedExistingPayment: boolean }> {
+ const reportedAt = s.reportedAt ?? new Date().toISOString();
  const updated = await client.query(
  `UPDATE payments
- SET route = $2, method = $3, request_id = $4, hook_reported_at = now()
- WHERE tx_hash = $1`,
- [s.txHash, s.route, s.method, s.requestId ?? null],
+ SET route = $2, method = $3, request_id = $4, hook_reported_at = $5
+ WHERE tx_hash = $1 AND (hook_reported_at IS NULL OR hook_reported_at < $5)`,
+ [s.txHash, s.route, s.method, s.requestId ?? null, reportedAt],
  );
 
  if ((updated.rowCount ?? 0) > 0) return { matchedExistingPayment: true };
 
- // Not indexed yet. Stage the attribution so it is not lost; the sync job
- // completes the row when it reaches that ledger. ON CONFLICT guards the race
- // where the indexer inserts between the UPDATE and the INSERT.
- // ts is explicitly NULL, not omitted: the column carries a CURRENT_TIMESTAMP
- // default, and letting it fire would stamp a staged row with the time it was
- // reported rather than the time the payment settled on chain — and would put
- // it straight onto the dashboard, since that filters on ts IS NOT NULL.
  await client.query(
  `INSERT INTO payments (tx_hash, payer, route, method, request_id, ts, hook_reported_at)
- VALUES ($1, $2, $3, $4, $5, NULL, now())
+ VALUES ($1, $2, $3, $4, $5, NULL, $6)
  ON CONFLICT (tx_hash) DO UPDATE
  SET route = EXCLUDED.route,
  method = EXCLUDED.method,
  request_id = EXCLUDED.request_id,
- hook_reported_at = now()`,
- [s.txHash, s.payer ?? null, s.route, s.method, s.requestId ?? null],
+ hook_reported_at = EXCLUDED.hook_reported_at
+ WHERE payments.hook_reported_at IS NULL OR payments.hook_reported_at < EXCLUDED.hook_reported_at`,
+ [s.txHash, s.payer ?? null, s.route, s.method, s.requestId ?? null, reportedAt],
  );
 
  return { matchedExistingPayment: false };

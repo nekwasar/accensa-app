@@ -13,13 +13,22 @@ function expectError(body: unknown, match: RegExp) {
 }
 
 describe('parseSettlementReport', () => {
- it('accepts a minimal valid report', () => {
- const result = parseSettlementReport(valid);
- expect(result).toEqual({
- ok: true,
- report: { txHash: TX, route: '/api/hello', method: 'GET', requestId: null, payer: null },
- });
- });
+  it('accepts a minimal valid report without reported_at during transition window', () => {
+  const result = parseSettlementReport(valid);
+  expect(result).toEqual({
+  ok: true,
+  report: { txHash: TX, route: '/api/hello', method: 'GET', requestId: null, payer: null, reportedAt: null },
+  });
+  });
+
+  it('accepts a valid report with reported_at', () => {
+  const date = new Date().toISOString();
+  const result = parseSettlementReport({ ...valid, reported_at: date });
+  expect(result).toEqual({
+  ok: true,
+  report: { txHash: TX, route: '/api/hello', method: 'GET', requestId: null, payer: null, reportedAt: date },
+  });
+  });
 
  it('lower-cases the transaction hash so lookups match the indexer', () => {
  const result = parseSettlementReport({ ...valid, tx_hash: TX.toUpperCase() });
@@ -84,8 +93,26 @@ describe('parseSettlementReport', () => {
  });
 
  it('rejects a non-string request id', () => {
- expectError({ ...valid, request_id: 5 }, /request_id/);
- });
+  expectError({ ...valid, request_id: 5 }, /request_id/);
+  });
+
+  it('rejects a non-string reported_at', () => {
+  expectError({ ...valid, reported_at: 123 }, /reported_at must be a string/);
+  });
+
+  it('rejects a malformed timestamp for reported_at', () => {
+  expectError({ ...valid, reported_at: 'not-a-date' }, /ISO-8601 timestamp/);
+  });
+
+  it('rejects a stale reported_at', () => {
+  const staleDate = new Date(Date.now() - 4000000).toISOString();
+  expectError({ ...valid, reported_at: staleDate }, /report_too_old/);
+  });
+
+  it('rejects a future-dated reported_at', () => {
+  const futureDate = new Date(Date.now() + 600000).toISOString();
+  expectError({ ...valid, reported_at: futureDate }, /report_future_dated/);
+  });
 });
 
 describe('bearerMatches', () => {
