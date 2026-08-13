@@ -17,8 +17,18 @@ const sidebars: SidebarsConfig = {
     'introduction',
     {
       type: 'category',
-      label: 'Core Protocol',
+      label: 'Accensa App',
       items: [
+        'app/overview',
+        'onboarding',
+        'user-guides',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Smart Contracts',
+      items: [
+        'contracts/overview',
         {
           type: 'link',
           label: 'Mechanics',
@@ -33,11 +43,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Guides',
+      label: 'Facilitator Middleware',
       items: [
-        'onboarding',
+        'facilitator/overview',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'General Guides',
+      items: [
         'developer',
-        'user-guides',
         'contributing',
         'troubleshooting',
       ],
