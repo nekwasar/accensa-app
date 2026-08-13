@@ -1,0 +1,21 @@
+# `@accensa/sdk`
+
+This SDK enables merchant applications to report x402 payment settlements to an Accensa indexer.
+
+## Reporting Settlements
+Accensa supports merchant-reported route attribution via the `/api/hook/settle` webhook.
+
+To maintain integrity, the payload is authenticated. Sellers using `@accensa/sdk` will have this handled automatically via `createSettleHook` or `attachAccensaHook`.
+
+### Signing Contract (For Non-JS Implementers)
+If you are integrating with Accensa from a non-JavaScript environment, you must construct and sign the settlement report yourself.
+The reporting contract is as follows:
+
+1. **Construct the JSON payload**:
+   Create a JSON object containing the settlement details (e.g., `tx_hash`, `route`, `method`).
+2. **Sign the raw request body**:
+   The Ed25519 signature is generated over the exact UTF-8 bytes of the request body (the JSON string). Ensure that the bytes signed match the body sent in the HTTP request exactly.
+3. **Set the header**:
+   Pass the resulting signature as a hex string in the `X-Signature` HTTP header.
+
+The backend verifies this signature before parsing the JSON, ensuring the request is strictly authenticated based on the raw bytes.
