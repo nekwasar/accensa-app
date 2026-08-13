@@ -22,6 +22,11 @@ const sidebars: SidebarsConfig = {
         'app/overview',
         'onboarding',
         'user-guides',
+        {
+          type: 'link',
+          label: 'GitHub Repository',
+          href: 'https://github.com/accensa/accensa-app',
+        },
       ],
     },
     {
@@ -39,6 +44,11 @@ const sidebars: SidebarsConfig = {
           label: 'Contracts',
           href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/contracts.md',
         },
+        {
+          type: 'link',
+          label: 'GitHub Repository',
+          href: 'https://github.com/accensa/accensa-contracts',
+        },
       ],
     },
     {
@@ -46,6 +56,11 @@ const sidebars: SidebarsConfig = {
       label: 'Facilitator Middleware',
       items: [
         'facilitator/overview',
+        {
+          type: 'link',
+          label: 'GitHub Repository',
+          href: 'https://github.com/accensa/x402-facilitator-stellar',
+        },
       ],
     },
     {
