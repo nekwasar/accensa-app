@@ -13,17 +13,16 @@ Accensa requires a standard PostgreSQL instance to store parsed ledger data.
 docker run --name pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
 ```
 
-### 2. Start the Indexer
-The Go Indexer polls the Stellar RPC and populates the database. Provide it with your merchant address and connection strings.
+### 2. Start the Facilitator
+Run the `x402-facilitator-stellar` service to handle the standard x402 protocol flow and process payments from AI agents.
 ```bash
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
-export STELLAR_RPC_URL=https://soroban-testnet.stellar.org
-export MERCHANT_ADDRESS=G...
-go run main.go
+cd x402-facilitator-stellar
+pnpm install
+pnpm start
 ```
 
 ### 3. Start the Dashboard
-The Next.js dashboard connects to the local Go Indexer API to visualize your revenue and receipts.
+The Next.js dashboard connects to your local database to visualize your revenue and receipts.
 ```bash
 cd apps/web
 pnpm install
