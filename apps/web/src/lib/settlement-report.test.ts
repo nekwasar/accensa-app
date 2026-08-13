@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSettlementReport, bearerMatches } from './settlement-report';
+import { parseSettlementReport } from './settlement-report';
 
 const TX = 'a'.repeat(64);
 const PAYER = 'G' + 'A'.repeat(55);
@@ -85,35 +85,5 @@ describe('parseSettlementReport', () => {
 
  it('rejects a non-string request id', () => {
  expectError({ ...valid, request_id: 5 }, /request_id/);
- });
-});
-
-describe('bearerMatches', () => {
- it('accepts the expected token', () => {
- expect(bearerMatches('Bearer s3cret', 's3cret')).toBe(true);
- });
-
- it('rejects a wrong token of the same length', () => {
- expect(bearerMatches('Bearer s3cres', 's3cret')).toBe(false);
- });
-
- it('rejects a token of a different length', () => {
- expect(bearerMatches('Bearer s3cretlonger', 's3cret')).toBe(false);
- });
-
- it('rejects a missing or malformed header', () => {
- expect(bearerMatches(null, 's3cret')).toBe(false);
- expect(bearerMatches('s3cret', 's3cret')).toBe(false);
- expect(bearerMatches('Basic s3cret', 's3cret')).toBe(false);
- });
-
- it('is case sensitive on the scheme', () => {
- expect(bearerMatches('bearer s3cret', 's3cret')).toBe(false);
- });
-
- // Fails closed: an unset secret must never authorise anything.
- it('rejects everything when no secret is configured', () => {
- expect(bearerMatches('Bearer anything', '')).toBe(false);
- expect(bearerMatches('Bearer ', '')).toBe(false);
  });
 });

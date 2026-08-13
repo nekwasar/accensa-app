@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withClient, ensureSchema, recordSettlement } from '@/lib/db';
-import { parseSettlementReport, bearerMatches } from '@/lib/settlement-report';
+import { parseSettlementReport } from '@/lib/settlement-report';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  * route that was paid for. That mapping exists only in the seller's process, so
  * it has to be reported rather than indexed. This is consequently the only
  * write path into `payments` that is not derived from the ledger, which is why
- * it fails closed: without HOOK_API_KEY configured the endpoint refuses to
+ * it fails closed: without MERCHANT_PUBLIC_KEY configured the endpoint refuses to
  * accept anything at all.
  *
  * Ledger-owned fields (ledger, amount, asset, ts) are never written here.
@@ -34,16 +34,11 @@ export async function POST(request: Request) {
  return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
  }
 
- let body: unknown;
- try {
- body = await request.json();
- } catch {
- return NextResponse.json({ error: 'Request body must be JSON' }, { status: 400 });
- }
-
-  const parsed = parseSettlementReport(body);
-  if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  let raw: string;
+  try {
+    raw = await request.text();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be text/json' }, { status: 400 });
   }
 
   try {
@@ -58,12 +53,24 @@ export async function POST(request: Request) {
       type: 'spki'
     });
     
-    const isValid = crypto.verify(null, Buffer.from(JSON.stringify(body)), publicKey, Buffer.from(signature, 'hex'));
+    const isValid = crypto.verify(null, Buffer.from(raw, 'utf8'), publicKey, Buffer.from(signature, 'hex'));
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
   } catch (err) {
     return NextResponse.json({ error: 'Signature verification failed' }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return NextResponse.json({ error: 'Request body must be JSON' }, { status: 400 });
+  }
+
+  const parsed = parseSettlementReport(body);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
  try {

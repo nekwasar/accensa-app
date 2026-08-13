@@ -84,23 +84,4 @@ export function parseSettlementReport(body: unknown): ParseResult {
  return { ok: true, report: { txHash: txHash.toLowerCase(), route, method, requestId, payer } };
 }
 
-/**
- * Constant-time-ish bearer token comparison.
- *
- * Length is compared first and the loop always runs to completion over the
- * expected token, so a mismatched byte does not short-circuit.
- */
-export function bearerMatches(header: string | null, expected: string): boolean {
- if (!header || !expected) return false;
- const prefix = 'Bearer ';
- if (!header.startsWith(prefix)) return false;
 
- const provided = header.slice(prefix.length);
- if (provided.length !== expected.length) return false;
-
- let diff = 0;
- for (let i = 0; i < expected.length; i++) {
- diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
- }
- return diff === 0;
-}
