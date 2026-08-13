@@ -104,6 +104,7 @@ describe('toSettleHookPayload', () => {
       payer: settlement.payer,
       amount: '1000',
       network: 'stellar:testnet',
+      reported_at: expect.any(String),
     });
   });
 });
@@ -122,7 +123,9 @@ describe('reportSettlement', () => {
     // 401 otherwise.
     const signature = (init.headers as Record<string, string>)['X-Signature'];
     expect(signature).toMatch(/^[0-9a-f]+$/);
-    expect(JSON.parse(init.body as string)).toEqual(toSettleHookPayload(settlement));
+    const body = JSON.parse(init.body as string);
+    const expected = toSettleHookPayload(settlement);
+    expect(body).toEqual({ ...expected, reported_at: body.reported_at });
   });
 
   it('does not double the slash when indexerUrl has a trailing one', async () => {
@@ -139,7 +142,9 @@ describe('reportSettlement', () => {
     expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
     expect(String(onError.mock.calls[0][0])).toContain('401');
     // The payload comes back with the error so a caller can retry or log it.
-    expect(onError.mock.calls[0][1]).toEqual(toSettleHookPayload(settlement));
+    const payload = onError.mock.calls[0][1];
+    const expected = toSettleHookPayload(settlement);
+    expect(payload).toEqual({ ...expected, reported_at: payload.reported_at });
   });
 
   it('resolves false in a runtime with no fetch at all', async () => {

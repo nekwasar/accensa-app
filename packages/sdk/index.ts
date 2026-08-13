@@ -83,6 +83,7 @@ export interface SettleHookPayload {
   payer?: string;
   amount?: string;
   network?: string;
+  reported_at?: string;
 }
 
 /** Builds the wire body for one settlement. */
@@ -95,6 +96,7 @@ export function toSettleHookPayload(settlement: Settlement): SettleHookPayload {
     payer: settlement.payer,
     amount: settlement.amount,
     network: settlement.network,
+    reported_at: new Date().toISOString(),
   };
 }
 
