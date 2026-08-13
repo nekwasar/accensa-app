@@ -70,6 +70,7 @@ const sidebars: SidebarsConfig = {
         'developer',
         'contributing',
         'troubleshooting',
+        'faq',
       ],
     }
   ],
