@@ -30,7 +30,7 @@ function HomepageHeader() {
           lineHeight: 1.1,
           letterSpacing: '0.025em',
           marginBottom: '1.5rem',
-          color: 'var(--ifm-heading-color)'
+          color: 'var(--accensa-title-color)'
         }}>
           <span style={{ display: 'block' }}>Trustless payments,</span>
           <span style={{ display: 'block', fontStyle: 'italic', fontWeight: 'normal', opacity: 0.7 }}>
@@ -42,7 +42,8 @@ function HomepageHeader() {
           maxWidth: '42rem',
           margin: '0 auto 2rem',
           lineHeight: 1.6,
-          opacity: 0.8
+          color: 'var(--accensa-text-color)',
+          fontWeight: 500
         }}>
           {siteConfig.tagline}
         </p>
