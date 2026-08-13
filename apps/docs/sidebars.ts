@@ -17,14 +17,6 @@ const sidebars: SidebarsConfig = {
     'introduction',
     {
       type: 'category',
-      label: 'Core Protocol',
-      items: [
-        'contracts-repo/docs/mechanics',
-        'contracts-repo/docs/contracts',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Guides',
       items: [
         'developer',
