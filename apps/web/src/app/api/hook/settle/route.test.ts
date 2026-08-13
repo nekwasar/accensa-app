@@ -13,7 +13,7 @@ vi.mock('@/lib/db', () => ({
 describe('POST /api/hook/settle', () => {
   beforeEach(() => {
     process.env.DATABASE_URL = 'postgres://dummy';
-    process.env.MERCHANT_PUBLIC_KEY = 'e15b369527ec5696d59f77f52f82c40212f7193d5ed59223ef295ef86faafdf7';
+    process.env.MERCHANT_PUBLIC_KEY = 'dfac12734284a3fd741b1392f7f545496462efa5ad0fb45f5d5ce79a09d46b2f';
   });
 
   const sign = (payload: string) => {
