@@ -1,0 +1,18 @@
+---
+sidebar_position: 1
+title: Facilitator Overview
+---
+
+# Facilitator Middleware
+
+[**View the Repository on GitHub ↗**](https://github.com/accensa/x402-facilitator-stellar)
+
+The `x402-facilitator-stellar` repository is the crucial off-chain middleware that bridges the gap between your server infrastructure and the on-chain Soroban smart contracts.
+
+## Key Responsibilities
+
+1. **Indexing & Verification:** Constantly indexes the Stellar blockchain state to verify payment settlements in real-time.
+2. **Webhook Dispatches:** Once a payment is securely verified and batched on-chain, it dispatches webhooks to the merchant's backend to fulfill the agent's request.
+3. **RPC Resilience:** Built-in dead-letter queues and retry mechanisms to handle failed RPC requests, ensuring no payment state is lost due to network instability.
+
+Because it is designed modularly, any project building payments on Stellar can fork this repository to handle their own high-throughput indexing and Webhook dispatching.

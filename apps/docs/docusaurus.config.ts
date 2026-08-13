@@ -7,7 +7,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Accensa',
   tagline: 'Merchant back-office for x402 sellers on Stellar',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/icon.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -15,15 +15,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://accensa.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/accensa-app/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'accensa', // Usually your GitHub org/user name.
+  projectName: 'accensa-app', // Usually your repo name.
 
   onBrokenLinks: 'throw',
 
@@ -76,10 +76,6 @@ const config: Config = {
     },
     navbar: {
       title: 'Accensa',
-      logo: {
-        alt: 'Accensa Logo',
-        src: 'img/logo.svg',
-      },
       items: [
         {
           type: 'docSidebar',
@@ -130,7 +126,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Accensa. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Accensa.`,
     },
     prism: {
       theme: prismThemes.github,

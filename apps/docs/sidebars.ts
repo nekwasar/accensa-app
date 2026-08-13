@@ -17,8 +17,23 @@ const sidebars: SidebarsConfig = {
     'introduction',
     {
       type: 'category',
-      label: 'Core Protocol',
+      label: 'accensa-app',
       items: [
+        'app/overview',
+        'onboarding',
+        'user-guides',
+        {
+          type: 'link',
+          label: 'GitHub Repository',
+          href: 'https://github.com/accensa/accensa-app',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'accensa-contracts',
+      items: [
+        'contracts/overview',
         {
           type: 'link',
           label: 'Mechanics',
@@ -29,17 +44,33 @@ const sidebars: SidebarsConfig = {
           label: 'Contracts',
           href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/contracts.md',
         },
+        {
+          type: 'link',
+          label: 'GitHub Repository',
+          href: 'https://github.com/accensa/accensa-contracts',
+        },
       ],
     },
     {
       type: 'category',
-      label: 'Guides',
+      label: 'x402-facilitator-stellar',
       items: [
-        'onboarding',
+        'facilitator/overview',
+        {
+          type: 'link',
+          label: 'GitHub Repository',
+          href: 'https://github.com/accensa/x402-facilitator-stellar',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'General Guides',
+      items: [
         'developer',
-        'user-guides',
         'contributing',
         'troubleshooting',
+        'faq',
       ],
     }
   ],
