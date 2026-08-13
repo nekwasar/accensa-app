@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withClient, ensureSchema, getSyncState } from '@/lib/db';
+import { isHash32 } from '@/lib/receipt-anchor';
 import type { SyncState } from '@/lib/sync-status';
 
 export const dynamic = 'force-dynamic';
@@ -25,12 +26,41 @@ export interface PaymentsResponse {
 
 export async function GET(request: Request) {
  if (!process.env.DATABASE_URL) {
- return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
+ return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
  }
 
  const { searchParams } = new URL(request.url);
- const limit = Math.min(Number(searchParams.get('limit') || '100'), 1000);
- const cursor = searchParams.get('cursor');
+  const limitParam = searchParams.get('limit');
+  let limit = 100;
+  if (limitParam !== null) {
+    const parsed = Number.parseFloat(limitParam);
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 1000) {
+      return NextResponse.json(
+        { error: 'limit must be an integer between 1 and 1000' },
+        { status: 400 }
+      );
+    }
+    limit = parsed;
+  }
+
+  const cursor = searchParams.get('cursor');
+  let parsedCursor: { ts: string; txHash: string } | null = null;
+  if (cursor) {
+    try {
+      const decoded = Buffer.from(cursor, 'base64').toString('utf8');
+      const parts = decoded.split('|');
+      if (parts.length !== 2) throw new Error();
+      
+      const [ts, txHash] = parts;
+      const date = new Date(ts);
+      if (Number.isNaN(date.getTime())) throw new Error();
+      if (!isHash32(txHash)) throw new Error();
+      
+      parsedCursor = { ts, txHash };
+    } catch {
+      return NextResponse.json({ error: 'invalid_cursor' }, { status: 400 });
+    }
+  }
 
  try {
  const { rows, sync } = await withClient(async (client) => {
@@ -38,12 +68,10 @@ export async function GET(request: Request) {
  
  let query = `SELECT tx_hash, ledger, payer, amount::text AS amount, asset, ts, route, method FROM payments WHERE ts IS NOT NULL`;
  const params: (string | number)[] = [];
- 
- if (cursor) {
-  const [ts, txHash] = Buffer.from(cursor, 'base64').toString().split('|');
-  query += ` AND (ts < $1 OR (ts = $1 AND tx_hash < $2))`;
-  params.push(ts, txHash);
- }
+  if (parsedCursor) {
+   query += ` AND (ts < $1 OR (ts = $1 AND tx_hash < $2))`;
+   params.push(parsedCursor.ts, parsedCursor.txHash);
+  }
  
  query += ` ORDER BY ts DESC, tx_hash DESC LIMIT $${params.length + 1}`;
  params.push(limit);
@@ -72,7 +100,7 @@ export async function GET(request: Request) {
  };
  return NextResponse.json(body);
  } catch (error: unknown) {
- const message = error instanceof Error ? error.message : 'Unknown error';
- return NextResponse.json({ error: message }, { status: 500 });
+ console.error('Error fetching payments:', error);
+ return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
  }
 }
