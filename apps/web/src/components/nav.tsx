@@ -47,7 +47,7 @@ export function Nav() {
  {pathname !=="/"&& <Link href="/"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</Link>}
  {pathname !=="/verify"&& <Link href="/verify"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Verify</Link>}
  {pathname !=="/dashboard"&& <Link href="/dashboard"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Dashboard</Link>}
- <a href="https://accensa.github.io/docs"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</a>
+ <a href="https://accensa.github.io/accensa-app"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Docs</a>
  <a href="https://github.com/accensa"className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">GitHub</a>
  </div>
 

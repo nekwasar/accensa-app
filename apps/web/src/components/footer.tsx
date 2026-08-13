@@ -27,7 +27,7 @@ export function Footer() {
  Verify
  </Link>
  <a
- href="https://accensa.github.io/docs"
+ href="https://accensa.github.io/accensa-app"
  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
  >
  Docs
