@@ -19,17 +19,27 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Core Protocol',
       items: [
-        'contracts-repo/docs/mechanics',
-        'contracts-repo/docs/contracts',
+        {
+          type: 'link',
+          label: 'Mechanics',
+          href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/mechanics.md',
+        },
+        {
+          type: 'link',
+          label: 'Contracts',
+          href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/contracts.md',
+        },
       ],
     },
     {
       type: 'category',
       label: 'Guides',
       items: [
+        'onboarding',
         'developer',
         'user-guides',
         'contributing',
+        'troubleshooting',
       ],
     }
   ],
