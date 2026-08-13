@@ -9,6 +9,14 @@ Accensa is a merchant back-office designed specifically for sellers operating on
 
 It reconstructs a seller's payment history directly from on-chain data, anchors verifiable receipts for agent operators, and executes merchant-authorized refunds.
 
+## Organization Structure
+
+The Accensa ecosystem is split across three primary repositories:
+
+1. **`accensa-app`**: The Next.js dashboard for merchants to visualize revenue and manage refunds, along with the Node SDK for receipt verification.
+2. **`accensa-contracts`**: Soroban smart contracts (e.g., `ReceiptAnchor`, `RefundVault`) that provide the on-chain trust layer for verifiable receipts and trustless refunds.
+3. **`x402-facilitator-stellar`**: The standard HTTP 402 facilitator. Sellers run this to automatically handle the x402 payment flow, index resource prices, and handle Stellar payments from AI agents.
+
 ## The Problem
 
 x402 (HTTP 402 over Stellar) facilitates agentic payments seamlessly. However, the seller experience ends the moment funds arrive at the `PAY_TO` address. This creates three critical operational gaps:
