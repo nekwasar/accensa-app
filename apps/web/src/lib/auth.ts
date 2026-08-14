@@ -1,19 +1,30 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const secretKey = process.env.JWT_SECRET_KEY || 'default_secret_key_for_development';
-const key = new TextEncoder().encode(secretKey);
+/**
+ * No fallback secret — see the note in `src/middleware.ts`. A default committed to a
+ * public repository is a signing key everyone has, so a deployment missing the variable
+ * would mint session tokens anyone could forge. Throwing is the correct failure: it is
+ * loud, it happens on the first signing attempt, and it cannot be mistaken for working.
+ */
+function signingKey(): Uint8Array {
+  const secretKey = process.env.JWT_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('JWT_SECRET_KEY is not set; refusing to sign or verify a session');
+  }
+  return new TextEncoder().encode(secretKey);
+}
 
 export async function encrypt(payload: Record<string, unknown>) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('24h')
-    .sign(key);
+    .sign(signingKey());
 }
 
 export async function decrypt(input: string): Promise<Record<string, unknown> | undefined> {
-  const { payload } = await jwtVerify(input, key, {
+  const { payload } = await jwtVerify(input, signingKey(), {
     algorithms: ['HS256'],
   });
   return payload;
