@@ -133,7 +133,7 @@ export function Nav() {
  <div className="h-px w-12 bg-slate-200 dark:bg-white/10 my-1"/>
 
  <a
- href="https://accensa-docs.vercel.app"
+ href="https://accensa.github.io/accensa-app"
  target="_blank"
  rel="noreferrer"
  onClick={() => setIsOpen(false)}
