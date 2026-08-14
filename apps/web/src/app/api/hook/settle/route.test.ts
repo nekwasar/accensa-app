@@ -3,7 +3,7 @@ import { POST } from './route';
 import * as crypto from 'node:crypto';
 
 vi.mock('@/lib/db', () => ({
-  withClient: vi.fn(async (cb) => {
+  withClient: vi.fn(async (_cb) => {
     return { matchedExistingPayment: false };
   }),
   ensureSchema: vi.fn(),
