@@ -5,6 +5,15 @@
   "main": "index.ts",
   "types": "index.ts",
   "license": "MIT",
+  "homepage": "https://accensa.github.io/accensa-app/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/accensa/accensa-app.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/accensa/accensa-app/issues"
+  },
   "exports": {
     ".": "./index.ts",
     "./merkle": "./merkle.ts"
