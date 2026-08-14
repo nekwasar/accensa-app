@@ -31,8 +31,15 @@ Three moving parts, and only one of them is Vercel's:
 - **GitHub Actions** — the real indexing cadence. Explained below, because the
   `vercel.json` cron is misleading on its own.
 
-There is a second Vercel project, `docs`, serving `accensa-docs.vercel.app` from
-`apps/docs`. It shares nothing with `web` but the repo.
+The documentation site in `apps/docs` is **not** deployed on Vercel. It is built
+by GitHub Actions and published to GitHub Pages at
+<https://accensa.github.io/accensa-app/>.
+
+> A second Vercel project named `docs` used to serve `accensa-docs.vercel.app`
+> from the same directory. It was last deployed on 2026-07-13 and had drifted
+> into serving unmodified Docusaurus scaffold copy, while every "Documentation"
+> link in the org still pointed at it. The project was deleted on 2026-08-14;
+> `accensa-docs.vercel.app` now returns 404 and nothing should link to it.
 
 ## Indexing cadence — read this before trusting `vercel.json`
 
