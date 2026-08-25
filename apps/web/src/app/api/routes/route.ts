@@ -68,7 +68,14 @@ export async function GET(request: Request) {
  return result.rows;
  });
 
- let routes = rows.map(r => ({
+ interface RouteRow {
+   route: string;
+   method: string | null;
+   total_revenue: string;
+   calls: number;
+ }
+
+ let routes: RouteRow[] = rows.map(r => ({
    route: String(r.route),
    method: String(r.method),
    total_revenue: String(r.total_revenue),
@@ -85,13 +92,13 @@ export async function GET(request: Request) {
      0n,
    );
    const otherCalls = tail.reduce((sum, r) => sum + r.calls, 0);
-   kept.push({
+   const otherRow = {
      route: '(other)',
-     method: null,
+     method: null as string | null,
      total_revenue: String(otherRevenue),
      calls: otherCalls,
-   });
-   routes = kept;
+   };
+   routes = [...kept, otherRow];
  }
 
  return NextResponse.json({
