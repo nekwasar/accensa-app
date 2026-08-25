@@ -1,0 +1,8 @@
+node_modules
+.next
+build
+dist
+.docusaurus
+pnpm-lock.yaml
+*.min.js
+.merkle-vectors.json
