@@ -56,7 +56,7 @@ jobs:
 
           # Run for 55 minutes to allow 5 minutes for the next hourly job to start
           END_TIME=$(( $(date +%s) + 3300 ))
-          
+
           while [ $(date +%s) -lt $END_TIME ]; do
             echo "Triggering sync at $(date)..."
             response=$(curl -sS --max-time 120 -w '\n%{http_code}' \

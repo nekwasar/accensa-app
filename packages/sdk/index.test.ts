@@ -202,10 +202,7 @@ describe('reportSettlement — network timeout', () => {
 
     // The regression this guards: an un-awaited rejection here crashes the
     // seller's process under Node's default unhandledRejection behaviour.
-    const result = await reportSettlement(
-      settlement,
-      opts({ fetchImpl, onError, timeoutMs: 10 }),
-    );
+    const result = await reportSettlement(settlement, opts({ fetchImpl, onError, timeoutMs: 10 }));
 
     expect(result).toBe(false);
     expect(onError).toHaveBeenCalledOnce();
@@ -349,7 +346,11 @@ describe('attachAccensaHook', () => {
 
     const req = fakeReq() as Request & { routeTemplate: string };
     req.routeTemplate = '/v1/quotes/:id';
-    await runHook(middleware as typeof middleware & Parameters<typeof runHook>[0], req, fakeRes(paid));
+    await runHook(
+      middleware as typeof middleware & Parameters<typeof runHook>[0],
+      req,
+      fakeRes(paid),
+    );
 
     expect(bodyOf(fetchImpl)).toMatchObject({
       route: '/v1/quotes/:id',

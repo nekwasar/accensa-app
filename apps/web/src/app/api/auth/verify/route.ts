@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
     // Verify the signature
     const kp = Keypair.fromPublicKey(merchantAddress);
-    const isValid = tx.signatures.some(sig => kp.verify(tx.hash(), sig.signature()));
+    const isValid = tx.signatures.some((sig) => kp.verify(tx.hash(), sig.signature()));
 
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });

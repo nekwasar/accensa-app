@@ -1,9 +1,9 @@
 import {
- isConnected as freighterIsConnected,
- getAddress as freighterGetAddress,
- getNetwork as freighterGetNetwork,
- requestAccess as freighterRequestAccess,
- signTransaction as freighterSignTransaction,
+  isConnected as freighterIsConnected,
+  getAddress as freighterGetAddress,
+  getNetwork as freighterGetNetwork,
+  requestAccess as freighterRequestAccess,
+  signTransaction as freighterSignTransaction,
 } from '@stellar/freighter-api';
 
 /**
@@ -29,14 +29,14 @@ import {
  */
 
 export type WalletStatus =
- /** No extension detected in this browser. */
- | { kind: 'unavailable' }
- /** Extension present, but the site has no approved address. */
- | { kind: 'disconnected' }
- /** Extension present and an address is approved for this site. */
- | { kind: 'connected'; address: string; network?: string }
- /** A call failed. Carries a message fit to render. */
- | { kind: 'error'; message: string };
+  /** No extension detected in this browser. */
+  | { kind: 'unavailable' }
+  /** Extension present, but the site has no approved address. */
+  | { kind: 'disconnected' }
+  /** Extension present and an address is approved for this site. */
+  | { kind: 'connected'; address: string; network?: string }
+  /** A call failed. Carries a message fit to render. */
+  | { kind: 'error'; message: string };
 
 /**
  * `GBXQ…4TQK` — enough of both ends to compare against an explorer, short
@@ -46,9 +46,9 @@ export type WalletStatus =
  * truncating them would produce a longer string than the input.
  */
 export function truncateAddress(address: string, lead = 4, tail = 4): string {
- if (lead < 0 || tail < 0) throw new RangeError('lead and tail must not be negative');
- if (address.length <= lead + tail + 1) return address;
- return `${address.slice(0, lead)}…${address.slice(-tail)}`;
+  if (lead < 0 || tail < 0) throw new RangeError('lead and tail must not be negative');
+  if (address.length <= lead + tail + 1) return address;
+  return `${address.slice(0, lead)}…${address.slice(-tail)}`;
 }
 
 /**
@@ -59,24 +59,24 @@ export function truncateAddress(address: string, lead = 4, tail = 4): string {
  * exception is still possible if the extension goes away mid-call.
  */
 function message(error: unknown): string {
- if (error instanceof Error && error.message) return error.message;
- if (typeof error === 'string' && error) return error;
- if (error && typeof error === 'object') {
- const detail = (error as { message?: unknown }).message;
- if (typeof detail === 'string' && detail) return detail;
- }
- return 'Wallet request failed';
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string' && error) return error;
+  if (error && typeof error === 'object') {
+    const detail = (error as { message?: unknown }).message;
+    if (typeof detail === 'string' && detail) return detail;
+  }
+  return 'Wallet request failed';
 }
 
 /** Reads the network name, treating its absence as"unknown"rather than a fault. */
 async function readNetwork(): Promise<string | undefined> {
- try {
- const result = await freighterGetNetwork();
- if (result.error || !result.network) return undefined;
- return result.network;
- } catch {
- return undefined;
- }
+  try {
+    const result = await freighterGetNetwork();
+    if (result.error || !result.network) return undefined;
+    return result.network;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -89,20 +89,20 @@ async function readNetwork(): Promise<string | undefined> {
  * distinguishes `disconnected` from `unavailable`.
  */
 export async function readStatus(): Promise<WalletStatus> {
- try {
- const connection = await freighterIsConnected();
- if (connection.error) return { kind: 'error', message: message(connection.error) };
- if (!connection.isConnected) return { kind: 'unavailable' };
+  try {
+    const connection = await freighterIsConnected();
+    if (connection.error) return { kind: 'error', message: message(connection.error) };
+    if (!connection.isConnected) return { kind: 'unavailable' };
 
- const account = await freighterGetAddress();
- // Not an error worth showing: an unapproved site is the normal state for a
- // first-time visitor, and the extension reports it this way.
- if (account.error || !account.address) return { kind: 'disconnected' };
+    const account = await freighterGetAddress();
+    // Not an error worth showing: an unapproved site is the normal state for a
+    // first-time visitor, and the extension reports it this way.
+    if (account.error || !account.address) return { kind: 'disconnected' };
 
- return { kind: 'connected', address: account.address, network: await readNetwork() };
- } catch (error: unknown) {
- return { kind: 'error', message: message(error) };
- }
+    return { kind: 'connected', address: account.address, network: await readNetwork() };
+  } catch (error: unknown) {
+    return { kind: 'error', message: message(error) };
+  }
 }
 
 /**
@@ -114,17 +114,17 @@ export async function readStatus(): Promise<WalletStatus> {
  * error for having made it would be wrong.
  */
 export async function connect(): Promise<WalletStatus> {
- try {
- const connection = await freighterIsConnected();
- if (!connection.isConnected) return { kind: 'unavailable' };
+  try {
+    const connection = await freighterIsConnected();
+    if (!connection.isConnected) return { kind: 'unavailable' };
 
- const access = await freighterRequestAccess();
- if (access.error || !access.address) return { kind: 'disconnected' };
+    const access = await freighterRequestAccess();
+    if (access.error || !access.address) return { kind: 'disconnected' };
 
- return { kind: 'connected', address: access.address, network: await readNetwork() };
- } catch (error: unknown) {
- return { kind: 'error', message: message(error) };
- }
+    return { kind: 'connected', address: access.address, network: await readNetwork() };
+  } catch (error: unknown) {
+    return { kind: 'error', message: message(error) };
+  }
 }
 
 /**
@@ -135,13 +135,13 @@ export async function connect(): Promise<WalletStatus> {
  * than fall through to a submit.
  */
 export async function signTransaction(
- xdr: string,
- opts: { networkPassphrase: string; address?: string },
+  xdr: string,
+  opts: { networkPassphrase: string; address?: string },
 ): Promise<string> {
- const result = await freighterSignTransaction(xdr, opts);
- if (result.error) throw new Error(message(result.error));
- if (!result.signedTxXdr) throw new Error('The wallet did not return a signed transaction');
- return result.signedTxXdr;
+  const result = await freighterSignTransaction(xdr, opts);
+  if (result.error) throw new Error(message(result.error));
+  if (!result.signedTxXdr) throw new Error('The wallet did not return a signed transaction');
+  return result.signedTxXdr;
 }
 
 /** Where a merchant installs the extension, for the unavailable state. */

@@ -55,18 +55,14 @@
     {
       "name": "two-leaf batch — left leaf",
       "leaf": "be169458dea8ed680e34387c9462d3793d4c4e68ad93785856eeed733a776ff5",
-      "proof": [
-        "0bda281dc490e2dfa2b6d5c7e99eaf45d56c21e8fe72055758c3c2c7de63c5ef"
-      ],
+      "proof": ["0bda281dc490e2dfa2b6d5c7e99eaf45d56c21e8fe72055758c3c2c7de63c5ef"],
       "root": "07c242b923591336d60e2db6a06a5d0ef616e54011094b03625051bb6cd1a2c5",
       "expected": true
     },
     {
       "name": "two-leaf batch — right leaf",
       "leaf": "0bda281dc490e2dfa2b6d5c7e99eaf45d56c21e8fe72055758c3c2c7de63c5ef",
-      "proof": [
-        "be169458dea8ed680e34387c9462d3793d4c4e68ad93785856eeed733a776ff5"
-      ],
+      "proof": ["be169458dea8ed680e34387c9462d3793d4c4e68ad93785856eeed733a776ff5"],
       "root": "07c242b923591336d60e2db6a06a5d0ef616e54011094b03625051bb6cd1a2c5",
       "expected": true
     },
@@ -83,9 +79,7 @@
     {
       "name": "three-leaf batch — leaf 2",
       "leaf": "9fb65b5a4be08d206e44518c0fb7bf0c568f641a5c401550e65bf27f2fa8bdf8",
-      "proof": [
-        "bb7186cc99e35a3a9a3cd50aec1db0e97235989a904fc5ae82344b531dba1902"
-      ],
+      "proof": ["bb7186cc99e35a3a9a3cd50aec1db0e97235989a904fc5ae82344b531dba1902"],
       "root": "f2ce5eb24c9bead8184a3fc3bb1404ae4aa28e34e7046e829423dd787d1ca037",
       "expected": true,
       "note": "Promoted odd node: proof is one level shorter."

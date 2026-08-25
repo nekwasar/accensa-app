@@ -31,9 +31,7 @@ describe('verifyReceipt — sorted-pair convention', () => {
     const a = leafOf('pair-a');
     const b = leafOf('pair-b');
     const root = sha256(
-      Buffer.concat(
-        [Buffer.from(a, 'hex'), Buffer.from(b, 'hex')].sort(Buffer.compare),
-      ),
+      Buffer.concat([Buffer.from(a, 'hex'), Buffer.from(b, 'hex')].sort(Buffer.compare)),
     ).toString('hex');
 
     // The same root verifies from either leaf, with the other as the proof.
