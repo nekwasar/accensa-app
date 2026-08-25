@@ -34,20 +34,61 @@ function truncate(value: string, head = 8, tail = 6) {
  return value.length <= head + tail + 1 ? value : `${value.slice(0, head)}…${value.slice(-tail)}`;
 }
 
+const REFUNDED_STORAGE_KEY = 'accensa-refunded-txs';
+
+function loadRefundedFromStorage(): ReadonlySet<string> {
+ if (typeof window === 'undefined') return new Set();
+ try {
+ const stored = localStorage.getItem(REFUNDED_STORAGE_KEY);
+ if (!stored) return new Set();
+ const parsed = JSON.parse(stored);
+ return Array.isArray(parsed) ? new Set(parsed) : new Set();
+ } catch {
+ return new Set();
+ }
+}
+
+function saveRefundedToStorage(refunded: ReadonlySet<string>): void {
+ if (typeof window === 'undefined') return;
+ try {
+ localStorage.setItem(REFUNDED_STORAGE_KEY, JSON.stringify([...refunded]));
+ } catch {
+ // localStorage may be full or unavailable; silently degrade.
+ }
+}
+
 export default function Dashboard() {
  const [state, setState] = useState<LoadState>({ status: 'loading' });
  const [selected, setSelected] = useState<Payment | null>(null);
  const closeButtonRef = useRef<HTMLButtonElement>(null);
  const [reloadToken, setReloadToken] = useState(0);
- // Refunds issued in this session. The indexer does not watch RefundVault
- // events yet, so a refund is otherwise invisible until someone opens the
- // payment again and the contract is re-read.
- const [refunded, setRefunded] = useState<ReadonlySet<string>>(() => new Set());
+ const [refunded, setRefunded] = useState<ReadonlySet<string>>(() => loadRefundedFromStorage());
  const markRefunded = useCallback(
- (txHash: string) => setRefunded((prev) => new Set(prev).add(txHash)),
+ (txHash: string) => {
+ setRefunded((prev) => {
+ const next = new Set(prev).add(txHash);
+ saveRefundedToStorage(next);
+ return next;
+ });
+ },
  [],
  );
  const online = useOnline();
+
+ // Sync refunded state across tabs via the storage event.
+ useEffect(() => {
+ function onStorage(e: StorageEvent) {
+ if (e.key !== REFUNDED_STORAGE_KEY) return;
+ try {
+ const parsed = e.newValue ? JSON.parse(e.newValue) : [];
+ setRefunded(Array.isArray(parsed) ? new Set(parsed) : new Set());
+ } catch {
+ // Ignore malformed data from another tab.
+ }
+ }
+ window.addEventListener('storage', onStorage);
+ return () => window.removeEventListener('storage', onStorage);
+ }, []);
 
  const reload = useCallback(() => setReloadToken((n) => n + 1), []);
 
@@ -138,7 +179,7 @@ export default function Dashboard() {
  <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors duration-300">Recent Settlements</h2>
  <div className="flex items-center gap-4">
  <StatusPill state={state} onRetry={reload} />
- <ExportCsvButton payments={payments} />
+ <ExportCsvButton payments={payments} refunded={refunded} />
  <SyncNowButton onSynced={reload} />
  </div>
  </div>
@@ -234,7 +275,7 @@ export default function Dashboard() {
  {refunded.has(payment.tx_hash) && (
  <span
  className="ml-2 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest border border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 align-middle"
- title="Refunded from the vault in this session"
+ title="Refunded from the vault"
  >
  Refunded
  </span>
@@ -514,13 +555,17 @@ function SyncNowButton({ onSynced }: { onSynced: () => void }) {
  * Serialization lives in lib/payments-csv so it can be tested without a DOM;
  * this only turns the text into a download.
  */
-function ExportCsvButton({ payments }: { payments: Payment[] }) {
+function ExportCsvButton({ payments, refunded }: { payments: Payment[]; refunded: ReadonlySet<string> }) {
  const [error, setError] = useState<string | null>(null);
 
  const download = useCallback(() => {
  try {
+ const csvPayments = payments.map((p) => ({
+ ...p,
+ refunded: refunded.has(p.tx_hash),
+ }));
  // The BOM is what makes Excel read the file as UTF-8.
- const blob = new Blob([CSV_BOM + paymentsToCsv(payments)], {
+ const blob = new Blob([CSV_BOM + paymentsToCsv(csvPayments)], {
  type: 'text/csv;charset=utf-8',
  });
  const url = URL.createObjectURL(blob);
@@ -535,7 +580,7 @@ function ExportCsvButton({ payments }: { payments: Payment[] }) {
  } catch (e) {
  setError(e instanceof Error ? e.message : 'Export failed');
  }
- }, [payments]);
+ }, [payments, refunded]);
 
  const empty = payments.length === 0;
 
