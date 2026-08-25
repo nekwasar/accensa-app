@@ -37,24 +37,24 @@ function truncate(value: string, head = 8, tail = 6) {
 const REFUNDED_STORAGE_KEY = 'accensa-refunded-txs';
 
 function loadRefundedFromStorage(): ReadonlySet<string> {
- if (typeof window === 'undefined') return new Set();
- try {
- const stored = localStorage.getItem(REFUNDED_STORAGE_KEY);
- if (!stored) return new Set();
- const parsed = JSON.parse(stored);
- return Array.isArray(parsed) ? new Set(parsed) : new Set();
- } catch {
- return new Set();
- }
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const stored = localStorage.getItem(REFUNDED_STORAGE_KEY);
+    if (!stored) return new Set();
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? new Set(parsed) : new Set();
+  } catch {
+    return new Set();
+  }
 }
 
 function saveRefundedToStorage(refunded: ReadonlySet<string>): void {
- if (typeof window === 'undefined') return;
- try {
- localStorage.setItem(REFUNDED_STORAGE_KEY, JSON.stringify([...refunded]));
- } catch {
- // localStorage may be full or unavailable; silently degrade.
- }
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(REFUNDED_STORAGE_KEY, JSON.stringify([...refunded]));
+  } catch {
+    // localStorage may be full or unavailable; silently degrade.
+  }
 }
 
 export default function Dashboard() {

@@ -209,7 +209,7 @@ const fixture = {
 const here = dirname(fileURLToPath(import.meta.url));
 
 const jsonPath = join(here, '..', 'merkle-vectors.json');
-writeFileSync(jsonPath, JSON.stringify(fixture, null, 2) + '\n');
+writeFileSync(jsonPath, JSON.stringify(fixture) + '\n');
 console.log(`wrote ${jsonPath} (${fixture.cases.length} cases)`);
 
 // Also emit the same vectors as Rust, so the Soroban contract tests run against

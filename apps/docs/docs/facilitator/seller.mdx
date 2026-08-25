@@ -48,16 +48,13 @@ The facilitator sends payment notifications to your webhook endpoint. Implement 
 // pages/api/hook/settle.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(
- req: NextApiRequest,
- res: NextApiResponse
-) {
- const { tx_hash, amount, asset, payer } = req.body;
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { tx_hash, amount, asset, payer } = req.body;
 
- // Verify the payment and fulfill the order
- // ...
+  // Verify the payment and fulfill the order
+  // ...
 
- res.status(200).json({ success: true });
+  res.status(200).json({ success: true });
 }
 ```
 
@@ -69,16 +66,16 @@ export default async function handler(
 import { AccensaSDK } from '@accensa/sdk';
 
 const sdk = new AccensaSDK({
- networkPassphrase: 'Test SDF Network ; September 2015',
- rpcUrl: 'https://soroban-testnet.stellar.org',
+  networkPassphrase: 'Test SDF Network ; September 2015',
+  rpcUrl: 'https://soroban-testnet.stellar.org',
 });
 
 // Generate a payment receipt for a customer
 const receipt = await sdk.createReceipt({
- merchant: 'YOUR_MERCHANT_ADDRESS',
- amount: '10.0000000',
- asset: 'native',
- description: 'Premium subscription',
+  merchant: 'YOUR_MERCHANT_ADDRESS',
+  amount: '10.0000000',
+  asset: 'native',
+  description: 'Premium subscription',
 });
 
 console.log('Payment URL:', receipt.url);
@@ -89,12 +86,12 @@ console.log('Payment URL:', receipt.url);
 ```typescript
 // Verify a payment receipt using the proof
 const verification = await sdk.verifyReceipt({
- batchId: 1,
- leaf: 'c476fc0553303ec4275bd4cb50ab7fa8182e343dbc4c721d7e2076fd77a5b56c',
- proof: [
- '7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1',
- '1733fad16ada0c23d8cdaff52bea66bea308dddddcb79348842acef0065c9615'
- ],
+  batchId: 1,
+  leaf: 'c476fc0553303ec4275bd4cb50ab7fa8182e343dbc4c721d7e2076fd77a5b56c',
+  proof: [
+    '7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1',
+    '1733fad16ada0c23d8cdaff52bea66bea308dddddcb79348842acef0065c9615',
+  ],
 });
 
 console.log('Verified:', verification.verified);
@@ -117,4 +114,4 @@ The Accensa dashboard provides a merchant back-office for monitoring payments:
 
 ---
 
-*This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing).*
+_This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing)._

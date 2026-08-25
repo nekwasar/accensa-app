@@ -18,17 +18,17 @@
 import { assetLabel } from './money';
 
 export interface CsvPayment {
- tx_hash: string;
- ledger: number | null;
- payer: string;
- /** Decimal string. Written through verbatim. */
- amount: string;
- asset: string | null;
- ts: string;
- route: string | null;
- method: string | null;
- /** Whether this payment was refunded in this session. */
- refunded?: boolean;
+  tx_hash: string;
+  ledger: number | null;
+  payer: string;
+  /** Decimal string. Written through verbatim. */
+  amount: string;
+  asset: string | null;
+  ts: string;
+  route: string | null;
+  method: string | null;
+  /** Whether this payment was refunded in this session. */
+  refunded?: boolean;
 }
 
 /** RFC 4180 says CRLF; Excel is the consumer that actually cares. */
@@ -43,16 +43,16 @@ const ROW_SEPARATOR = '\r\n';
 export const CSV_BOM = '﻿';
 
 const HEADERS = [
- 'Transaction Hash',
- 'Timestamp',
- 'Amount',
- 'Asset',
- 'Asset Identifier',
- 'Payer',
- 'Route',
- 'Method',
- 'Ledger',
- 'Refunded',
+  'Transaction Hash',
+  'Timestamp',
+  'Amount',
+  'Asset',
+  'Asset Identifier',
+  'Payer',
+  'Route',
+  'Method',
+  'Ledger',
+  'Refunded',
 ];
 
 /** Characters that make a spreadsheet treat a cell as a formula. */
@@ -92,21 +92,21 @@ export function toCsvRow(cells: string[]): string {
  * named columns rather than a zero-byte file that reads as a failure.
  */
 export function paymentsToCsv(payments: readonly CsvPayment[]): string {
- const rows = payments.map((payment) =>
- toCsvRow([
- neutralizeFormula(payment.tx_hash),
- payment.ts,
- // Verbatim. No Number, no formatAmount.
- payment.amount,
- assetLabel(payment.asset),
- neutralizeFormula(payment.asset ?? 'native'),
- neutralizeFormula(payment.payer),
- neutralizeFormula(payment.route ?? ''),
- neutralizeFormula(payment.method ?? ''),
- payment.ledger === null ? '' : String(payment.ledger),
- payment.refunded ? 'Yes' : '',
- ]),
- );
+  const rows = payments.map((payment) =>
+    toCsvRow([
+      neutralizeFormula(payment.tx_hash),
+      payment.ts,
+      // Verbatim. No Number, no formatAmount.
+      payment.amount,
+      assetLabel(payment.asset),
+      neutralizeFormula(payment.asset ?? 'native'),
+      neutralizeFormula(payment.payer),
+      neutralizeFormula(payment.route ?? ''),
+      neutralizeFormula(payment.method ?? ''),
+      payment.ledger === null ? '' : String(payment.ledger),
+      payment.refunded ? 'Yes' : '',
+    ]),
+  );
 
   // Trailing separator so appending to the file cannot merge two records.
   return [toCsvRow(HEADERS), ...rows].join(ROW_SEPARATOR) + ROW_SEPARATOR;
