@@ -142,7 +142,7 @@ export async function reportSettlement(
 
   try {
     const payload = JSON.stringify(body);
-    
+
     let signatureHex = '';
     if (typeof process !== 'undefined' && process.versions && process.versions.node) {
       // Node.js environment
@@ -151,10 +151,10 @@ export async function reportSettlement(
       const privateKey = crypto.createPrivateKey({
         key: Buffer.concat([
           Buffer.from('302e020100300506032b657004220420', 'hex'), // PKCS#8 Ed25519 header
-          keyBuffer
+          keyBuffer,
         ]),
         format: 'der',
-        type: 'pkcs8'
+        type: 'pkcs8',
       });
       signatureHex = crypto.sign(null, Buffer.from(payload), privateKey).toString('hex');
     } else {
@@ -206,8 +206,9 @@ function reportToConsole(error: unknown, payload?: SettleHookPayload): void {
  * {@link createSettleHook} — it receives the settle result as ground truth
  * rather than reading it back off the wire.
  */
-export interface AccensaMiddlewareOptions<Req extends AttributableRequest = Request>
-  extends AccensaHookOptions {
+export interface AccensaMiddlewareOptions<
+  Req extends AttributableRequest = Request,
+> extends AccensaHookOptions {
   /**
    * Derives what to attribute the payment to.
    *
@@ -284,7 +285,7 @@ export function createSettleHook(opts: SettleHookOptions) {
 }
 
 function requestFacts(req: AttributableRequest): RequestFacts {
-  const requestId = req.headers['x-request-id'];
+  const requestId = req.headers?.['x-request-id'];
   return {
     route: req.route?.path ?? req.path ?? '',
     method: req.method ?? '',

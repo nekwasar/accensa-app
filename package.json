@@ -1,4 +1,13 @@
 {
   "name": "accensa-app-root",
-  "private": true
+  "private": true,
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "pnpm --filter web lint && pnpm --filter @accensa/sdk lint",
+    "typecheck": "pnpm --filter web typecheck && pnpm --filter @accensa/sdk typecheck"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
 }

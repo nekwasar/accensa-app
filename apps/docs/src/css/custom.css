@@ -64,17 +64,22 @@
 
 .bg-grid {
   background-size: 24px 24px;
-  background-image: radial-gradient(circle, rgba(0,0,0,0.15) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.15) 1.5px, transparent 1.5px);
 }
 [data-theme='dark'] .bg-grid {
-  background-image: radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
 }
 
 .font-harabara {
   font-family: 'Harabara', sans-serif !important;
   letter-spacing: 0.05em;
 }
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   letter-spacing: 0.05em;
 }
 .font-camiro {

@@ -83,17 +83,18 @@ stellar contract deploy \
 ```typescript
 // src/config.ts
 export const config = {
- stellar: {
- rpcUrl: process.env.STELLAR_RPC_URL ?? 'https://soroban-testnet.stellar.org',
- networkPassphrase: process.env.STELLAR_NETWORK_PASSPHRASE ?? 'Test SDF Network ; September 2015',
- receiptAnchorId: process.env.RECEIPT_ANCHOR_ID,
- },
- database: {
- url: process.env.DATABASE_URL,
- },
- webhook: {
- url: process.env.MERCHANT_WEBHOOK_URL,
- },
+  stellar: {
+    rpcUrl: process.env.STELLAR_RPC_URL ?? 'https://soroban-testnet.stellar.org',
+    networkPassphrase:
+      process.env.STELLAR_NETWORK_PASSPHRASE ?? 'Test SDF Network ; September 2015',
+    receiptAnchorId: process.env.RECEIPT_ANCHOR_ID,
+  },
+  database: {
+    url: process.env.DATABASE_URL,
+  },
+  webhook: {
+    url: process.env.MERCHANT_WEBHOOK_URL,
+  },
 };
 ```
 
@@ -104,17 +105,17 @@ export const config = {
 import { Contract, rpc } from '@stellar/stellar-sdk';
 
 async function indexPayments() {
- const server = new rpc.Server(config.stellar.rpcUrl);
- const contract = new Contract(config.stellar.receiptAnchorId);
+  const server = new rpc.Server(config.stellar.rpcUrl);
+  const contract = new Contract(config.stellar.receiptAnchorId);
 
- // Read the latest batch
- const latestBatch = await simulate(contract, 'get_latest_batch');
+  // Read the latest batch
+  const latestBatch = await simulate(contract, 'get_latest_batch');
 
- // Index each payment in the batch
- for (const payment of latestBatch.payments) {
- await storePayment(payment);
- await dispatchWebhook(payment);
- }
+  // Index each payment in the batch
+  for (const payment of latestBatch.payments) {
+    await storePayment(payment);
+    await dispatchWebhook(payment);
+  }
 }
 ```
 
@@ -125,18 +126,18 @@ async function indexPayments() {
 ```typescript
 // src/routes/health.ts
 app.get('/health', async (req, res) => {
- const checks = {
- indexer: await checkIndexerHealth(),
- database: await checkDatabaseHealth(),
- stellar: await checkStellarConnection(),
- };
+  const checks = {
+    indexer: await checkIndexerHealth(),
+    database: await checkDatabaseHealth(),
+    stellar: await checkStellarConnection(),
+  };
 
- const healthy = Object.values(checks).every(c => c.status === 'ok');
+  const healthy = Object.values(checks).every((c) => c.status === 'ok');
 
- res.status(healthy ? 200 : 503).json({
- status: healthy ? 'healthy' : 'degraded',
- checks,
- });
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'healthy' : 'degraded',
+    checks,
+  });
 });
 ```
 
@@ -147,14 +148,14 @@ app.get('/health', async (req, res) => {
 import { Counter, Histogram } from 'prom-client';
 
 export const paymentsIndexed = new Counter({
- name: 'payments_indexed_total',
- help: 'Total number of payments indexed',
+  name: 'payments_indexed_total',
+  help: 'Total number of payments indexed',
 });
 
 export const indexDuration = new Histogram({
- name: 'index_duration_seconds',
- help: 'Duration of indexing operations',
- buckets: [0.1, 0.5, 1, 2, 5, 10],
+  name: 'index_duration_seconds',
+  help: 'Duration of indexing operations',
+  buckets: [0.1, 0.5, 1, 2, 5, 10],
 });
 ```
 
@@ -181,16 +182,19 @@ The facilitator enforces rate limits to protect the Stellar network:
 ### Common Issues
 
 **Indexer not starting**
+
 - Check database connection
 - Verify Stellar RPC URL is accessible
 - Ensure environment variables are set correctly
 
 **Webhooks failing**
+
 - Check merchant webhook URL is reachable
 - Verify webhook payload format
 - Check for network connectivity issues
 
 **Payments not being indexed**
+
 - Check Stellar network status
 - Verify contract address is correct
 - Review indexer logs for errors
@@ -203,4 +207,4 @@ The facilitator enforces rate limits to protect the Stellar network:
 
 ---
 
-*This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing).*
+_This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing)._

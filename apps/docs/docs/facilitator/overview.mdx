@@ -16,3 +16,5 @@ The `x402-facilitator-stellar` repository is the crucial off-chain middleware th
 3. **RPC Resilience:** Built-in dead-letter queues and retry mechanisms to handle failed RPC requests, ensuring no payment state is lost due to network instability.
 
 Because it is designed modularly, any project building payments on Stellar can fork this repository to handle their own high-throughput indexing and Webhook dispatching.
+
+For an overview of how the facilitator relates to the other repositories — including the distinction between x402 payment verification (this component) and receipt verification (`accensa-app`) — see the [Architecture](/docs/architecture) page.

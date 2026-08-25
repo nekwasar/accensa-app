@@ -9,19 +9,19 @@ import { Client } from 'pg';
  * connections (db.<ref>.supabase.co) are IPv6-only.
  */
 export function connectionString(): string {
- const url = process.env.DATABASE_URL;
- if (!url) throw new Error('DATABASE_URL is not configured');
- return url;
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL is not configured');
+  return url;
 }
 
 export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
- const client = new Client({ connectionString: connectionString() });
- await client.connect();
- try {
- return await fn(client);
- } finally {
- await client.end().catch(() => {});
- }
+  const client = new Client({ connectionString: connectionString() });
+  await client.connect();
+  try {
+    return await fn(client);
+  } finally {
+    await client.end().catch(() => {});
+  }
 }
 
 /**
@@ -32,7 +32,7 @@ export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise
  * well so a fresh database works without a manual migration step.
  */
 export async function ensureSchema(client: Client): Promise<void> {
- await client.query(`
+  await client.query(`
  CREATE TABLE IF NOT EXISTS payments (
  tx_hash VARCHAR(64) PRIMARY KEY,
  ledger BIGINT,
@@ -46,8 +46,8 @@ export async function ensureSchema(client: Client): Promise<void> {
  );
  `);
 
- // Older four-column layout keyed the time column"timestamp".
- await client.query(`
+  // Older four-column layout keyed the time column"timestamp".
+  await client.query(`
  DO $$
  BEGIN
  IF EXISTS (SELECT 1 FROM information_schema.columns
@@ -59,19 +59,19 @@ export async function ensureSchema(client: Client): Promise<void> {
  END $$;
  `);
 
- for (const [col, type] of [
- ['ledger', 'BIGINT'],
- ['asset', 'VARCHAR(64)'],
- ['ts', 'TIMESTAMPTZ'],
- ['route', 'VARCHAR(255)'],
- ['method', 'VARCHAR(10)'],
- ['request_id', 'VARCHAR(64)'],
- ['hook_reported_at', 'TIMESTAMPTZ'],
- ]) {
- await client.query(`ALTER TABLE payments ADD COLUMN IF NOT EXISTS ${col} ${type};`);
- }
+  for (const [col, type] of [
+    ['ledger', 'BIGINT'],
+    ['asset', 'VARCHAR(64)'],
+    ['ts', 'TIMESTAMPTZ'],
+    ['route', 'VARCHAR(255)'],
+    ['method', 'VARCHAR(10)'],
+    ['request_id', 'VARCHAR(64)'],
+    ['hook_reported_at', 'TIMESTAMPTZ'],
+  ]) {
+    await client.query(`ALTER TABLE payments ADD COLUMN IF NOT EXISTS ${col} ${type};`);
+  }
 
- await client.query(`
+  await client.query(`
  CREATE TABLE IF NOT EXISTS sync_state (
  id INT PRIMARY KEY DEFAULT 1,
  last_ledger BIGINT NOT NULL,
@@ -80,18 +80,18 @@ export async function ensureSchema(client: Client): Promise<void> {
  );
  `);
 
- // Attribution reported by the merchant arrives before the indexer has seen
- // the transfer — the sync job runs on a schedule, the hook fires the instant
- // x402 settles. Those staged rows have no amount or payer yet, and inventing
- // a zero to satisfy a constraint is exactly the fabrication this codebase
- // exists to avoid. The chain fills them in.
- for (const col of ['amount', 'payer']) {
- await client.query(`ALTER TABLE payments ALTER COLUMN ${col} DROP NOT NULL;`);
- }
+  // Attribution reported by the merchant arrives before the indexer has seen
+  // the transfer — the sync job runs on a schedule, the hook fires the instant
+  // x402 settles. Those staged rows have no amount or payer yet, and inventing
+  // a zero to satisfy a constraint is exactly the fabrication this codebase
+  // exists to avoid. The chain fills them in.
+  for (const col of ['amount', 'payer']) {
+    await client.query(`ALTER TABLE payments ALTER COLUMN ${col} DROP NOT NULL;`);
+  }
 
- await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
- await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
- await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
 }
 
 /**
@@ -113,28 +113,28 @@ export async function ensureSchema(client: Client): Promise<void> {
  * Returns whether the settlement matched an already-indexed payment.
  */
 export async function recordSettlement(
- client: Client,
- s: {
- txHash: string;
- route: string;
- method: string;
- requestId?: string | null;
- payer?: string | null;
- reportedAt?: string | null;
- },
+  client: Client,
+  s: {
+    txHash: string;
+    route: string;
+    method: string;
+    requestId?: string | null;
+    payer?: string | null;
+    reportedAt?: string | null;
+  },
 ): Promise<{ matchedExistingPayment: boolean }> {
- const reportedAt = s.reportedAt ?? new Date().toISOString();
- const updated = await client.query(
- `UPDATE payments
+  const reportedAt = s.reportedAt ?? new Date().toISOString();
+  const updated = await client.query(
+    `UPDATE payments
  SET route = $2, method = $3, request_id = $4, hook_reported_at = $5
  WHERE tx_hash = $1 AND (hook_reported_at IS NULL OR hook_reported_at < $5)`,
- [s.txHash, s.route, s.method, s.requestId ?? null, reportedAt],
- );
+    [s.txHash, s.route, s.method, s.requestId ?? null, reportedAt],
+  );
 
- if ((updated.rowCount ?? 0) > 0) return { matchedExistingPayment: true };
+  if ((updated.rowCount ?? 0) > 0) return { matchedExistingPayment: true };
 
- await client.query(
- `INSERT INTO payments (tx_hash, payer, route, method, request_id, ts, hook_reported_at)
+  await client.query(
+    `INSERT INTO payments (tx_hash, payer, route, method, request_id, ts, hook_reported_at)
  VALUES ($1, $2, $3, $4, $5, NULL, $6)
  ON CONFLICT (tx_hash) DO UPDATE
  SET route = EXCLUDED.route,
@@ -142,17 +142,17 @@ export async function recordSettlement(
  request_id = EXCLUDED.request_id,
  hook_reported_at = EXCLUDED.hook_reported_at
  WHERE payments.hook_reported_at IS NULL OR payments.hook_reported_at < EXCLUDED.hook_reported_at`,
- [s.txHash, s.payer ?? null, s.route, s.method, s.requestId ?? null, reportedAt],
- );
+    [s.txHash, s.payer ?? null, s.route, s.method, s.requestId ?? null, reportedAt],
+  );
 
- return { matchedExistingPayment: false };
+  return { matchedExistingPayment: false };
 }
 
 export async function getLastSyncedLedger(client: Client): Promise<number | null> {
- const res = await client.query<{ last_ledger: string }>(
- `SELECT last_ledger FROM sync_state WHERE id = 1`,
- );
- return res.rows.length ? Number(res.rows[0].last_ledger) : null;
+  const res = await client.query<{ last_ledger: string }>(
+    `SELECT last_ledger FROM sync_state WHERE id = 1`,
+  );
+  return res.rows.length ? Number(res.rows[0].last_ledger) : null;
 }
 
 /**
@@ -162,17 +162,17 @@ export async function getLastSyncedLedger(client: Client): Promise<number | null
  * rather than implying the freshness of its own poll.
  */
 export async function getSyncState(
- client: Client,
+  client: Client,
 ): Promise<{ lastLedger: number; updatedAt: string } | null> {
- const res = await client.query<{ last_ledger: string; updated_at: Date | string }>(
- `SELECT last_ledger, updated_at FROM sync_state WHERE id = 1`,
- );
- if (!res.rows.length) return null;
- const { last_ledger, updated_at } = res.rows[0];
- return {
- lastLedger: Number(last_ledger),
- updatedAt: updated_at instanceof Date ? updated_at.toISOString() : String(updated_at),
- };
+  const res = await client.query<{ last_ledger: string; updated_at: Date | string }>(
+    `SELECT last_ledger, updated_at FROM sync_state WHERE id = 1`,
+  );
+  if (!res.rows.length) return null;
+  const { last_ledger, updated_at } = res.rows[0];
+  return {
+    lastLedger: Number(last_ledger),
+    updatedAt: updated_at instanceof Date ? updated_at.toISOString() : String(updated_at),
+  };
 }
 
 export async function setLastSyncedLedger(client: Client, ledger: number): Promise<void> {

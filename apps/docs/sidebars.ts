@@ -1,4 +1,4 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -15,6 +15,7 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'introduction',
+    'architecture',
     {
       type: 'category',
       label: 'accensa-app',
@@ -51,33 +52,28 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-{
- type: 'category',
- label: 'x402-facilitator-stellar',
- items: [
- 'facilitator/overview',
- 'facilitator/seller',
- 'facilitator/buyer-agent',
- 'facilitator/operator',
- 'facilitator/conformance',
- 'facilitator/sync-mechanism',
- {
- type: 'link',
- label: 'GitHub Repository',
- href: 'https://github.com/accensa/x402-facilitator-stellar',
- },
- ],
- },
+    {
+      type: 'category',
+      label: 'x402-facilitator-stellar',
+      items: [
+        'facilitator/overview',
+        'facilitator/seller',
+        'facilitator/buyer-agent',
+        'facilitator/operator',
+        'facilitator/conformance',
+        'facilitator/sync-mechanism',
+        {
+          type: 'link',
+          label: 'GitHub Repository',
+          href: 'https://github.com/accensa/x402-facilitator-stellar',
+        },
+      ],
+    },
     {
       type: 'category',
       label: 'General Guides',
-      items: [
-        'developer',
-        'contributing',
-        'troubleshooting',
-        'faq',
-      ],
-    }
+      items: ['developer', 'contributing', 'troubleshooting', 'faq'],
+    },
   ],
 };
 

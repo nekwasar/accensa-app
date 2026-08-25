@@ -8,10 +8,10 @@ This page is the single source of truth for how to reach the Accensa maintainers
 
 ## Community channels
 
-| Channel | Best for |
-|---|---|
-| [Telegram](https://t.me/+Gflo5jZStw1jMjE0) | Quick questions, claiming an issue, unblocking mid-PR |
-| [Discord](https://discord.gg/5aprtMSyR) | Longer design discussion, architecture questions, async threads |
+| Channel                                    | Best for                                                        |
+| ------------------------------------------ | --------------------------------------------------------------- |
+| [Telegram](https://t.me/+Gflo5jZStw1jMjE0) | Quick questions, claiming an issue, unblocking mid-PR           |
+| [Discord](https://discord.gg/5aprtMSyR)    | Longer design discussion, architecture questions, async threads |
 
 Both channels are staffed by the maintainers. If you are working on a Drips Wave issue and are blocked, use them — a question asked early costs far less than a PR built on a wrong assumption.
 

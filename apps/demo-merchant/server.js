@@ -1,27 +1,27 @@
-import express from "express";
+import express from 'express';
 import {
   paymentMiddlewareFromHTTPServer,
   x402ResourceServer,
-  x402HTTPResourceServer
-} from "@x402/express";
-import { HTTPFacilitatorClient } from "@x402/core/server";
-import { ExactStellarScheme } from "@x402/stellar/exact/server";
+  x402HTTPResourceServer,
+} from '@x402/express';
+import { HTTPFacilitatorClient } from '@x402/core/server';
+import { ExactStellarScheme } from '@x402/stellar/exact/server';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Where to report route attribution. Point this at your Accensa deployment.
-const ACCENSA_URL = process.env.ACCENSA_URL || "http://localhost:3000";
+const ACCENSA_URL = process.env.ACCENSA_URL || 'http://localhost:3000';
 const HOOK_API_KEY = process.env.HOOK_API_KEY;
 
-const NETWORK = "stellar:testnet";
+const NETWORK = 'stellar:testnet';
 
 // Native XLM Stellar Asset Contract on testnet. Priced as an explicit
 // AssetAmount rather than a bare number: the default money parser assumes
 // USDC, and the asset has to match what the indexer watches
 // (ASSET_CONTRACT_IDS) or the settled transfer is never picked up.
 const XLM_SAC =
-  process.env.TOKEN_ADDRESS || "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
+  process.env.TOKEN_ADDRESS || 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
 /**
  * x402 identifies the paid resource by absolute URL. Attribution wants the path
@@ -30,17 +30,17 @@ const XLM_SAC =
  * demo runs as plain ESM with no build step.
  */
 function routeFromResourceUrl(url) {
-  if (typeof url !== "string" || url.trim() === "") return "";
+  if (typeof url !== 'string' || url.trim() === '') return '';
   try {
     return new URL(url).pathname;
   } catch {
-    return url.startsWith("/") ? url : "";
+    return url.startsWith('/') ? url : '';
   }
 }
 
 // 1. Create the resource server and point it to the public facilitator
 const resourceServer = new x402ResourceServer([
-  new HTTPFacilitatorClient({ url: "https://www.x402.org/facilitator" })
+  new HTTPFacilitatorClient({ url: 'https://www.x402.org/facilitator' }),
 ]);
 
 // The facilitator settles, but the resource server still needs the scheme
@@ -58,15 +58,15 @@ resourceServer.register(NETWORK, new ExactStellarScheme());
 // row whose tx_hash never appears on chain is worse than a missing row.
 resourceServer.onAfterSettle(async (ctx) => {
   if (!ctx.result.success) {
-    console.error("❌ Settlement failed:", ctx.result.errorReason);
+    console.error('❌ Settlement failed:', ctx.result.errorReason);
     return;
   }
   if (!ctx.result.transaction) {
-    console.warn("⚠️  Settlement succeeded without a transaction hash; nothing to attribute");
+    console.warn('⚠️  Settlement succeeded without a transaction hash; nothing to attribute');
     return;
   }
   if (!HOOK_API_KEY) {
-    console.warn("⚠️  HOOK_API_KEY is not set; skipping attribution report");
+    console.warn('⚠️  HOOK_API_KEY is not set; skipping attribution report');
     return;
   }
 
@@ -75,46 +75,46 @@ resourceServer.onAfterSettle(async (ctx) => {
   // one verb on a path has to decide for itself which it is reporting.
   const route = routeFromResourceUrl(ctx.paymentPayload?.resource?.url);
   if (!route) {
-    console.warn("⚠️  Settlement carried no resource URL; nothing to attribute");
+    console.warn('⚠️  Settlement carried no resource URL; nothing to attribute');
     return;
   }
 
-  console.log("✅ Settled", ctx.result.transaction, "for", route);
+  console.log('✅ Settled', ctx.result.transaction, 'for', route);
 
   try {
     const res = await fetch(`${ACCENSA_URL}/api/hook/settle`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${HOOK_API_KEY}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${HOOK_API_KEY}`,
       },
       body: JSON.stringify({
         tx_hash: ctx.result.transaction,
         route,
-        method: "GET",
-        payer: ctx.result.payer
-      })
+        method: 'GET',
+        payer: ctx.result.payer,
+      }),
     });
 
     if (!res.ok) {
       console.error(`⚠️  Accensa returned ${res.status}:`, await res.text());
     } else {
-      console.log("📊 Attribution reported to Accensa");
+      console.log('📊 Attribution reported to Accensa');
     }
   } catch (error) {
     // Never let reporting break a paid request — the payment already settled.
-    console.error("⚠️  Could not reach Accensa:", error.message);
+    console.error('⚠️  Could not reach Accensa:', error.message);
   }
 });
 
 // 3. Configure the routes
 const routesConfig = {
-  "/api/hello": {
+  '/api/hello': {
     accepts: {
-      scheme: "exact",
-      price: { asset: XLM_SAC, amount: "1000" }, // 1000 stroops = 0.0001 XLM
+      scheme: 'exact',
+      price: { asset: XLM_SAC, amount: '1000' }, // 1000 stroops = 0.0001 XLM
       network: NETWORK,
-      payTo: process.env.MERCHANT_ADDRESS || "GAQW...REPLACE_WITH_REAL_ADDRESS",
+      payTo: process.env.MERCHANT_ADDRESS || 'GAQW...REPLACE_WITH_REAL_ADDRESS',
     },
   },
 };
@@ -125,10 +125,10 @@ const httpServer = new x402HTTPResourceServer(resourceServer, routesConfig);
 app.use(paymentMiddlewareFromHTTPServer(httpServer));
 
 // 5. Protected route
-app.get("/api/hello", (req, res) => {
+app.get('/api/hello', (req, res) => {
   res.json({
-    message: "Payment verified!",
-    data: "This is the premium Accensa content."
+    message: 'Payment verified!',
+    data: 'This is the premium Accensa content.',
   });
 });
 

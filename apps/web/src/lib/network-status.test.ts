@@ -84,7 +84,9 @@ describe('describeFailure', () => {
   });
 
   it('falls back when a server failure carries no message', () => {
-    expect(describeFailure(new Error('   '), true)).toBe('The request failed for an unknown reason.');
+    expect(describeFailure(new Error('   '), true)).toBe(
+      'The request failed for an unknown reason.',
+    );
     expect(describeFailure({ nope: true }, true)).toBe('The request failed for an unknown reason.');
   });
 });

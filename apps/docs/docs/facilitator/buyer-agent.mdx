@@ -48,7 +48,7 @@ import { readStatus } from '@accensa/sdk/freighter';
 
 const status = await readStatus();
 if (status.kind === 'connected') {
- console.log('Connected address:', status.address);
+  console.log('Connected address:', status.address);
 }
 ```
 
@@ -60,15 +60,15 @@ if (status.kind === 'connected') {
 import { AccensaSDK } from '@accensa/sdk';
 
 const sdk = new AccensaSDK({
- networkPassphrase: 'Test SDF Network ; September 2015',
- rpcUrl: 'https://soroban-testnet.stellar.org',
+  networkPassphrase: 'Test SDF Network ; September 2015',
+  rpcUrl: 'https://soroban-testnet.stellar.org',
 });
 
 // Create a payment transaction
 const payment = await sdk.createPayment({
- merchant: 'MERCHANT_STELLAR_ADDRESS',
- amount: '5.0000000',
- asset: 'native',
+  merchant: 'MERCHANT_STELLAR_ADDRESS',
+  amount: '5.0000000',
+  asset: 'native',
 });
 
 // Sign and submit via wallet
@@ -81,18 +81,18 @@ console.log('Transaction hash:', result.hash);
 ```typescript
 // Verify a payment receipt received from a seller
 const receipt = await sdk.verifyReceipt({
- batchId: 1,
- leaf: 'c476fc0553303ec4275bd4cb50ab7fa8182e343dbc4c721d7e2076fd77a5b56c',
- proof: [
- '7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1',
- '1733fad16ada0c23d8cdaff52bea66bea308dddddcb79348842acef0065c9615'
- ],
+  batchId: 1,
+  leaf: 'c476fc0553303ec4275bd4cb50ab7fa8182e343dbc4c721d7e2076fd77a5b56c',
+  proof: [
+    '7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1',
+    '1733fad16ada0c23d8cdaff52bea66bea308dddddcb79348842acef0065c9615',
+  ],
 });
 
 if (receipt.verified) {
- console.log('Payment confirmed on-chain!');
+  console.log('Payment confirmed on-chain!');
 } else {
- console.log('Payment verification failed');
+  console.log('Payment verification failed');
 }
 ```
 
@@ -113,23 +113,23 @@ The Accensa dashboard includes a public verifier:
 ```typescript
 // Agent script that processes payments automatically
 async function processPayments(merchantAddress: string) {
- const sdk = new AccensaSDK({
- networkPassphrase: 'Test SDF Network ; September 2015',
- rpcUrl: 'https://soroban-testnet.stellar.org',
- });
+  const sdk = new AccensaSDK({
+    networkPassphrase: 'Test SDF Network ; September 2015',
+    rpcUrl: 'https://soroban-testnet.stellar.org',
+  });
 
- // Poll for pending payments
- while (true) {
- const payments = await sdk.getPendingPayments(merchantAddress);
+  // Poll for pending payments
+  while (true) {
+    const payments = await sdk.getPendingPayments(merchantAddress);
 
- for (const payment of payments) {
- // Process each payment
- await handlePayment(payment);
- }
+    for (const payment of payments) {
+      // Process each payment
+      await handlePayment(payment);
+    }
 
- // Wait before next poll
- await new Promise(resolve => setTimeout(resolve, 60000));
- }
+    // Wait before next poll
+    await new Promise((resolve) => setTimeout(resolve, 60000));
+  }
 }
 ```
 
@@ -138,15 +138,13 @@ async function processPayments(merchantAddress: string) {
 ```typescript
 // Verify multiple receipts at once
 const receipts = [
- { batchId: 1, leaf: 'hash1', proof: ['proof1a', 'proof1b'] },
- { batchId: 1, leaf: 'hash2', proof: ['proof2a', 'proof2b'] },
+  { batchId: 1, leaf: 'hash1', proof: ['proof1a', 'proof1b'] },
+  { batchId: 1, leaf: 'hash2', proof: ['proof2a', 'proof2b'] },
 ];
 
-const results = await Promise.all(
- receipts.map(receipt => sdk.verifyReceipt(receipt))
-);
+const results = await Promise.all(receipts.map((receipt) => sdk.verifyReceipt(receipt)));
 
-const valid = results.filter(r => r.verified);
+const valid = results.filter((r) => r.verified);
 console.log(`Verified ${valid.length} of ${receipts.length} receipts`);
 ```
 
@@ -158,4 +156,4 @@ console.log(`Verified ${valid.length} of ${receipts.length} receipts`);
 
 ---
 
-*This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing).*
+_This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing)._
