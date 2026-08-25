@@ -1,0 +1,161 @@
+---
+sidebar_position: 3
+title: Buyer/Agent Guide
+---
+
+# Buyer/Agent Integration Guide
+
+This guide walks you through integrating x402 payments on Stellar as a buyer or agent using the Accensa ecosystem.
+
+## Overview
+
+As a buyer or agent, you initiate x402 payments to sellers. The Accensa ecosystem provides:
+
+- **SDK** - Generate and verify payment receipts
+- **Receipt verification** - Validate payment proofs on-chain
+- **Agent workflows** - Automate payment operations
+
+## Prerequisites
+
+1. A Stellar testnet account with XLM balance
+2. Node.js 20+ installed
+3. Basic understanding of the x402 protocol
+
+## Quick Start
+
+### 1. Install the SDK
+
+```bash
+npm install @accensa/sdk
+# or
+pnpm add @accensa/sdk
+```
+
+### 2. Configure Environment Variables
+
+```env
+STELLAR_RPC_URL=https://soroban-testnet.stellar.org
+STELLAR_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+RECEIPT_ANCHOR_ID=CBHRJU7CF4XIFRNDITFHNQHABKBMFM2FYFHLGWN3JGSFYYCDSMDAWPRV
+```
+
+### 3. Connect Your Wallet
+
+Use Freighter or another Stellar wallet to sign transactions:
+
+```typescript
+import { readStatus } from '@accensa/sdk/freighter';
+
+const status = await readStatus();
+if (status.kind === 'connected') {
+ console.log('Connected address:', status.address);
+}
+```
+
+## Live Testnet Example
+
+### Making a Payment
+
+```typescript
+import { AccensaSDK } from '@accensa/sdk';
+
+const sdk = new AccensaSDK({
+ networkPassphrase: 'Test SDF Network ; September 2015',
+ rpcUrl: 'https://soroban-testnet.stellar.org',
+});
+
+// Create a payment transaction
+const payment = await sdk.createPayment({
+ merchant: 'MERCHANT_STELLAR_ADDRESS',
+ amount: '5.0000000',
+ asset: 'native',
+});
+
+// Sign and submit via wallet
+const result = await sdk.submitPayment(payment);
+console.log('Transaction hash:', result.hash);
+```
+
+### Verifying a Receipt
+
+```typescript
+// Verify a payment receipt received from a seller
+const receipt = await sdk.verifyReceipt({
+ batchId: 1,
+ leaf: 'c476fc0553303ec4275bd4cb50ab7fa8182e343dbc4c721d7e2076fd77a5b56c',
+ proof: [
+ '7ca64ee60e2b975f59f2a1f1cc1526d5b001a5c29f70291f316ba1c012a01bd1',
+ '1733fad16ada0c23d8cdaff52bea66bea308dddddcb79348842acef0065c9615'
+ ],
+});
+
+if (receipt.verified) {
+ console.log('Payment confirmed on-chain!');
+} else {
+ console.log('Payment verification failed');
+}
+```
+
+### Using the Verifier Page
+
+The Accensa dashboard includes a public verifier:
+
+1. Navigate to `https://accensa-dashboard.vercel.app/verify`
+2. Enter the batch ID from your receipt
+3. Paste the receipt hash (leaf)
+4. Add the proof hashes
+5. Click "Verify Cryptographic Proof"
+
+## Agent Workflows
+
+### Automated Payment Processing
+
+```typescript
+// Agent script that processes payments automatically
+async function processPayments(merchantAddress: string) {
+ const sdk = new AccensaSDK({
+ networkPassphrase: 'Test SDF Network ; September 2015',
+ rpcUrl: 'https://soroban-testnet.stellar.org',
+ });
+
+ // Poll for pending payments
+ while (true) {
+ const payments = await sdk.getPendingPayments(merchantAddress);
+
+ for (const payment of payments) {
+ // Process each payment
+ await handlePayment(payment);
+ }
+
+ // Wait before next poll
+ await new Promise(resolve => setTimeout(resolve, 60000));
+ }
+}
+```
+
+### Batch Verification
+
+```typescript
+// Verify multiple receipts at once
+const receipts = [
+ { batchId: 1, leaf: 'hash1', proof: ['proof1a', 'proof1b'] },
+ { batchId: 1, leaf: 'hash2', proof: ['proof2a', 'proof2b'] },
+];
+
+const results = await Promise.all(
+ receipts.map(receipt => sdk.verifyReceipt(receipt))
+);
+
+const valid = results.filter(r => r.verified);
+console.log(`Verified ${valid.length} of ${receipts.length} receipts`);
+```
+
+## Next Steps
+
+- [Seller Guide](./seller) - Understand the merchant perspective
+- [Operator Guide](./operator) - Run infrastructure components
+- [Troubleshooting](../troubleshooting) - Common issues and solutions
+
+---
+
+*This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing).*
