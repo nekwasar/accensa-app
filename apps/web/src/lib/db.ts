@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Client } from 'pg';
 
 /**
  * Opens a database connection.
@@ -14,9 +14,7 @@ export function connectionString(): string {
   return url;
 }
 
-export async function withClient<T>(
-  fn: (client: Client) => Promise<T>,
-): Promise<T> {
+export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
   const client = new Client({ connectionString: connectionString() });
   await client.connect();
   try {
@@ -34,7 +32,6 @@ export async function withClient<T>(
  * well so a fresh database works without a manual migration step.
  */
 export async function ensureSchema(client: Client): Promise<void> {
-  await client.query(`
   await client.query(`
  CREATE TABLE IF NOT EXISTS payments (
  tx_hash VARCHAR(64) PRIMARY KEY,
@@ -63,17 +60,15 @@ export async function ensureSchema(client: Client): Promise<void> {
  `);
 
   for (const [col, type] of [
-    ["ledger", "BIGINT"],
-    ["asset", "VARCHAR(64)"],
-    ["ts", "TIMESTAMPTZ"],
-    ["route", "VARCHAR(255)"],
-    ["method", "VARCHAR(10)"],
-    ["request_id", "VARCHAR(64)"],
-    ["hook_reported_at", "TIMESTAMPTZ"],
+    ['ledger', 'BIGINT'],
+    ['asset', 'VARCHAR(64)'],
+    ['ts', 'TIMESTAMPTZ'],
+    ['route', 'VARCHAR(255)'],
+    ['method', 'VARCHAR(10)'],
+    ['request_id', 'VARCHAR(64)'],
+    ['hook_reported_at', 'TIMESTAMPTZ'],
   ]) {
-    await client.query(
-      `ALTER TABLE payments ADD COLUMN IF NOT EXISTS ${col} ${type};`,
-    );
+    await client.query(`ALTER TABLE payments ADD COLUMN IF NOT EXISTS ${col} ${type};`);
   }
 
   await client.query(`
@@ -90,21 +85,13 @@ export async function ensureSchema(client: Client): Promise<void> {
   // x402 settles. Those staged rows have no amount or payer yet, and inventing
   // a zero to satisfy a constraint is exactly the fabrication this codebase
   // exists to avoid. The chain fills them in.
-  for (const col of ["amount", "payer"]) {
-    await client.query(
-      `ALTER TABLE payments ALTER COLUMN ${col} DROP NOT NULL;`,
-    );
+  for (const col of ['amount', 'payer']) {
+    await client.query(`ALTER TABLE payments ALTER COLUMN ${col} DROP NOT NULL;`);
   }
 
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`,
-  );
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`,
-  );
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`,
-  );
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
 
   // Auth challenge nonces — issued by /api/auth/challenge, consumed by
   // /api/auth/verify. Prevents replay of unrelated signed transactions.
@@ -168,22 +155,13 @@ export async function recordSettlement(
  request_id = EXCLUDED.request_id,
  hook_reported_at = EXCLUDED.hook_reported_at
  WHERE payments.hook_reported_at IS NULL OR payments.hook_reported_at < EXCLUDED.hook_reported_at`,
-    [
-      s.txHash,
-      s.payer ?? null,
-      s.route,
-      s.method,
-      s.requestId ?? null,
-      reportedAt,
-    ],
+    [s.txHash, s.payer ?? null, s.route, s.method, s.requestId ?? null, reportedAt],
   );
 
   return { matchedExistingPayment: false };
 }
 
-export async function getLastSyncedLedger(
-  client: Client,
-): Promise<number | null> {
+export async function getLastSyncedLedger(client: Client): Promise<number | null> {
   const res = await client.query<{ last_ledger: string }>(
     `SELECT last_ledger FROM sync_state WHERE id = 1`,
   );
@@ -207,19 +185,13 @@ export async function getSyncState(
   const { last_ledger, updated_at } = res.rows[0];
   return {
     lastLedger: Number(last_ledger),
-    updatedAt:
-      updated_at instanceof Date
-        ? updated_at.toISOString()
-        : String(updated_at),
+    updatedAt: updated_at instanceof Date ? updated_at.toISOString() : String(updated_at),
   };
 }
 
-export async function setLastSyncedLedger(
-  client: Client,
-  ledger: number,
-): Promise<void> {
+export async function setLastSyncedLedger(client: Client, ledger: number): Promise<void> {
   // Use advisory lock to prevent concurrent double-processing of ranges
-  await client.query("SELECT pg_advisory_xact_lock(1)");
+  await client.query('SELECT pg_advisory_xact_lock(1)');
   await client.query(
     `INSERT INTO sync_state (id, last_ledger, updated_at) VALUES (1, $1, now())
      ON CONFLICT (id) DO UPDATE SET last_ledger = EXCLUDED.last_ledger, updated_at = now()
@@ -234,9 +206,7 @@ export async function setLastSyncedLedger(
  * been used.
  */
 export async function storeNonce(client: Client, nonce: string): Promise<void> {
-  await client.query(`INSERT INTO challenge_nonces (nonce) VALUES ($1)`, [
-    nonce,
-  ]);
+  await client.query(`INSERT INTO challenge_nonces (nonce) VALUES ($1)`, [nonce]);
 }
 
 /**
@@ -246,10 +216,7 @@ export async function storeNonce(client: Client, nonce: string): Promise<void> {
  * one case where /api/auth/verify should proceed. A false return means the
  * nonce was unknown, already consumed, or expired, and the caller must 401.
  */
-export async function consumeNonce(
-  client: Client,
-  nonce: string,
-): Promise<boolean> {
+export async function consumeNonce(client: Client, nonce: string): Promise<boolean> {
   const result = await client.query(
     `UPDATE challenge_nonces
      SET consumed = true

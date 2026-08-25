@@ -5,21 +5,25 @@ import { POST } from './route';
 const MERCHANT_KEYPAIR = Keypair.random();
 const MERCHANT_ADDRESS = MERCHANT_KEYPAIR.publicKey();
 
-const mockConsumeNonce = vi.fn();
-const mockCreateSession = vi.fn().mockResolvedValue(undefined);
-const mockWithClient = vi.fn(async (fn: (client: unknown) => Promise<unknown>) => {
-  return fn({});
-});
-const mockEnsureSchema = vi.fn().mockResolvedValue(undefined);
+const { mockConsumeNonce, mockCreateSession, mockWithClient, mockEnsureSchema } = vi.hoisted(
+  () => ({
+    mockConsumeNonce: vi.fn(),
+    mockCreateSession: vi.fn().mockResolvedValue(undefined),
+    mockWithClient: vi.fn(async (fn: (client: unknown) => Promise<unknown>) => {
+      return fn({});
+    }),
+    mockEnsureSchema: vi.fn().mockResolvedValue(undefined),
+  }),
+);
 
 vi.mock('@/lib/auth', () => ({
-  createSession: (...args: unknown[]) => mockCreateSession(...args),
+  createSession: mockCreateSession,
 }));
 
 vi.mock('@/lib/db', () => ({
-  withClient: (...args: unknown[]) => mockWithClient(...args),
-  ensureSchema: (...args: unknown[]) => mockEnsureSchema(...args),
-  consumeNonce: (...args: unknown[]) => mockConsumeNonce(...args),
+  withClient: mockWithClient,
+  ensureSchema: mockEnsureSchema,
+  consumeNonce: mockConsumeNonce,
 }));
 
 function buildChallenge(nonce: string, passphrase = Networks.TESTNET) {

@@ -4,18 +4,22 @@ import { GET } from './route';
 
 const MERCHANT_KEYPAIR = Keypair.random();
 
-const mockStoreNonce = vi.fn().mockResolvedValue(undefined);
-const mockSweepExpiredNonces = vi.fn().mockResolvedValue(undefined);
-const mockEnsureSchema = vi.fn().mockResolvedValue(undefined);
-const mockWithClient = vi.fn(async (fn: (client: unknown) => Promise<unknown>) => {
-  return fn({});
-});
+const { mockStoreNonce, mockSweepExpiredNonces, mockEnsureSchema, mockWithClient } = vi.hoisted(
+  () => ({
+    mockStoreNonce: vi.fn().mockResolvedValue(undefined),
+    mockSweepExpiredNonces: vi.fn().mockResolvedValue(undefined),
+    mockEnsureSchema: vi.fn().mockResolvedValue(undefined),
+    mockWithClient: vi.fn(async (fn: (client: unknown) => Promise<unknown>) => {
+      return fn({});
+    }),
+  }),
+);
 
 vi.mock('@/lib/db', () => ({
-  withClient: (...args: unknown[]) => mockWithClient(...args),
-  ensureSchema: (...args: unknown[]) => mockEnsureSchema(...args),
-  storeNonce: (...args: unknown[]) => mockStoreNonce(...args),
-  sweepExpiredNonces: (...args: unknown[]) => mockSweepExpiredNonces(...args),
+  withClient: mockWithClient,
+  ensureSchema: mockEnsureSchema,
+  storeNonce: mockStoreNonce,
+  sweepExpiredNonces: mockSweepExpiredNonces,
 }));
 
 describe('/api/auth/challenge GET', () => {

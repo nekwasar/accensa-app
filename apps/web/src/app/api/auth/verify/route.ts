@@ -58,9 +58,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid challenge structure' }, { status: 401 });
     }
 
-    const nonce = typeof op.value === 'string'
-      ? op.value
-      : Buffer.from(op.value).toString('utf8');
+    const nonce = typeof op.value === 'string' ? op.value : Buffer.from(op.value).toString('utf8');
 
     // Confirm the nonce was issued by this server and consume it
     const consumed = await withClient(async (client) => {
