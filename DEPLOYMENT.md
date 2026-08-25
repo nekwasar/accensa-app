@@ -99,6 +99,7 @@ The pooler host looks like `aws-1-<region>.pooler.supabase.com`.
 | `SYNC_URL` | GitHub secret | The `/api/sync` endpoint the workflow posts to. |
 | `HOOK_API_KEY` | Vercel (`web`) | Gates `/api/hook/settle`. **Absent means the endpoint fails closed**, not open. |
 | `NEXT_PUBLIC_REFUND_VAULT_ID` | Vercel (`web`), optional | Overrides the built-in RefundVault contract id. |
+| `STELLAR_NETWORK_PASSPHRASE` | Vercel (`web`), optional | Stellar network passphrase for auth challenges and RPC calls. Defaults to `Test SDF Network ; September 2015`. Set to `Public Global Stellar Network ; September 2015` for pubnet. |
 
 Set them per environment (`production`, `preview`, `development`) — Vercel does
 not share values across them.
