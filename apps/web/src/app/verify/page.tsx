@@ -12,6 +12,53 @@ const SAMPLE = {
 
 const FORGED_LEAF = '16b138aabc889c21114436424e13132bd8928d2c21b4ac5a9ac5198104efb42c';
 
+/** Strip optional 0x prefix and surrounding whitespace, returning lowercase hex. */
+function normalizeHex(input: string): string {
+ return input.trim().replace(/^0x/i, '').toLowerCase();
+}
+
+/** A hex-encoded 32-byte hash is exactly 64 hex characters. */
+function isHex64(value: string): boolean {
+ return /^[0-9a-f]{64}$/.test(normalizeHex(value));
+}
+
+interface FieldErrors {
+ batchId?: string;
+ leaf?: string;
+ proof?: string;
+}
+
+function validate(batchId: string, leaf: string, proof: string): FieldErrors {
+ const errors: FieldErrors = {};
+
+ if (!batchId.trim()) {
+ errors.batchId = 'Batch ID is required.';
+ } else if (!/^\d+$/.test(batchId.trim())) {
+ errors.batchId = 'Batch ID must be a whole number.';
+ }
+
+ const trimmedLeaf = leaf.trim();
+ if (!trimmedLeaf) {
+ errors.leaf = 'Receipt hash is required.';
+ } else if (!isHex64(trimmedLeaf)) {
+ errors.leaf = 'Must be exactly 64 hex characters (a 32-byte hash).';
+ }
+
+ const siblings = proof.split(/[\s,]+/).map((p) => p.trim()).filter(Boolean);
+ if (siblings.length === 0) {
+ errors.proof = 'At least one sibling hash is required.';
+ } else {
+ for (let i = 0; i < siblings.length; i++) {
+ if (!isHex64(siblings[i])) {
+ errors.proof = `Sibling #${i + 1} is not a valid 64-character hex hash.`;
+ break;
+ }
+ }
+ }
+
+ return errors;
+}
+
 type State =
  | { status: 'idle' }
  | { status: 'checking' }
@@ -23,18 +70,28 @@ export default function VerifyPage() {
  const [leaf, setLeaf] = useState('');
  const [proof, setProof] = useState('');
  const [state, setState] = useState<State>({ status: 'idle' });
+ const [errors, setErrors] = useState<FieldErrors>({});
 
  async function submit(e: React.FormEvent) {
  e.preventDefault();
+ setErrors({});
+
+ const fieldErrors = validate(batchId, leaf, proof);
+ if (Object.keys(fieldErrors).length > 0) {
+ setErrors(fieldErrors);
+ return;
+ }
+
  setState({ status: 'checking' });
  try {
+ const siblings = proof.split(/[\s,]+/).map((p) => p.trim()).filter(Boolean);
  const res = await fetch('/api/verify', {
  method: 'POST',
  headers: { 'Content-Type': 'application/json' },
  body: JSON.stringify({
- batchId: Number(batchId),
- leaf: leaf.trim(),
- proof: proof.split(/[\s,]+/).map((p) => p.trim()).filter(Boolean),
+ batchId: parseInt(batchId.trim(), 10),
+ leaf: normalizeHex(leaf),
+ proof: siblings.map(normalizeHex),
  }),
  });
  const body = await res.json();
@@ -52,6 +109,7 @@ export default function VerifyPage() {
  setBatchId(SAMPLE.batchId);
  setLeaf(forged ? FORGED_LEAF : SAMPLE.leaf);
  setProof(SAMPLE.proof);
+ setErrors({});
  setState({ status: 'idle' });
  }
 
@@ -95,20 +153,21 @@ export default function VerifyPage() {
 
  <form onSubmit={submit} className="space-y-8">
  <div className="grid md:grid-cols-2 gap-8">
- <Field label="Batch ID"hint="The anchored batch number.">
+ <Field label="Batch ID"hint="The anchored batch number." error={errors.batchId}>
  <input
  value={batchId}
- onChange={(e) => setBatchId(e.target.value)}
+ onChange={(e) => { setBatchId(e.target.value); setErrors((prev) => ({ ...prev, batchId: undefined })); }}
  placeholder="1"
+ inputMode="numeric"
  required
  className="w-full bg-slate-50 dark:bg-[#0a111a] border border-slate-200 dark:border-white/10 px-5 py-4 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none"
  />
  </Field>
 
- <Field label="Receipt Hash (Leaf)"hint="Hex-encoded 32-byte hash.">
+ <Field label="Receipt Hash (Leaf)"hint="Hex-encoded 32-byte hash." error={errors.leaf}>
  <input
  value={leaf}
- onChange={(e) => setLeaf(e.target.value)}
+ onChange={(e) => { setLeaf(e.target.value); setErrors((prev) => ({ ...prev, leaf: undefined })); }}
  placeholder="c476fc05…"
  required
  className="w-full bg-slate-50 dark:bg-[#0a111a] border border-slate-200 dark:border-white/10 px-5 py-4 font-mono text-emerald-600 dark:text-emerald-400 focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none"
@@ -116,10 +175,10 @@ export default function VerifyPage() {
  </Field>
  </div>
 
- <Field label="Merkle Proof"hint="Sibling hashes, ordered leaf to root.">
+ <Field label="Merkle Proof"hint="Sibling hashes, ordered leaf to root." error={errors.proof}>
  <textarea
  value={proof}
- onChange={(e) => setProof(e.target.value)}
+ onChange={(e) => { setProof(e.target.value); setErrors((prev) => ({ ...prev, proof: undefined })); }}
  rows={3}
  placeholder="7ca64ee6…&#10;1733fad1…"
  className="w-full bg-slate-50 dark:bg-[#0a111a] border border-slate-200 dark:border-white/10 px-5 py-4 font-mono text-slate-600 dark:text-slate-400 text-sm focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-400 dark:focus:ring-0 transition-all shadow-sm dark:shadow-none resize-y leading-relaxed"
@@ -212,14 +271,18 @@ function CheckCard({ title, source, result }: { title: string; source: string; r
  );
 }
 
-function Field({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) {
+function Field({ label, hint, children, error }: { label: string; hint: string; children: React.ReactNode; error?: string }) {
  return (
  <label className="block space-y-2">
  <div className="flex justify-between items-baseline">
  <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors duration-300">{label}</span>
  </div>
  {children}
+ {error ? (
+ <span className="block text-xs font-medium text-red-600 dark:text-red-400 transition-colors duration-300">{error}</span>
+ ) : (
  <span className="block text-xs font-medium text-slate-400 dark:text-slate-500 transition-colors duration-300">{hint}</span>
+ )}
  </label>
  );
 }
