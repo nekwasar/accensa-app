@@ -52,18 +52,23 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    {
-      type: 'category',
-      label: 'x402-facilitator-stellar',
-      items: [
-        'facilitator/overview',
-        {
-          type: 'link',
-          label: 'GitHub Repository',
-          href: 'https://github.com/accensa/x402-facilitator-stellar',
-        },
-      ],
-    },
+{
+ type: 'category',
+ label: 'x402-facilitator-stellar',
+ items: [
+ 'facilitator/overview',
+ 'facilitator/seller',
+ 'facilitator/buyer-agent',
+ 'facilitator/operator',
+ 'facilitator/conformance',
+ 'facilitator/sync-mechanism',
+ {
+ type: 'link',
+ label: 'GitHub Repository',
+ href: 'https://github.com/accensa/x402-facilitator-stellar',
+ },
+ ],
+ },
     {
       type: 'category',
       label: 'General Guides',
