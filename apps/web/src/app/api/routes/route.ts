@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { withClient, ensureSchema } from "@/lib/db";
+import { NextResponse } from 'next/server';
+import { withClient, ensureSchema } from '@/lib/db';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -10,15 +10,15 @@ const DEFAULT_WINDOW_DAYS = 30;
 export async function GET(request: Request) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json(
-      { error: "DATABASE_URL is not configured" },
+      { error: 'DATABASE_URL is not configured' },
       { status: 500 },
     );
   }
 
   const { searchParams } = new URL(request.url);
-  const from = searchParams.get("from");
-  const to = searchParams.get("to");
-  const limitParam = searchParams.get("limit");
+  const from = searchParams.get('from');
+  const to = searchParams.get('to');
+  const limitParam = searchParams.get('limit');
 
   let limit = DEFAULT_LIMIT;
   if (limitParam !== null) {
@@ -95,14 +95,14 @@ export async function GET(request: Request) {
       const otherRevenue = tail.reduce(
         (sum, r) =>
           sum +
-          (typeof r.total_revenue === "string"
+          (typeof r.total_revenue === 'string'
             ? BigInt(r.total_revenue)
             : BigInt(0)),
         0n,
       );
       const otherCalls = tail.reduce((sum, r) => sum + r.calls, 0);
       const otherRow = {
-        route: "(other)",
+        route: '(other)',
         method: null as string | null,
         total_revenue: String(otherRevenue),
         calls: otherCalls,
@@ -116,7 +116,7 @@ export async function GET(request: Request) {
       default_window_days: from ? null : DEFAULT_WINDOW_DAYS,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
