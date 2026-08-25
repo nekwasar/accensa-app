@@ -1,4 +1,4 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -15,6 +15,7 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'introduction',
+    'architecture',
     {
       type: 'category',
       label: 'accensa-app',
@@ -66,13 +67,8 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'General Guides',
-      items: [
-        'developer',
-        'contributing',
-        'troubleshooting',
-        'faq',
-      ],
-    }
+      items: ['developer', 'contributing', 'troubleshooting', 'faq'],
+    },
   ],
 };
 
