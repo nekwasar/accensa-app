@@ -66,7 +66,7 @@ export default function LoginPage() {
             <ShieldAlert className="w-8 h-8 text-primary" />
           </div>
         </div>
-        
+
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Merchant Login</h1>
           <p className="text-sm text-muted-foreground">
@@ -85,11 +85,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
         >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            'Connect Wallet'
-          )}
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Connect Wallet'}
         </button>
       </div>
     </div>

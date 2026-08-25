@@ -8,17 +8,15 @@
  */
 
 export interface SettlementReport {
- txHash: string;
- route: string;
- method: string;
- requestId: string | null;
- payer: string | null;
- reportedAt: string | null;
+  txHash: string;
+  route: string;
+  method: string;
+  requestId: string | null;
+  payer: string | null;
+  reportedAt: string | null;
 }
 
-export type ParseResult =
- | { ok: true; report: SettlementReport }
- | { ok: false; error: string };
+export type ParseResult = { ok: true; report: SettlementReport } | { ok: false; error: string };
 
 /** Stellar transaction hashes are 32 bytes, hex-encoded. */
 const TX_HASH = /^[0-9a-f]{64}$/i;
@@ -33,83 +31,84 @@ const MAX_ROUTE = 255;
 const MAX_REQUEST_ID = 64;
 
 export function parseSettlementReport(body: unknown): ParseResult {
- if (typeof body !== 'object' || body === null || Array.isArray(body)) {
- return { ok: false, error: 'Body must be a JSON object' };
- }
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return { ok: false, error: 'Body must be a JSON object' };
+  }
 
- const b = body as Record<string, unknown>;
+  const b = body as Record<string, unknown>;
 
- const txHash = typeof b.tx_hash === 'string' ? b.tx_hash.trim() : '';
- if (!TX_HASH.test(txHash)) {
- return { ok: false, error: 'tx_hash must be a hex-encoded 32-byte transaction hash' };
- }
+  const txHash = typeof b.tx_hash === 'string' ? b.tx_hash.trim() : '';
+  if (!TX_HASH.test(txHash)) {
+    return { ok: false, error: 'tx_hash must be a hex-encoded 32-byte transaction hash' };
+  }
 
- const route = typeof b.route === 'string' ? b.route.trim() : '';
- if (route === '') return { ok: false, error: 'route is required' };
- if (route.length > MAX_ROUTE) {
- return { ok: false, error: `route must be at most ${MAX_ROUTE} characters` };
- }
+  const route = typeof b.route === 'string' ? b.route.trim() : '';
+  if (route === '') return { ok: false, error: 'route is required' };
+  if (route.length > MAX_ROUTE) {
+    return { ok: false, error: `route must be at most ${MAX_ROUTE} characters` };
+  }
 
- const method = typeof b.method === 'string' ? b.method.trim().toUpperCase() : '';
- if (!METHODS.has(method)) {
- return { ok: false, error: 'method must be a standard HTTP method' };
- }
+  const method = typeof b.method === 'string' ? b.method.trim().toUpperCase() : '';
+  if (!METHODS.has(method)) {
+    return { ok: false, error: 'method must be a standard HTTP method' };
+  }
 
- let requestId: string | null = null;
- if (b.request_id !== undefined && b.request_id !== null) {
- if (typeof b.request_id !== 'string') {
- return { ok: false, error: 'request_id must be a string' };
- }
- const trimmed = b.request_id.trim();
- if (trimmed.length > MAX_REQUEST_ID) {
- return { ok: false, error: `request_id must be at most ${MAX_REQUEST_ID} characters` };
- }
- requestId = trimmed === '' ? null : trimmed;
- }
+  let requestId: string | null = null;
+  if (b.request_id !== undefined && b.request_id !== null) {
+    if (typeof b.request_id !== 'string') {
+      return { ok: false, error: 'request_id must be a string' };
+    }
+    const trimmed = b.request_id.trim();
+    if (trimmed.length > MAX_REQUEST_ID) {
+      return { ok: false, error: `request_id must be at most ${MAX_REQUEST_ID} characters` };
+    }
+    requestId = trimmed === '' ? null : trimmed;
+  }
 
- // The payer is only ever a hint used to stage a not-yet-indexed payment; the
- // indexer overwrites it with the value read from the ledger. Reject a
- // malformed one rather than persisting a value that can never reconcile.
- let payer: string | null = null;
- if (b.payer !== undefined && b.payer !== null) {
- if (typeof b.payer !== 'string') {
- return { ok: false, error: 'payer must be a string' };
- }
- const trimmed = b.payer.trim();
- if (trimmed !== '' && !ACCOUNT_ID.test(trimmed)) {
- return { ok: false, error: 'payer must be a Stellar account ID' };
- }
- payer = trimmed === '' ? null : trimmed;
- }
+  // The payer is only ever a hint used to stage a not-yet-indexed payment; the
+  // indexer overwrites it with the value read from the ledger. Reject a
+  // malformed one rather than persisting a value that can never reconcile.
+  let payer: string | null = null;
+  if (b.payer !== undefined && b.payer !== null) {
+    if (typeof b.payer !== 'string') {
+      return { ok: false, error: 'payer must be a string' };
+    }
+    const trimmed = b.payer.trim();
+    if (trimmed !== '' && !ACCOUNT_ID.test(trimmed)) {
+      return { ok: false, error: 'payer must be a Stellar account ID' };
+    }
+    payer = trimmed === '' ? null : trimmed;
+  }
 
- let reportedAt: string | null = null;
- if (b.reported_at !== undefined && b.reported_at !== null) {
-   if (typeof b.reported_at !== 'string') {
-     return { ok: false, error: 'reported_at must be a string' };
-   }
-   const d = new Date(b.reported_at);
-   if (Number.isNaN(d.getTime())) {
-     return { ok: false, error: 'reported_at must be an ISO-8601 timestamp' };
-   }
-   const maxAgeMs = process.env.HOOK_MAX_AGE_MS ? Number(process.env.HOOK_MAX_AGE_MS) : 3600000;
-   const now = Date.now();
-   const age = now - d.getTime();
-   if (age > maxAgeMs) {
-     return { ok: false, error: 'report_too_old' };
-   }
-   // 5 minutes clock skew
-   if (d.getTime() > now + 300000) {
-     return { ok: false, error: 'report_future_dated' };
-   }
-   reportedAt = b.reported_at;
- } else {
-   // transition window
-   if (Date.now() > new Date('2027-01-01T00:00:00Z').getTime()) {
-     return { ok: false, error: 'reported_at is required' };
-   }
- }
+  let reportedAt: string | null = null;
+  if (b.reported_at !== undefined && b.reported_at !== null) {
+    if (typeof b.reported_at !== 'string') {
+      return { ok: false, error: 'reported_at must be a string' };
+    }
+    const d = new Date(b.reported_at);
+    if (Number.isNaN(d.getTime())) {
+      return { ok: false, error: 'reported_at must be an ISO-8601 timestamp' };
+    }
+    const maxAgeMs = process.env.HOOK_MAX_AGE_MS ? Number(process.env.HOOK_MAX_AGE_MS) : 3600000;
+    const now = Date.now();
+    const age = now - d.getTime();
+    if (age > maxAgeMs) {
+      return { ok: false, error: 'report_too_old' };
+    }
+    // 5 minutes clock skew
+    if (d.getTime() > now + 300000) {
+      return { ok: false, error: 'report_future_dated' };
+    }
+    reportedAt = b.reported_at;
+  } else {
+    // transition window
+    if (Date.now() > new Date('2027-01-01T00:00:00Z').getTime()) {
+      return { ok: false, error: 'reported_at is required' };
+    }
+  }
 
- return { ok: true, report: { txHash: txHash.toLowerCase(), route, method, requestId, payer, reportedAt } };
+  return {
+    ok: true,
+    report: { txHash: txHash.toLowerCase(), route, method, requestId, payer, reportedAt },
+  };
 }
-
-

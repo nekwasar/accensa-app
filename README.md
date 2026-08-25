@@ -22,7 +22,7 @@
 ## The Problem
 
 When you put an x402 paywall in front of an API, payment stops being an event your
-backend records and becomes something that happens *on a ledger you don't control*.
+backend records and becomes something that happens _on a ledger you don't control_.
 An agent pays, retries, and gets its data — and your database never hears about it.
 
 So the merchant is left without the things every other payment stack gives them:
@@ -31,7 +31,7 @@ So the merchant is left without the things every other payment stack gives them:
   "what did I earn today, and from which route" means reading chain data, not
   querying your own database.
 - **No attribution.** A transfer tells you an amount and a payer. It doesn't tell you
-  *which endpoint* was bought, which is exactly what you need to price anything.
+  _which endpoint_ was bought, which is exactly what you need to price anything.
 - **No way to answer a dispute.** When an agent operator claims they were double
   charged, both sides are looking at different records.
 
@@ -69,12 +69,12 @@ of a cent, which is the only way verifiability survives micropayment economics.
    Next.js dashboard  ◀──verify_receipt(leaf, proof)
 ```
 
-| Component | Path | What it does |
-|---|---|---|
-| **Indexer** | [`apps/web/src/app/api/sync`](apps/web/src/app/api/sync) | Decodes Stellar Asset Contract `transfer` events addressed to the merchant and persists them to PostgreSQL. Runs on a schedule; tracks a ledger cursor so it never rescans or double-counts. |
-| **Dashboard** | [`apps/web/`](apps/web) | Next.js app showing payments, totals, and receipt verification. |
-| **SDK** | [`packages/sdk/`](packages/sdk) | `verifyReceipt()` for off-chain Merkle verification, and `attachAccensaHook()` / `createSettleHook()` for reporting route-level attribution from your x402 server. |
-| **Demo merchant** | [`apps/demo-merchant/`](apps/demo-merchant) | Minimal paid endpoint for exercising the flow end to end. |
+| Component         | Path                                                     | What it does                                                                                                                                                                                 |
+| ----------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Indexer**       | [`apps/web/src/app/api/sync`](apps/web/src/app/api/sync) | Decodes Stellar Asset Contract `transfer` events addressed to the merchant and persists them to PostgreSQL. Runs on a schedule; tracks a ledger cursor so it never rescans or double-counts. |
+| **Dashboard**     | [`apps/web/`](apps/web)                                  | Next.js app showing payments, totals, and receipt verification.                                                                                                                              |
+| **SDK**           | [`packages/sdk/`](packages/sdk)                          | `verifyReceipt()` for off-chain Merkle verification, and `attachAccensaHook()` / `createSettleHook()` for reporting route-level attribution from your x402 server.                           |
+| **Demo merchant** | [`apps/demo-merchant/`](apps/demo-merchant)              | Minimal paid endpoint for exercising the flow end to end.                                                                                                                                    |
 
 ## Verifying a Receipt Off-Chain
 
@@ -145,7 +145,10 @@ Set `HOOK_API_KEY` on both sides, then report settlements from your x402 server:
 import { createSettleHook } from '@accensa/sdk';
 
 resourceServer.onAfterSettle(
-  createSettleHook({ indexerUrl: 'https://your-accensa.vercel.app', apiKey: process.env.HOOK_API_KEY }),
+  createSettleHook({
+    indexerUrl: 'https://your-accensa.vercel.app',
+    apiKey: process.env.HOOK_API_KEY,
+  }),
 );
 ```
 
@@ -191,7 +194,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security policy in [SECURITY.md](SECURIT
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
 ## Setup
+
 See [db-setup.md](db-setup.md) for database setup instructions, and
 [DEPLOYMENT.md](DEPLOYMENT.md) for the deployed topology — how Vercel, Supabase,
 and the GitHub Actions indexer fit together, which environment variables live

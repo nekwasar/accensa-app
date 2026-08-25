@@ -1,8 +1,8 @@
 /** When the indexer last committed progress. Null before it has ever run. */
 export interface SyncState {
- lastLedger: number;
- /** ISO 8601. */
- updatedAt: string;
+  lastLedger: number;
+  /** ISO 8601. */
+  updatedAt: string;
 }
 
 /**
@@ -25,11 +25,11 @@ export const LIVE_WITHIN_MS = 15 * 60 * 1000;
 export const LAGGING_WITHIN_MS = 3 * 60 * 60 * 1000;
 
 export interface SyncStatus {
- level: SyncLevel;
- /** Human-readable age, e.g."47m". Empty when the age is unknown. */
- age: string;
- /** Full sentence for a title attribute / screen readers. */
- detail: string;
+  level: SyncLevel;
+  /** Human-readable age, e.g."47m". Empty when the age is unknown. */
+  age: string;
+  /** Full sentence for a title attribute / screen readers. */
+  detail: string;
 }
 
 /**
@@ -40,30 +40,30 @@ export interface SyncStatus {
  * state is unknown, and refusing forever would leave no way to recover.
  */
 export function cooldownRemaining(
- updatedAt: string | null | undefined,
- cooldownMs: number,
- now: number = Date.now(),
+  updatedAt: string | null | undefined,
+  cooldownMs: number,
+  now: number = Date.now(),
 ): number {
- if (!updatedAt) return 0;
- const updated = Date.parse(updatedAt);
- if (Number.isNaN(updated)) return 0;
- const since = now - updated;
- // A timestamp in the future means clock skew, not a fresh sync; do not let it
- // lock the button out for however long the skew happens to be.
- if (since < 0) return 0;
- return since >= cooldownMs ? 0 : cooldownMs - since;
+  if (!updatedAt) return 0;
+  const updated = Date.parse(updatedAt);
+  if (Number.isNaN(updated)) return 0;
+  const since = now - updated;
+  // A timestamp in the future means clock skew, not a fresh sync; do not let it
+  // lock the button out for however long the skew happens to be.
+  if (since < 0) return 0;
+  return since >= cooldownMs ? 0 : cooldownMs - since;
 }
 
 /** Formats a duration as a single coarse unit: 4s, 12m, 3h, 2d. */
 export function formatAge(ms: number): string {
- if (ms < 0) return '0s';
- const seconds = Math.floor(ms / 1000);
- if (seconds < 60) return `${seconds}s`;
- const minutes = Math.floor(seconds / 60);
- if (minutes < 60) return `${minutes}m`;
- const hours = Math.floor(minutes / 60);
- if (hours < 24) return `${hours}h`;
- return `${Math.floor(hours / 24)}d`;
+  if (ms < 0) return '0s';
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
 }
 
 /**
@@ -75,34 +75,34 @@ export function formatAge(ms: number): string {
  * this is measured from the indexer's own timestamp instead.
  */
 export function describeSync(sync: SyncState | null, now: number = Date.now()): SyncStatus {
- if (!sync?.updatedAt) {
- return { level: 'unknown', age: '', detail: 'The indexer has not reported a sync yet.' };
- }
+  if (!sync?.updatedAt) {
+    return { level: 'unknown', age: '', detail: 'The indexer has not reported a sync yet.' };
+  }
 
- const updated = Date.parse(sync.updatedAt);
- if (Number.isNaN(updated)) {
- return { level: 'unknown', age: '', detail: 'The indexer reported an unreadable sync time.' };
- }
+  const updated = Date.parse(sync.updatedAt);
+  if (Number.isNaN(updated)) {
+    return { level: 'unknown', age: '', detail: 'The indexer reported an unreadable sync time.' };
+  }
 
- // A clock skew between server and browser can put the timestamp slightly in
- // the future; treat that as"just now"rather than showing a negative age.
- const ms = Math.max(0, now - updated);
- const age = formatAge(ms);
- const at = new Date(updated).toLocaleString();
+  // A clock skew between server and browser can put the timestamp slightly in
+  // the future; treat that as"just now"rather than showing a negative age.
+  const ms = Math.max(0, now - updated);
+  const age = formatAge(ms);
+  const at = new Date(updated).toLocaleString();
 
- if (ms <= LIVE_WITHIN_MS) {
- return { level: 'live', age, detail: `Indexed ${age} ago, at ${at}.` };
- }
- if (ms <= LAGGING_WITHIN_MS) {
- return {
- level: 'lagging',
- age,
- detail: `Last indexed ${age} ago, at ${at}. Payments settled since then are not shown yet.`,
- };
- }
- return {
- level: 'stale',
- age,
- detail: `Last indexed ${age} ago, at ${at}. This total is out of date - the sync job may not be running.`,
- };
+  if (ms <= LIVE_WITHIN_MS) {
+    return { level: 'live', age, detail: `Indexed ${age} ago, at ${at}.` };
+  }
+  if (ms <= LAGGING_WITHIN_MS) {
+    return {
+      level: 'lagging',
+      age,
+      detail: `Last indexed ${age} ago, at ${at}. Payments settled since then are not shown yet.`,
+    };
+  }
+  return {
+    level: 'stale',
+    age,
+    detail: `Last indexed ${age} ago, at ${at}. This total is out of date - the sync job may not be running.`,
+  };
 }

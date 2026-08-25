@@ -1,6 +1,6 @@
 ---
-title: "Developer Guide"
-description: "SDK references and Indexer API structure for technical integrators."
+title: 'Developer Guide'
+description: 'SDK references and Indexer API structure for technical integrators.'
 ---
 
 ## SDK Reference
@@ -18,14 +18,16 @@ const app = express();
 
 // Attach the Accensa hook first so it observes the settled response,
 // then the standard x402 middleware.
-app.use(attachAccensaHook({
-  indexerUrl: process.env.ACCENSA_INDEXER_URL,
-  apiKey: process.env.HOOK_API_KEY
-}));
+app.use(
+  attachAccensaHook({
+    indexerUrl: process.env.ACCENSA_INDEXER_URL,
+    apiKey: process.env.HOOK_API_KEY,
+  }),
+);
 app.use(x402Middleware());
 
 app.get('/api/data', (req, res) => {
-  res.json({ data: "Premium payload" });
+  res.json({ data: 'Premium payload' });
 });
 ```
 
@@ -34,12 +36,15 @@ app.get('/api/data', (req, res) => {
 The Accensa backend exposes a JSON REST API consumed by the dashboard. You can also query it directly.
 
 ### `GET /health`
+
 Liveness probe. Returns `{"status":"ok"}`.
 
 ### `GET /api/payments`
+
 Returns all historically tracked payments. `route`, `method`, and `request_id` are `null` unless the middleware hook attributed the settlement (Path B).
 
 **Response Shape:**
+
 ```json
 [
   {
@@ -57,6 +62,7 @@ Returns all historically tracked payments. `route`, `method`, and `request_id` a
 ```
 
 ### `POST /hook/settle`
+
 Path B ingestion endpoint called by the SDK middleware hook. Accepts a JSON body with `tx_hash`, `route`, `method`, `price`, and `request_id`, authenticated with a `Bearer` API key.
 
 Route-level aggregation (`GET /api/routes`) is computed in the dashboard today; a dedicated aggregation endpoint is tracked as an open issue.

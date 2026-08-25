@@ -27,6 +27,8 @@ export interface CsvPayment {
   ts: string;
   route: string | null;
   method: string | null;
+  /** Whether this payment was refunded in this session. */
+  refunded?: boolean;
 }
 
 /** RFC 4180 says CRLF; Excel is the consumer that actually cares. */
@@ -50,6 +52,7 @@ const HEADERS = [
   'Route',
   'Method',
   'Ledger',
+  'Refunded',
 ];
 
 /** Characters that make a spreadsheet treat a cell as a formula. */
@@ -101,6 +104,7 @@ export function paymentsToCsv(payments: readonly CsvPayment[]): string {
       neutralizeFormula(payment.route ?? ''),
       neutralizeFormula(payment.method ?? ''),
       payment.ledger === null ? '' : String(payment.ledger),
+      payment.refunded ? 'Yes' : '',
     ]),
   );
 

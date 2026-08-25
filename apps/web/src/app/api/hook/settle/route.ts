@@ -19,10 +19,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   const publicKeyHex = process.env.MERCHANT_PUBLIC_KEY;
   if (!publicKeyHex) {
-    return NextResponse.json(
-      { error: 'Settlement reporting is not configured' },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: 'Settlement reporting is not configured' }, { status: 503 });
   }
 
   const signature = request.headers.get('x-signature');
@@ -30,9 +27,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing X-Signature header' }, { status: 401 });
   }
 
- if (!process.env.DATABASE_URL) {
- return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
- }
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
+  }
 
   let raw: string;
   try {
@@ -47,13 +44,18 @@ export async function POST(request: Request) {
     const publicKey = crypto.createPublicKey({
       key: Buffer.concat([
         Buffer.from('302a300506032b6570032100', 'hex'), // SubjectPublicKeyInfo Ed25519 header
-        keyBuffer
+        keyBuffer,
       ]),
       format: 'der',
-      type: 'spki'
+      type: 'spki',
     });
-    
-    const isValid = crypto.verify(null, Buffer.from(raw, 'utf8'), publicKey, Buffer.from(signature, 'hex'));
+
+    const isValid = crypto.verify(
+      null,
+      Buffer.from(raw, 'utf8'),
+      publicKey,
+      Buffer.from(signature, 'hex'),
+    );
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
@@ -73,21 +75,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
- try {
- const { matchedExistingPayment } = await withClient(async (client) => {
- await ensureSchema(client);
- return recordSettlement(client, parsed.report);
- });
+  try {
+    const { matchedExistingPayment } = await withClient(async (client) => {
+      await ensureSchema(client);
+      return recordSettlement(client, parsed.report);
+    });
 
- return NextResponse.json({
- recorded: true,
- txHash: parsed.report.txHash,
- // False means the transfer has not been indexed yet and the attribution
- // was staged. The sync job completes the row when it reaches that ledger.
- matchedExistingPayment,
- });
- } catch (error) {
- const message = error instanceof Error ? error.message : 'Unknown error';
- return NextResponse.json({ error: `Could not record settlement: ${message}` }, { status: 500 });
- }
+    return NextResponse.json({
+      recorded: true,
+      txHash: parsed.report.txHash,
+      // False means the transfer has not been indexed yet and the attribution
+      // was staged. The sync job completes the row when it reaches that ledger.
+      matchedExistingPayment,
+    });
+  } catch (error) {
+    console.error('Error recording settlement:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }
