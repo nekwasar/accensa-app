@@ -57,12 +57,12 @@ describe('toCsvRow', () => {
 });
 
 describe('paymentsToCsv', () => {
-  it('emits the header even for an empty set', () => {
-    const csv = paymentsToCsv([]);
-    expect(lines(csv)).toEqual([
-      'Transaction Hash,Timestamp,Amount,Asset,Asset Identifier,Payer,Route,Method,Ledger',
-    ]);
-  });
+ it('emits the header even for an empty set', () => {
+ const csv = paymentsToCsv([]);
+ expect(lines(csv)).toEqual([
+ 'Transaction Hash,Timestamp,Amount,Asset,Asset Identifier,Payer,Route,Method,Ledger,Refunded',
+ ]);
+ });
 
   it('terminates every record, including the last', () => {
     expect(paymentsToCsv([payment()]).endsWith('\r\n')).toBe(true);
