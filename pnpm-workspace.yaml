@@ -1,11 +1,11 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
 allowBuilds:
   '@swc/core': true
   core-js: true
   esbuild: true
-  sharp: set this to true or false
+  sharp: false
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - esbuild@0.24.3
