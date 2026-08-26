@@ -57,6 +57,10 @@ jobs:
       - name: Test SDK
         working-directory: ./packages/sdk
         run: pnpm test
+      - name: Verify generated API types are reproducible
+        run: |
+          pnpm --filter @accensa/sdk gen:api
+          git diff --exit-code -- packages/sdk/generated/api-types.ts
       - name: Verify conformance vectors are reproducible
         run: |
           node packages/sdk/scripts/generate-vectors.mjs
