@@ -92,6 +92,19 @@ export async function ensureSchema(client: Client): Promise<void> {
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
+
+  // Auth challenge nonces — issued by /api/auth/challenge, consumed by
+  // /api/auth/verify. Prevents replay of unrelated signed transactions.
+  await client.query(`
+ CREATE TABLE IF NOT EXISTS challenge_nonces (
+   nonce VARCHAR(64) PRIMARY KEY,
+   issued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+   consumed BOOLEAN NOT NULL DEFAULT false
+ );
+ `);
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS idx_challenge_nonces_issued ON challenge_nonces(issued_at DESC);`,
+  );
 }
 
 /**
@@ -164,9 +177,10 @@ export async function getLastSyncedLedger(client: Client): Promise<number | null
 export async function getSyncState(
   client: Client,
 ): Promise<{ lastLedger: number; updatedAt: string } | null> {
-  const res = await client.query<{ last_ledger: string; updated_at: Date | string }>(
-    `SELECT last_ledger, updated_at FROM sync_state WHERE id = 1`,
-  );
+  const res = await client.query<{
+    last_ledger: string;
+    updated_at: Date | string;
+  }>(`SELECT last_ledger, updated_at FROM sync_state WHERE id = 1`);
   if (!res.rows.length) return null;
   const { last_ledger, updated_at } = res.rows[0];
   return {
@@ -183,5 +197,50 @@ export async function setLastSyncedLedger(client: Client, ledger: number): Promi
      ON CONFLICT (id) DO UPDATE SET last_ledger = EXCLUDED.last_ledger, updated_at = now()
      WHERE sync_state.last_ledger < EXCLUDED.last_ledger`,
     [ledger],
+  );
+}
+
+/**
+ * Persists a nonce issued by /api/auth/challenge so /api/auth/verify can
+ * confirm it was this server that minted it, and that it has not already
+ * been used.
+ */
+export async function storeNonce(client: Client, nonce: string): Promise<void> {
+  await client.query(`INSERT INTO challenge_nonces (nonce) VALUES ($1)`, [nonce]);
+}
+
+/**
+ * Marks a nonce as consumed if it has not been used yet.
+ *
+ * Returns true when the nonce was valid and freshly consumed — that is the
+ * one case where /api/auth/verify should proceed. A false return means the
+ * nonce was unknown, already consumed, or expired, and the caller must 401.
+ */
+export async function consumeNonce(client: Client, nonce: string): Promise<boolean> {
+  const result = await client.query(
+    `UPDATE challenge_nonces
+     SET consumed = true
+     WHERE nonce = $1 AND consumed = false`,
+    [nonce],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+/**
+ * Removes consumed nonces and any unconsumed ones older than `maxAge`.
+ *
+ * Called opportunistically from the challenge endpoint so the table does
+ * not grow without bound. A 10-minute window covers the 5-minute
+ * timebounds on the challenge plus generous clock skew.
+ */
+export async function sweepExpiredNonces(
+  client: Client,
+  maxAgeMs: number = 10 * 60 * 1000,
+): Promise<void> {
+  await client.query(
+    `DELETE FROM challenge_nonces
+     WHERE consumed = true
+        OR issued_at < now() - interval '1 millisecond' * $1`,
+    [maxAgeMs],
   );
 }

@@ -3,11 +3,9 @@ import { withClient, ensureSchema } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-function isValidTimestamp(value: string): boolean {
-  if (value.trim() === '') return false;
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime());
-}
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 200;
+const DEFAULT_WINDOW_DAYS = 30;
 
 export async function GET(request: Request) {
   if (!process.env.DATABASE_URL) {
@@ -17,31 +15,41 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
+  const limitParam = searchParams.get('limit');
 
-  if (from && !isValidTimestamp(from)) {
-    return NextResponse.json({ error: 'from must be a valid ISO 8601 timestamp' }, { status: 400 });
-  }
-  if (to && !isValidTimestamp(to)) {
-    return NextResponse.json({ error: 'to must be a valid ISO 8601 timestamp' }, { status: 400 });
-  }
-  if (from && to && new Date(from) > new Date(to)) {
-    return NextResponse.json({ error: 'from must not be later than to' }, { status: 400 });
+  let limit = DEFAULT_LIMIT;
+  if (limitParam !== null) {
+    const parsed = Number.parseFloat(limitParam);
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
+      return NextResponse.json(
+        { error: `limit must be an integer between 1 and ${MAX_LIMIT}` },
+        { status: 400 },
+      );
+    }
+    limit = parsed;
   }
 
   try {
     const rows = await withClient(async (client) => {
       await ensureSchema(client);
       let query = `
-        SELECT COALESCE(route, '(unattributed)') as route, method, SUM(amount) as total_revenue, COUNT(*) as calls
-        FROM payments
-        WHERE ts IS NOT NULL
-      `;
-      const params: string[] = [];
+ SELECT COALESCE(route, '(unattributed)') as route, method, SUM(amount) as total_revenue, COUNT(*) as calls
+ FROM payments
+ WHERE ts IS NOT NULL
+ `;
+      const params: (string | number)[] = [];
 
+      // Apply a default time window when no explicit from/to is given so
+      // the aggregate does not scan the entire table on every dashboard load.
       if (from) {
         params.push(from);
         query += ` AND ts >= $${params.length}`;
+      } else {
+        const defaultFrom = new Date(Date.now() - DEFAULT_WINDOW_DAYS * 86_400_000).toISOString();
+        params.push(defaultFrom);
+        query += ` AND ts >= $${params.length}`;
       }
+
       if (to) {
         params.push(to);
         query += ` AND ts <= $${params.length}`;
@@ -49,15 +57,58 @@ export async function GET(request: Request) {
 
       query += ` GROUP BY route, method ORDER BY total_revenue DESC`;
 
+      // Fetch one extra row to detect whether there are more groups than the
+      // limit. If there are, the extra row is rolled into an aggregated
+      // "(other)" bucket so the response always carries correct totals.
+      const fetchLimit = limit + 1;
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(fetchLimit);
+
       const result = await client.query(query, params);
       return result.rows;
     });
 
-    return NextResponse.json(
-      rows.map((r) => ({ ...r, total_revenue: String(r.total_revenue), calls: Number(r.calls) })),
-    );
+    interface RouteRow {
+      route: string;
+      method: string | null;
+      total_revenue: string;
+      calls: number;
+    }
+
+    let routes: RouteRow[] = rows.map((r) => ({
+      route: String(r.route),
+      method: String(r.method),
+      total_revenue: String(r.total_revenue),
+      calls: Number(r.calls),
+    }));
+
+    let truncated = false;
+    if (routes.length > limit) {
+      truncated = true;
+      const kept = routes.slice(0, limit);
+      const tail = routes.slice(limit);
+      const otherRevenue = tail.reduce(
+        (sum, r) =>
+          sum + (typeof r.total_revenue === 'string' ? BigInt(r.total_revenue) : BigInt(0)),
+        0n,
+      );
+      const otherCalls = tail.reduce((sum, r) => sum + r.calls, 0);
+      const otherRow = {
+        route: '(other)',
+        method: null as string | null,
+        total_revenue: String(otherRevenue),
+        calls: otherCalls,
+      };
+      routes = [...kept, otherRow];
+    }
+
+    return NextResponse.json({
+      routes,
+      truncated,
+      default_window_days: from ? null : DEFAULT_WINDOW_DAYS,
+    });
   } catch (error: unknown) {
-    console.error('Error fetching routes:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
