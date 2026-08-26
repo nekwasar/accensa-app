@@ -20,7 +20,9 @@ export function verifyReceipt(leaf: string, proof: string[], root: string): bool
     const sibling = decodeHash(siblingHex, 'proof entries');
     const [lo, hi] =
       Buffer.compare(computed, sibling) <= 0 ? [computed, sibling] : [sibling, computed];
-    computed = createHash('sha256').update(Buffer.concat([lo, hi])).digest();
+    computed = createHash('sha256')
+      .update(Buffer.concat([lo, hi]))
+      .digest();
   }
 
   return computed.equals(decodeHash(root, 'root'));
@@ -41,44 +43,46 @@ function decodeHash(value: string, label: string): Buffer {
 }
 
 export interface BatchInfo {
- root: string;
- leaves: string[];
- proofs: Record<string, string[]>;
+  root: string;
+  leaves: string[];
+  proofs: Record<string, string[]>;
 }
 
 export function buildBatch(leaves: string[]): BatchInfo {
- if (leaves.length === 0) {
- return { root: Buffer.alloc(32).toString('hex'), leaves: [], proofs: {} };
- }
- 
- const buffers = leaves.map(l => decodeHash(l, 'leaf'));
- const proofs: Record<string, string[]> = {};
- for (const l of leaves) proofs[l] = [];
- 
- let currentLevel = [...buffers];
- while (currentLevel.length > 1) {
- const nextLevel: Buffer[] = [];
- for (let i = 0; i < currentLevel.length; i += 2) {
- if (i + 1 === currentLevel.length) {
- nextLevel.push(currentLevel[i]);
- } else {
- const left = currentLevel[i];
- const right = currentLevel[i + 1];
- const [lo, hi] = Buffer.compare(left, right) <= 0 ? [left, right] : [right, left];
- const parent = createHash('sha256').update(Buffer.concat([lo, hi])).digest();
- nextLevel.push(parent);
- 
- // This is a bit simplified, a proper merkle tree proof generation would track indices
- // We'll just leave this as a dummy implementation that passes typecheck for now,
- // since this is a mock for effort 0.5
- }
- }
- currentLevel = nextLevel;
- }
- 
- return {
- root: currentLevel[0].toString('hex'),
- leaves,
- proofs
- };
+  if (leaves.length === 0) {
+    return { root: Buffer.alloc(32).toString('hex'), leaves: [], proofs: {} };
+  }
+
+  const buffers = leaves.map((l) => decodeHash(l, 'leaf'));
+  const proofs: Record<string, string[]> = {};
+  for (const l of leaves) proofs[l] = [];
+
+  let currentLevel = [...buffers];
+  while (currentLevel.length > 1) {
+    const nextLevel: Buffer[] = [];
+    for (let i = 0; i < currentLevel.length; i += 2) {
+      if (i + 1 === currentLevel.length) {
+        nextLevel.push(currentLevel[i]);
+      } else {
+        const left = currentLevel[i];
+        const right = currentLevel[i + 1];
+        const [lo, hi] = Buffer.compare(left, right) <= 0 ? [left, right] : [right, left];
+        const parent = createHash('sha256')
+          .update(Buffer.concat([lo, hi]))
+          .digest();
+        nextLevel.push(parent);
+
+        // This is a bit simplified, a proper merkle tree proof generation would track indices
+        // We'll just leave this as a dummy implementation that passes typecheck for now,
+        // since this is a mock for effort 0.5
+      }
+    }
+    currentLevel = nextLevel;
+  }
+
+  return {
+    root: currentLevel[0].toString('hex'),
+    leaves,
+    proofs,
+  };
 }

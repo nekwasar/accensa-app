@@ -10,9 +10,9 @@
  */
 import express, { type NextFunction, type Request, type Response } from 'express';
 import {
- paymentMiddlewareFromHTTPServer,
- x402ResourceServer,
- x402HTTPResourceServer,
+  paymentMiddlewareFromHTTPServer,
+  x402ResourceServer,
+  x402HTTPResourceServer,
 } from '@x402/express';
 import { HTTPFacilitatorClient } from '@x402/core/server';
 import { ExactStellarScheme } from '@x402/stellar/exact/server';
@@ -31,14 +31,14 @@ const NETWORK = 'stellar:testnet';
  * watches or the settled transfer is never picked up.
  */
 const XLM_SAC =
- process.env.TOKEN_ADDRESS ?? 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
+  process.env.TOKEN_ADDRESS ?? 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
 const accensa = {
- indexerUrl: process.env.ACCENSA_URL ?? 'http://localhost:3000',
- // Reports are authenticated by an Ed25519 signature over the exact body
- // bytes, not a shared bearer token. The Accensa deployment holds the matching
- // public key and rejects anything it cannot verify with 401.
- privateKeyHex: required('ACCENSA_PRIVATE_KEY_HEX'),
+  indexerUrl: process.env.ACCENSA_URL ?? 'http://localhost:3000',
+  // Reports are authenticated by an Ed25519 signature over the exact body
+  // bytes, not a shared bearer token. The Accensa deployment holds the matching
+  // public key and rejects anything it cannot verify with 401.
+  privateKeyHex: required('ACCENSA_PRIVATE_KEY_HEX'),
 };
 
 // ---------------------------------------------------------------------------
@@ -55,12 +55,12 @@ const accensa = {
  * the entire point of x402.
  */
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
- const token = req.headers.authorization?.replace(/^Bearer /, '');
- if (!token || token !== process.env.ADMIN_TOKEN) {
- res.status(401).json({ error: 'Unauthorized' });
- return;
- }
- next();
+  const token = req.headers.authorization?.replace(/^Bearer /, '');
+  if (!token || token !== process.env.ADMIN_TOKEN) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  next();
 }
 
 // ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 // ---------------------------------------------------------------------------
 
 const resourceServer = new x402ResourceServer([
- new HTTPFacilitatorClient({ url: 'https://www.x402.org/facilitator' }),
+  new HTTPFacilitatorClient({ url: 'https://www.x402.org/facilitator' }),
 ]);
 
 // The facilitator settles, but the resource server still needs the scheme
@@ -89,26 +89,26 @@ resourceServer.register(NETWORK, new ExactStellarScheme());
  * missing row, because it looks like revenue that cannot be verified.
  */
 resourceServer.onAfterSettle(
- createSettleHook({
- ...accensa,
- method: 'GET',
- onError: (error, payload) => {
- // Reporting is best-effort — the payment already settled, and a failure
- // here must not surface to the paying agent. Log it; do not throw.
- console.error('[accensa] attribution failed', payload?.tx_hash ?? '', error);
- },
- }),
+  createSettleHook({
+    ...accensa,
+    method: 'GET',
+    onError: (error, payload) => {
+      // Reporting is best-effort — the payment already settled, and a failure
+      // here must not surface to the paying agent. Log it; do not throw.
+      console.error('[accensa] attribution failed', payload?.tx_hash ?? '', error);
+    },
+  }),
 );
 
 const routesConfig = {
- '/api/hello': {
- accepts: {
- scheme: 'exact',
- price: { asset: XLM_SAC, amount: '1000' }, // 1000 stroops = 0.0001 XLM
- network: NETWORK,
- payTo: required('MERCHANT_ADDRESS'),
- },
- },
+  '/api/hello': {
+    accepts: {
+      scheme: 'exact',
+      price: { asset: XLM_SAC, amount: '1000' }, // 1000 stroops = 0.0001 XLM
+      network: NETWORK,
+      payTo: required('MERCHANT_ADDRESS'),
+    },
+  },
 };
 
 app.use(paymentMiddlewareFromHTTPServer(new x402HTTPResourceServer(resourceServer, routesConfig)));
@@ -135,7 +135,7 @@ void attachAccensaHook;
 // ---------------------------------------------------------------------------
 
 app.get('/api/hello', (_req, res) => {
- res.json({ message: 'Payment verified', data: 'Premium content.' });
+  res.json({ message: 'Payment verified', data: 'Premium content.' });
 });
 
 // Free route: no entry in routesConfig, so the payment middleware ignores it.
@@ -143,13 +143,13 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 
 // Seller-owned, credential-protected, and never paywalled.
 app.get('/admin/stats', requireAdmin, (_req, res) => {
- res.json({ note: 'Your own metrics live here.' });
+  res.json({ note: 'Your own metrics live here.' });
 });
 
 app.listen(PORT, () => {
- console.log(`x402 seller listening on http://localhost:${PORT}`);
- console.log(`Paid route: GET /api/hello`);
- console.log(`Reporting attribution to ${accensa.indexerUrl}/api/hook/settle`);
+  console.log(`x402 seller listening on http://localhost:${PORT}`);
+  console.log(`Paid route: GET /api/hello`);
+  console.log(`Reporting attribution to ${accensa.indexerUrl}/api/hook/settle`);
 });
 
 /**
@@ -160,7 +160,7 @@ app.listen(PORT, () => {
  * up as an empty routes column in the dashboard days later.
  */
 function required(name: string): string {
- const value = process.env[name];
- if (!value) throw new Error(`${name} is required. Copy .env.example to .env and fill it in.`);
- return value;
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required. Copy .env.example to .env and fill it in.`);
+  return value;
 }

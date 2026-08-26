@@ -1,0 +1,210 @@
+---
+sidebar_position: 4
+title: Operator Guide
+---
+
+# Operator Integration Guide
+
+This guide walks you through operating infrastructure components for the x402 protocol on Stellar using the Accensa ecosystem.
+
+## Overview
+
+As an operator, you run the infrastructure that enables x402 payments. The Accensa ecosystem provides:
+
+- **Facilitator middleware** - Index payments and dispatch webhooks
+- **ReceiptAnchor contract** - Anchor payment batches on-chain
+- **Monitoring tools** - Track system health and performance
+
+## Prerequisites
+
+1. Docker and Docker Compose installed
+2. Node.js 20+ installed
+3. Access to a Stellar node (testnet or mainnet)
+4. Basic understanding of distributed systems
+
+## Quick Start
+
+### 1. Clone the Facilitator Repository
+
+```bash
+git clone https://github.com/accensa/x402-facilitator-stellar.git
+cd x402-facilitator-stellar
+```
+
+### 2. Configure Environment Variables
+
+```env
+# Stellar configuration
+STELLAR_RPC_URL=https://soroban-testnet.stellar.org
+STELLAR_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+RECEIPT_ANCHOR_ID=CBHRJU7CF4XIFRNDITFHNQHABKBMFM2FYFHLGWN3JGSFYYCDSMDAWPRV
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/accensa
+
+# Webhook configuration
+MERCHANT_WEBHOOK_URL=https://your-merchant-api.com/hook/settle
+```
+
+### 3. Start the Facilitator
+
+```bash
+# Using Docker Compose
+docker-compose up -d
+
+# Or run directly
+npm install
+npm run start
+```
+
+## Live Testnet Example
+
+### Deploying the ReceiptAnchor Contract
+
+```bash
+# Install the Stellar CLI
+cargo install --locked stellar-cli
+
+# Generate a keypair for deployment
+stellar keys generate --network testnet deployer
+
+# Fund the deployer account
+stellar network fund --network testnet deployer
+
+# Deploy the contract
+stellar contract deploy \
+ --wasm contracts/receipt_anchor.wasm \
+ --source deployer \
+ --network testnet
+```
+
+### Configuring the Facilitator
+
+```typescript
+// src/config.ts
+export const config = {
+  stellar: {
+    rpcUrl: process.env.STELLAR_RPC_URL ?? 'https://soroban-testnet.stellar.org',
+    networkPassphrase:
+      process.env.STELLAR_NETWORK_PASSPHRASE ?? 'Test SDF Network ; September 2015',
+    receiptAnchorId: process.env.RECEIPT_ANCHOR_ID,
+  },
+  database: {
+    url: process.env.DATABASE_URL,
+  },
+  webhook: {
+    url: process.env.MERCHANT_WEBHOOK_URL,
+  },
+};
+```
+
+### Indexing Payments
+
+```typescript
+// src/indexer.ts
+import { Contract, rpc } from '@stellar/stellar-sdk';
+
+async function indexPayments() {
+  const server = new rpc.Server(config.stellar.rpcUrl);
+  const contract = new Contract(config.stellar.receiptAnchorId);
+
+  // Read the latest batch
+  const latestBatch = await simulate(contract, 'get_latest_batch');
+
+  // Index each payment in the batch
+  for (const payment of latestBatch.payments) {
+    await storePayment(payment);
+    await dispatchWebhook(payment);
+  }
+}
+```
+
+## Monitoring
+
+### Health Check Endpoint
+
+```typescript
+// src/routes/health.ts
+app.get('/health', async (req, res) => {
+  const checks = {
+    indexer: await checkIndexerHealth(),
+    database: await checkDatabaseHealth(),
+    stellar: await checkStellarConnection(),
+  };
+
+  const healthy = Object.values(checks).every((c) => c.status === 'ok');
+
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'healthy' : 'degraded',
+    checks,
+  });
+});
+```
+
+### Metrics Collection
+
+```typescript
+// src/metrics.ts
+import { Counter, Histogram } from 'prom-client';
+
+export const paymentsIndexed = new Counter({
+  name: 'payments_indexed_total',
+  help: 'Total number of payments indexed',
+});
+
+export const indexDuration = new Histogram({
+  name: 'index_duration_seconds',
+  help: 'Duration of indexing operations',
+  buckets: [0.1, 0.5, 1, 2, 5, 10],
+});
+```
+
+## Scaling Considerations
+
+### Horizontal Scaling
+
+The facilitator can be horizontally scaled:
+
+1. **Multiple indexers** - Run multiple indexer instances behind a load balancer
+2. **Database sharding** - Shard by merchant address or batch ID
+3. **Webhook workers** - Run dedicated webhook dispatch workers
+
+### Rate Limiting
+
+The facilitator enforces rate limits to protect the Stellar network:
+
+- **RPC calls**: Limited to avoid overwhelming Stellar nodes
+- **Webhook dispatches**: Throttled to prevent merchant API overload
+- **Database writes**: Batched for efficiency
+
+## Troubleshooting
+
+### Common Issues
+
+**Indexer not starting**
+
+- Check database connection
+- Verify Stellar RPC URL is accessible
+- Ensure environment variables are set correctly
+
+**Webhooks failing**
+
+- Check merchant webhook URL is reachable
+- Verify webhook payload format
+- Check for network connectivity issues
+
+**Payments not being indexed**
+
+- Check Stellar network status
+- Verify contract address is correct
+- Review indexer logs for errors
+
+## Next Steps
+
+- [Seller Guide](./seller) - Understand the merchant perspective
+- [Buyer/Agent Guide](./buyer-agent) - Understand the customer perspective
+- [Facilitator Overview](./overview) - Deep dive into the architecture
+
+---
+
+_This guide is part of the Accensa x402 documentation. For contributions, see [Contributing](../contributing)._

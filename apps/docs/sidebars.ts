@@ -1,4 +1,4 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -15,6 +15,7 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'introduction',
+    'architecture',
     {
       type: 'category',
       label: 'accensa-app',
@@ -37,12 +38,12 @@ const sidebars: SidebarsConfig = {
         {
           type: 'link',
           label: 'Mechanics',
-          href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/mechanics.md',
+          href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/mechanics.mdx',
         },
         {
           type: 'link',
           label: 'Contracts',
-          href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/contracts.md',
+          href: 'https://github.com/accensa/accensa-contracts/blob/main/docs/contracts.mdx',
         },
         {
           type: 'link',
@@ -56,6 +57,11 @@ const sidebars: SidebarsConfig = {
       label: 'x402-facilitator-stellar',
       items: [
         'facilitator/overview',
+        'facilitator/seller',
+        'facilitator/buyer-agent',
+        'facilitator/operator',
+        'facilitator/conformance',
+        'facilitator/sync-mechanism',
         {
           type: 'link',
           label: 'GitHub Repository',
@@ -66,13 +72,8 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'General Guides',
-      items: [
-        'developer',
-        'contributing',
-        'troubleshooting',
-        'faq',
-      ],
-    }
+      items: ['developer', 'contributing', 'troubleshooting', 'faq'],
+    },
   ],
 };
 
