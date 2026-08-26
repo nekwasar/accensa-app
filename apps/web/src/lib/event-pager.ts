@@ -5,21 +5,21 @@ export const EVENTS_PAGE_LIMIT = 200;
 
 /** One page of `getEvents` output. */
 export interface EventPage {
- events: RawEvent[];
- /** Opaque cursor for the next page. Absent once the range is exhausted. */
- cursor?: string;
+  events: RawEvent[];
+  /** Opaque cursor for the next page. Absent once the range is exhausted. */
+  cursor?: string;
 }
 
 export interface DrainResult {
- events: RawEvent[];
- /**
- * True when the range was consumed to the end. False when paging stopped
- * early against the deadline, which means the final ledger seen may be only
- * partially consumed and the sync cursor must not advance past it.
- */
- drained: boolean;
- /** Number of RPC round trips made. */
- pages: number;
+  events: RawEvent[];
+  /**
+   * True when the range was consumed to the end. False when paging stopped
+   * early against the deadline, which means the final ledger seen may be only
+   * partially consumed and the sync cursor must not advance past it.
+   */
+  drained: boolean;
+  /** Number of RPC round trips made. */
+  pages: number;
 }
 
 /**
@@ -50,48 +50,48 @@ export const LEDGER_WINDOW = 10_000;
  * the caller is told, via `drained: false`, that it is holding a partial result.
  */
 export async function drainEvents(
- fetchPage: (params: {
- startLedger?: number;
- endLedger?: number;
- cursor?: string;
- }) => Promise<EventPage>,
- opts: { startLedger: number; endLedger?: number; withinBudget?: () => boolean },
+  fetchPage: (params: {
+    startLedger?: number;
+    endLedger?: number;
+    cursor?: string;
+  }) => Promise<EventPage>,
+  opts: { startLedger: number; endLedger?: number; withinBudget?: () => boolean },
 ): Promise<DrainResult> {
- const { startLedger, endLedger, withinBudget } = opts;
- const events: RawEvent[] = [];
- let cursor: string | undefined;
- let pages = 0;
+  const { startLedger, endLedger, withinBudget } = opts;
+  const events: RawEvent[] = [];
+  let cursor: string | undefined;
+  let pages = 0;
 
- for (;;) {
- // A cursor supersedes startLedger; sending both is rejected by the RPC.
- const page = await fetchPage(cursor ? { cursor } : { startLedger, endLedger });
- pages++;
- events.push(...page.events);
+  for (;;) {
+    // A cursor supersedes startLedger; sending both is rejected by the RPC.
+    const page = await fetchPage(cursor ? { cursor } : { startLedger, endLedger });
+    pages++;
+    events.push(...page.events);
 
- // Within a bounded window a short page really does mean exhausted. Trusting
- // the cursor alone would loop forever against an RPC that always returns one.
- if (page.events.length < EVENTS_PAGE_LIMIT) return { events, drained: true, pages };
+    // Within a bounded window a short page really does mean exhausted. Trusting
+    // the cursor alone would loop forever against an RPC that always returns one.
+    if (page.events.length < EVENTS_PAGE_LIMIT) return { events, drained: true, pages };
 
- const next = page.cursor ?? page.events[page.events.length - 1]?.id;
- if (!next) return { events, drained: true, pages };
- cursor = next;
+    const next = page.cursor ?? page.events[page.events.length - 1]?.id;
+    if (!next) return { events, drained: true, pages };
+    cursor = next;
 
- if (withinBudget && !withinBudget()) return { events, drained: false, pages };
- }
+    if (withinBudget && !withinBudget()) return { events, drained: false, pages };
+  }
 }
 
 export interface SweepResult {
- events: RawEvent[];
- /**
-  * The last ledger known to be fully consumed, and so the furthest the sync
-  * cursor may advance. Only ever a completed window boundary, so it is safe
-  * whether or not the sweep finished.
-  */
- sweptThrough: number;
- /** True when the sweep reached `endLedger` rather than stopping on budget. */
- complete: boolean;
- pages: number;
- windows: number;
+  events: RawEvent[];
+  /**
+   * The last ledger known to be fully consumed, and so the furthest the sync
+   * cursor may advance. Only ever a completed window boundary, so it is safe
+   * whether or not the sweep finished.
+   */
+  sweptThrough: number;
+  /** True when the sweep reached `endLedger` rather than stopping on budget. */
+  complete: boolean;
+  pages: number;
+  windows: number;
 }
 
 /**
@@ -103,46 +103,46 @@ export interface SweepResult {
  * re-reads it from the start rather than stepping over the part it never saw.
  */
 export async function sweepLedgerRange(
- fetchPage: (params: {
- startLedger?: number;
- endLedger?: number;
- cursor?: string;
- }) => Promise<EventPage>,
- opts: {
- startLedger: number;
- endLedger: number;
- windowSize?: number;
- withinBudget?: () => boolean;
- },
+  fetchPage: (params: {
+    startLedger?: number;
+    endLedger?: number;
+    cursor?: string;
+  }) => Promise<EventPage>,
+  opts: {
+    startLedger: number;
+    endLedger: number;
+    windowSize?: number;
+    withinBudget?: () => boolean;
+  },
 ): Promise<SweepResult> {
- const { startLedger, endLedger, windowSize = LEDGER_WINDOW, withinBudget } = opts;
- const events: RawEvent[] = [];
- let sweptThrough = startLedger - 1;
- let pages = 0;
- let windows = 0;
+  const { startLedger, endLedger, windowSize = LEDGER_WINDOW, withinBudget } = opts;
+  const events: RawEvent[] = [];
+  let sweptThrough = startLedger - 1;
+  let pages = 0;
+  let windows = 0;
 
- while (sweptThrough < endLedger) {
- if (withinBudget && !withinBudget()) {
- return { events, sweptThrough, complete: false, pages, windows };
- }
+  while (sweptThrough < endLedger) {
+    if (withinBudget && !withinBudget()) {
+      return { events, sweptThrough, complete: false, pages, windows };
+    }
 
- const from = sweptThrough + 1;
- const to = Math.min(from + windowSize - 1, endLedger);
- const window = await drainEvents(fetchPage, {
- startLedger: from,
- endLedger: to,
- withinBudget,
- });
+    const from = sweptThrough + 1;
+    const to = Math.min(from + windowSize - 1, endLedger);
+    const window = await drainEvents(fetchPage, {
+      startLedger: from,
+      endLedger: to,
+      withinBudget,
+    });
 
- windows++;
- pages += window.pages;
- events.push(...window.events);
+    windows++;
+    pages += window.pages;
+    events.push(...window.events);
 
- if (!window.drained) {
- return { events, sweptThrough, complete: false, pages, windows };
- }
- sweptThrough = to;
- }
+    if (!window.drained) {
+      return { events, sweptThrough, complete: false, pages, windows };
+    }
+    sweptThrough = to;
+  }
 
- return { events, sweptThrough, complete: true, pages, windows };
+  return { events, sweptThrough, complete: true, pages, windows };
 }

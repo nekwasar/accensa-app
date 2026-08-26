@@ -171,10 +171,7 @@ interface Accumulator {
  * alongside the routes. That bucket is the honest answer to "how much of this
  * revenue does Path B actually explain".
  */
-export function buildRouteBreakdown(
-  payments: RevenuePayment[],
-  asset: string,
-): RouteBreakdown {
+export function buildRouteBreakdown(payments: RevenuePayment[], asset: string): RouteBreakdown {
   const buckets = new Map<string, Accumulator>();
   let unattributed: Accumulator | null = null;
   let total = 0n;

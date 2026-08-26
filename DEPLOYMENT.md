@@ -68,18 +68,28 @@ is the one failure here that cannot be fixed by running the job again.
 ## Reading a sync response
 
 ```json
-{ "success": true, "latestLedger": 4067288, "startLedger": 3967288,
-  "syncedTo": 4067288, "skippedLedgers": 0, "drained": true,
-  "pages": 11, "windows": 11, "scanned": 1, "decoded": 1, "inserted": 1 }
+{
+  "success": true,
+  "latestLedger": 4067288,
+  "startLedger": 3967288,
+  "syncedTo": 4067288,
+  "skippedLedgers": 0,
+  "drained": true,
+  "pages": 11,
+  "windows": 11,
+  "scanned": 1,
+  "decoded": 1,
+  "inserted": 1
+}
 ```
 
-| Field | Meaning |
-|---|---|
-| `syncedTo` | Where the cursor now stands. A reply without this field is not the indexer — `sync.yml` fails the run on it. |
-| `drained` | False when paging stopped against the time budget. Not a fault; the next run resumes from `syncedTo`. |
-| `windows` | `getEvents` calls made. Requests are bounded to 10,000 ledgers because the RPC silently truncates wider ranges. |
-| `skippedLedgers` | Ledgers lost to the retention window. Should always be 0. |
-| `scanned` / `decoded` / `inserted` | Events matched, decoded as transfers, and written. |
+| Field                              | Meaning                                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `syncedTo`                         | Where the cursor now stands. A reply without this field is not the indexer — `sync.yml` fails the run on it.    |
+| `drained`                          | False when paging stopped against the time budget. Not a fault; the next run resumes from `syncedTo`.           |
+| `windows`                          | `getEvents` calls made. Requests are bounded to 10,000 ledgers because the RPC silently truncates wider ranges. |
+| `skippedLedgers`                   | Ledgers lost to the retention window. Should always be 0.                                                       |
+| `scanned` / `decoded` / `inserted` | Events matched, decoded as transfers, and written.                                                              |
 
 ## Database connection
 
@@ -92,13 +102,14 @@ The pooler host looks like `aws-1-<region>.pooler.supabase.com`.
 
 ## Environment variables
 
-| Variable | Where | What it does |
-|---|---|---|
-| `DATABASE_URL` | Vercel (`web`) | Supabase **session pooler** connection string. |
-| `CRON_SECRET` | Vercel (`web`) + GitHub secret | Shared by `/api/sync` and `sync.yml`. Anonymous callers get `{"error":"Unauthorized"}`. |
-| `SYNC_URL` | GitHub secret | The `/api/sync` endpoint the workflow posts to. |
-| `HOOK_API_KEY` | Vercel (`web`) | Gates `/api/hook/settle`. **Absent means the endpoint fails closed**, not open. |
-| `NEXT_PUBLIC_REFUND_VAULT_ID` | Vercel (`web`), optional | Overrides the built-in RefundVault contract id. |
+| Variable                      | Where                          | What it does                                                                                                                                                                       |
+| ----------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                | Vercel (`web`)                 | Supabase **session pooler** connection string.                                                                                                                                     |
+| `CRON_SECRET`                 | Vercel (`web`) + GitHub secret | Shared by `/api/sync` and `sync.yml`. Anonymous callers get `{"error":"Unauthorized"}`.                                                                                            |
+| `SYNC_URL`                    | GitHub secret                  | The `/api/sync` endpoint the workflow posts to.                                                                                                                                    |
+| `HOOK_API_KEY`                | Vercel (`web`)                 | Gates `/api/hook/settle`. **Absent means the endpoint fails closed**, not open.                                                                                                    |
+| `NEXT_PUBLIC_REFUND_VAULT_ID` | Vercel (`web`), optional       | Overrides the built-in RefundVault contract id.                                                                                                                                    |
+| `STELLAR_NETWORK_PASSPHRASE`  | Vercel (`web`), optional       | Stellar network passphrase for auth challenges and RPC calls. Defaults to `Test SDF Network ; September 2015`. Set to `Public Global Stellar Network ; September 2015` for pubnet. |
 
 Set them per environment (`production`, `preview`, `development`) — Vercel does
 not share values across them.
@@ -117,7 +128,7 @@ echo "$CONNECTION_STRING" | vercel env add DATABASE_URL production    # stores e
 its contents.
 
 Vercel also marks new variables **sensitive** by default, and `vercel env pull`
-returns sensitive values blank *by design* — a blank in your local pull is not
+returns sensitive values blank _by design_ — a blank in your local pull is not
 evidence the remote value is blank. Use `--no-sensitive` for non-secrets if you
 want to read them back.
 

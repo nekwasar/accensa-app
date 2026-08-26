@@ -21,9 +21,7 @@ const leafOf = (label) => sha256(Buffer.from(label, 'utf8'));
 
 /** Combine two nodes smaller-hash-first, so proofs need no position flags. */
 const combine = (a, b) =>
-  Buffer.compare(a, b) <= 0
-    ? sha256(Buffer.concat([a, b]))
-    : sha256(Buffer.concat([b, a]));
+  Buffer.compare(a, b) <= 0 ? sha256(Buffer.concat([a, b])) : sha256(Buffer.concat([b, a]));
 
 /**
  * Builds every level of the tree. An odd node at the end of a level is promoted
@@ -113,7 +111,10 @@ cases.push({
 // Two-leaf batch, proving each side. Together these exercise both branches of
 // the sorted-pair comparison (computed < sibling and computed > sibling).
 const pairLabels = ['pair-a', 'pair-b'];
-for (const [i, side] of [[0, 'left'], [1, 'right']]) {
+for (const [i, side] of [
+  [0, 'left'],
+  [1, 'right'],
+]) {
   const b = batch(pairLabels, i);
   cases.push({
     name: `two-leaf batch — ${side} leaf`,
@@ -182,8 +183,7 @@ cases.push({
 });
 
 const fixture = {
-  $comment:
-    'GENERATED FILE — do not edit by hand. Run packages/sdk/scripts/generate-vectors.mjs.',
+  $comment: 'GENERATED FILE — do not edit by hand. Run packages/sdk/scripts/generate-vectors.mjs.',
   description:
     'Shared conformance vectors for Accensa receipt verification. Consumed by the ' +
     'TypeScript SDK and by the Soroban ReceiptAnchor contract tests, so both ' +
@@ -209,13 +209,17 @@ const fixture = {
 const here = dirname(fileURLToPath(import.meta.url));
 
 const jsonPath = join(here, '..', 'merkle-vectors.json');
-writeFileSync(jsonPath, JSON.stringify(fixture, null, 2) + '\n');
+writeFileSync(jsonPath, JSON.stringify(fixture) + '\n');
 console.log(`wrote ${jsonPath} (${fixture.cases.length} cases)`);
 
 // Also emit the same vectors as Rust, so the Soroban contract tests run against
 // byte-identical data without needing a JSON parser in a no_std crate. Copy the
 // output to accensa-contracts/contracts/receipt-anchor/src/vectors.rs.
-const bytes = (h) => `[${h.match(/../g).map((b) => `0x${b}`).join(', ')}]`;
+const bytes = (h) =>
+  `[${h
+    .match(/../g)
+    .map((b) => `0x${b}`)
+    .join(', ')}]`;
 
 const rust = `// GENERATED FILE — do not edit by hand.
 //

@@ -18,18 +18,18 @@ import React from 'react';
 export type PageWidth = 'full' | 'narrow';
 
 const WIDTHS: Record<PageWidth, string> = {
- full: 'w-full',
- narrow: 'max-w-3xl',
+  full: 'w-full',
+  narrow: 'max-w-3xl',
 };
 
 export function PageContainer({
- width = 'full',
- className = '',
- children,
+  width = 'full',
+  className = '',
+  children,
 }: {
- width?: PageWidth;
- className?: string;
- children: React.ReactNode;
+  width?: PageWidth;
+  className?: string;
+  children: React.ReactNode;
 }) {
- return <div className={`${WIDTHS[width]} mx-auto ${className}`}>{children}</div>;
+  return <div className={`${WIDTHS[width]} mx-auto ${className}`}>{children}</div>;
 }

@@ -25,9 +25,7 @@ export async function middleware(request: NextRequest) {
   // bytes plus a five-minute timestamp bound. Gating it here would 401 every legitimate
   // settlement report before its own verification ever ran.
   const isPublicApi =
-    path.startsWith('/api/verify') ||
-    path.startsWith('/api/auth') ||
-    path.startsWith('/api/hook/');
+    path.startsWith('/api/verify') || path.startsWith('/api/auth') || path.startsWith('/api/hook/');
   const isCronSync = path === '/api/sync' && request.method === 'GET';
   const isPrivateApi = path.startsWith('/api/') && !isPublicApi && !isCronSync;
   const isDashboard = path.startsWith('/dashboard');
@@ -48,8 +46,23 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-      await jwtVerify(sessionCookie, key, { algorithms: ['HS256'] });
-      return NextResponse.next();
+      const { payload } = await jwtVerify(sessionCookie, key, { algorithms: ['HS256'] });
+      const merchantAddress = typeof payload.publicKey === 'string' ? payload.publicKey : null;
+      if (isPrivateApi && !merchantAddress) {
+        // A session with no identifiable merchant cannot be scoped to any
+        // tenant's data — treat it the same as no session at all.
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      // Route handlers trust this header for merchant scoping instead of each
+      // re-verifying and re-decoding the session cookie themselves. It is only
+      // ever set here, after jwtVerify has succeeded, so a request cannot
+      // forge it — Next.js middleware runs before the request reaches a route
+      // handler and this header is set on the *outgoing* request, overwriting
+      // any value a caller tried to smuggle in.
+      const headers = new Headers(request.headers);
+      headers.set('x-accensa-merchant', merchantAddress ?? '');
+      return NextResponse.next({ request: { headers } });
     } catch {
       if (isPrivateApi) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       return NextResponse.redirect(new URL('/login', request.url));
