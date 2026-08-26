@@ -36,16 +36,13 @@ describe('/api/auth/challenge GET', () => {
   });
 
   test('returns xdr and configured network passphrase', async () => {
-    process.env.STELLAR_NETWORK_PASSPHRASE =
-      'Public Global Stellar Network ; September 2015';
+    process.env.STELLAR_NETWORK_PASSPHRASE = 'Public Global Stellar Network ; September 2015';
     const res = await GET();
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.xdr).toBeDefined();
     expect(typeof data.xdr).toBe('string');
-    expect(data.networkPassphrase).toBe(
-      'Public Global Stellar Network ; September 2015',
-    );
+    expect(data.networkPassphrase).toBe('Public Global Stellar Network ; September 2015');
   });
 
   test('defaults to Networks.TESTNET when STELLAR_NETWORK_PASSPHRASE is unset', async () => {

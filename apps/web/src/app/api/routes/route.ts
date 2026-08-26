@@ -9,10 +9,7 @@ const DEFAULT_WINDOW_DAYS = 30;
 
 export async function GET(request: Request) {
   if (!process.env.DATABASE_URL) {
-    return NextResponse.json(
-      { error: 'DATABASE_URL is not configured' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -48,9 +45,7 @@ export async function GET(request: Request) {
         params.push(from);
         query += ` AND ts >= $${params.length}`;
       } else {
-        const defaultFrom = new Date(
-          Date.now() - DEFAULT_WINDOW_DAYS * 86_400_000,
-        ).toISOString();
+        const defaultFrom = new Date(Date.now() - DEFAULT_WINDOW_DAYS * 86_400_000).toISOString();
         params.push(defaultFrom);
         query += ` AND ts >= $${params.length}`;
       }
@@ -94,10 +89,7 @@ export async function GET(request: Request) {
       const tail = routes.slice(limit);
       const otherRevenue = tail.reduce(
         (sum, r) =>
-          sum +
-          (typeof r.total_revenue === 'string'
-            ? BigInt(r.total_revenue)
-            : BigInt(0)),
+          sum + (typeof r.total_revenue === 'string' ? BigInt(r.total_revenue) : BigInt(0)),
         0n,
       );
       const otherCalls = tail.reduce((sum, r) => sum + r.calls, 0);

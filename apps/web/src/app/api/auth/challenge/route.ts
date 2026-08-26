@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server';
-import {
-  TransactionBuilder,
-  Account,
-  Operation,
-  Networks,
-} from '@stellar/stellar-sdk';
+import { TransactionBuilder, Account, Operation, Networks } from '@stellar/stellar-sdk';
 import { randomBytes } from 'crypto';
-import {
-  withClient,
-  ensureSchema,
-  storeNonce,
-  sweepExpiredNonces,
-} from '@/lib/db';
+import { withClient, ensureSchema, storeNonce, sweepExpiredNonces } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,10 +12,7 @@ function networkPassphrase(): string {
 export async function GET() {
   const merchantAddress = process.env.MERCHANT_ADDRESS;
   if (!merchantAddress) {
-    return NextResponse.json(
-      { error: 'MERCHANT_ADDRESS not configured' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'MERCHANT_ADDRESS not configured' }, { status: 500 });
   }
 
   // Create a 64-byte random nonce

@@ -106,9 +106,7 @@ describe('/api/routes GET', () => {
   test('respects custom from/to parameters', async () => {
     mockQuery.mockResolvedValue({ rows: [] });
 
-    await GET(
-      mockRequest('http://localhost/api/routes?from=2026-01-01&to=2026-06-01'),
-    );
+    await GET(mockRequest('http://localhost/api/routes?from=2026-01-01&to=2026-06-01'));
     const callArgs = mockQuery.mock.calls[0];
     const query = callArgs[0] as string;
     const params = callArgs[1] as (string | number)[];
@@ -122,9 +120,7 @@ describe('/api/routes GET', () => {
   test('does not include default_window_days when from is provided', async () => {
     mockQuery.mockResolvedValue({ rows: [] });
 
-    const res = await GET(
-      mockRequest('http://localhost/api/routes?from=2026-01-01'),
-    );
+    const res = await GET(mockRequest('http://localhost/api/routes?from=2026-01-01'));
     const data = await res.json();
     expect(data.default_window_days).toBeNull();
   });

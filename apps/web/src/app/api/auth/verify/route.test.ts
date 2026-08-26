@@ -1,11 +1,5 @@
 import { expect, test, vi, describe, beforeEach } from 'vitest';
-import {
-  Keypair,
-  TransactionBuilder,
-  Account,
-  Operation,
-  Networks,
-} from '@stellar/stellar-sdk';
+import { Keypair, TransactionBuilder, Account, Operation, Networks } from '@stellar/stellar-sdk';
 import { POST } from './route';
 
 const MERCHANT_KEYPAIR = Keypair.random();
@@ -50,9 +44,7 @@ function buildNonChallengeTransaction(passphrase = Networks.TESTNET) {
     networkPassphrase: passphrase,
     timebounds: { minTime: now - 60, maxTime: now + 300 },
   })
-    .addOperation(
-      Operation.manageData({ name: 'SomeOtherKey', value: 'somevalue' }),
-    )
+    .addOperation(Operation.manageData({ name: 'SomeOtherKey', value: 'somevalue' }))
     .build();
 }
 
@@ -162,9 +154,7 @@ describe('/api/auth/verify POST', () => {
       networkPassphrase: Networks.TESTNET,
       timebounds: { minTime: now - 120, maxTime: now - 60 },
     })
-      .addOperation(
-        Operation.manageData({ name: 'Accensa Auth', value: 'e'.repeat(64) }),
-      )
+      .addOperation(Operation.manageData({ name: 'Accensa Auth', value: 'e'.repeat(64) }))
       .build();
     tx.sign(MERCHANT_KEYPAIR);
 
