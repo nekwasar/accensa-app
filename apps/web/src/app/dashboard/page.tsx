@@ -25,10 +25,36 @@ interface Payment {
 
 type LoadState =
   | { status: 'loading' }
-  | { status: 'ready'; payments: Payment[]; fetchedAt: number; sync: SyncState | null }
+  | {
+      status: 'ready';
+      payments: Payment[];
+      fetchedAt: number;
+      sync: SyncState | null;
+      /** Cursor for the page after the polled head. Null once exhausted. */
+      cursor: string | null;
+    }
   | { status: 'error'; message: string };
 
 const POLL_INTERVAL_MS = 15_000;
+
+/**
+ * Merges the polled head page with any older pages the merchant has scrolled
+ * in, newest first, de-duplicated by `tx_hash`.
+ *
+ * The head is re-fetched every poll and a new settlement lands at its top, so
+ * an already-loaded older page can overlap it after a sync; the dedupe keeps
+ * that from showing a row twice.
+ */
+export function mergePayments(head: Payment[], older: Payment[]): Payment[] {
+  const seen = new Set<string>();
+  const out: Payment[] = [];
+  for (const payment of [...head, ...older]) {
+    if (seen.has(payment.tx_hash)) continue;
+    seen.add(payment.tx_hash);
+    out.push(payment);
+  }
+  return out;
+}
 const explorerUrl = (hash: string) => `https://stellar.expert/explorer/testnet/tx/${hash}`;
 
 function truncate(value: string, head = 8, tail = 6) {
@@ -63,6 +89,13 @@ export default function Dashboard() {
   const [selected, setSelected] = useState<Payment | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  // Older pages the merchant has scrolled in, plus the cursor after the last
+  // of them. Kept across polls: they are historical rows the poll does not
+  // re-serve. `olderCursor` is undefined until the first older page is pulled,
+  // at which point it — not the head's cursor — marks where the tail is.
+  const [olderPages, setOlderPages] = useState<Payment[]>([]);
+  const [olderCursor, setOlderCursor] = useState<string | null | undefined>(undefined);
+  const [loadingMore, setLoadingMore] = useState(false);
   // Refunds issued in this session. The indexer does not watch RefundVault
   // events yet, so a refund is otherwise invisible until someone opens the
   // payment again and the contract is re-read.
@@ -92,8 +125,9 @@ export default function Dashboard() {
         // a deploy can briefly serve an older build to an already-open tab.
         const payments: Payment[] = Array.isArray(data) ? data : (data.payments ?? []);
         const sync: SyncState | null = Array.isArray(data) ? null : (data.sync ?? null);
+        const cursor: string | null = Array.isArray(data) ? null : (data.next_cursor ?? null);
         if (!controller.signal.aborted) {
-          setState({ status: 'ready', payments, fetchedAt: Date.now(), sync });
+          setState({ status: 'ready', payments, fetchedAt: Date.now(), sync, cursor });
         }
       } catch (error) {
         // Re-read navigator.onLine here rather than closing over `online`: the
@@ -120,7 +154,36 @@ export default function Dashboard() {
     return () => document.removeEventListener('keydown', onKey);
   }, [selected]);
 
-  const payments = state.status === 'ready' ? state.payments : [];
+  const headPayments = state.status === 'ready' ? state.payments : [];
+  const payments = mergePayments(headPayments, olderPages);
+
+  // Where the next "load older" page starts: the last older page's cursor once
+  // one has been pulled, otherwise the head's. `null` means the range is
+  // exhausted; `undefined` (before any load) falls back to the head cursor.
+  const tailCursor =
+    olderCursor !== undefined ? olderCursor : state.status === 'ready' ? state.cursor : null;
+
+  const loadOlder = useCallback(async () => {
+    if (!tailCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/payments?cursor=${encodeURIComponent(tailCursor)}`, {
+        cache: 'no-store',
+      });
+      if (!res.ok)
+        throw new Error((await res.json().catch(() => ({}))).error ?? `Error ${res.status}`);
+      const data = await res.json();
+      const page: Payment[] = Array.isArray(data) ? data : (data.payments ?? []);
+      setOlderPages((prev) => mergePayments(prev, page));
+      setOlderCursor(Array.isArray(data) ? null : (data.next_cursor ?? null));
+    } catch {
+      // A failed "load older" leaves the table as it was; the poll's own
+      // error handling covers a genuine connectivity problem.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [tailCursor, loadingMore]);
+
   const total = sumAmounts(payments.map((p) => p.amount));
   const assets = new Set(payments.map((p) => assetLabel(p.asset)));
   const totalAsset = assets.size === 1 ? [...assets][0] : '';
@@ -288,6 +351,20 @@ export default function Dashboard() {
                 <div className="hidden md:block overflow-x-auto">
                   <PaymentsTable payments={payments} refunded={refunded} onSelect={setSelected} />
                 </div>
+
+                {tailCursor && (
+                  <div className="p-6 border-t border-slate-100 dark:border-white/5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => void loadOlder()}
+                      disabled={loadingMore || !online}
+                      title={online ? undefined : 'Loading older settlements needs a connection.'}
+                      className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                    >
+                      {loadingMore ? 'Loading…' : 'Load older settlements'}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -388,7 +465,7 @@ export function PaymentModal({
               href={explorerUrl(selected.tx_hash)}
               target="_blank"
               rel="noreferrer"
-               className="flex items-center justify-center gap-1.5 w-full py-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none transition-all font-bold text-sm tracking-wide uppercase"
+              className="flex items-center justify-center gap-1.5 w-full py-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none transition-all font-bold text-sm tracking-wide uppercase"
             >
               View on Explorer <ArrowUpRight className="w-4 h-4 opacity-70" />
             </a>
