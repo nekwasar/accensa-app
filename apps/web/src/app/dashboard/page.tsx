@@ -9,6 +9,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { PageContainer } from '@/components/page-container';
 import { RefundPanel } from '@/components/refund-panel';
 import { CopyButton } from '@/components/copy-button';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { useOnline } from '@/components/network-status';
 import { describeFailure, isAbortError } from '@/lib/network-status';
 
@@ -283,7 +284,7 @@ export default function Dashboard() {
             )}
 
             {state.status === 'ready' && payments.length > 0 && (
-              <>
+              <ErrorBoundary label="settlements table">
                 {/* Mobile View */}
                 <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
                   {payments.map((payment) => (
@@ -365,7 +366,7 @@ export default function Dashboard() {
                     </button>
                   </div>
                 )}
-              </>
+              </ErrorBoundary>
             )}
           </div>
         </section>

@@ -7,6 +7,7 @@ import { PageContainer } from '@/components/page-container';
 import { useOnline } from '@/components/network-status';
 import { describeFailure, isAbortError } from '@/lib/network-status';
 import { RevenueChart } from '@/components/revenue-chart';
+import { ErrorBoundary } from '@/components/error-boundary';
 import {
   routeBreakdownFromAggregates,
   seriesFromDayBuckets,
@@ -177,7 +178,9 @@ export default function RoutesPage() {
               <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white mb-6">
                 Over time
               </h2>
-              <RevenueChart series={series} />
+              <ErrorBoundary label="revenue chart">
+                <RevenueChart series={series} />
+              </ErrorBoundary>
               {series.unpricedCalls > 0 && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
                   {series.unpricedCalls} payment{series.unpricedCalls === 1 ? '' : 's'} in range had
@@ -191,7 +194,9 @@ export default function RoutesPage() {
               <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white mb-6">
                 By route
               </h2>
-              <RouteTable breakdown={breakdown} asset={selectedAsset} />
+              <ErrorBoundary label="route breakdown">
+                <RouteTable breakdown={breakdown} asset={selectedAsset} />
+              </ErrorBoundary>
             </section>
           </>
         )}
