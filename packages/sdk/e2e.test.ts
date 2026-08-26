@@ -46,12 +46,10 @@ function encodeSettleHeader(result: Record<string, unknown>): string {
  */
 function x402Mock(req: Request, res: Response, next: NextFunction) {
   if (!req.header('X-PAYMENT')) {
-    res
-      .status(402)
-      .json({
-        error: 'Payment Required',
-        accepts: [{ scheme: 'exact', network: 'stellar:testnet' }],
-      });
+    res.status(402).json({
+      error: 'Payment Required',
+      accepts: [{ scheme: 'exact', network: 'stellar:testnet' }],
+    });
     return;
   }
   res.setHeader(
