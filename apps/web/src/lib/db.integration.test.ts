@@ -1,7 +1,36 @@
 import { describe, it, expect } from 'vitest';
+import { Client } from 'pg';
+
+async function withMerchantClient<T>(
+  merchantId: number,
+  fn: (client: Client) => Promise<T>,
+): Promise<T> {
+  return withClient(async (client) => {
+    // Ensure the non-superuser role exists
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'test_app_user') THEN
+          CREATE ROLE test_app_user;
+        END IF;
+      END $$;
+    `);
+    await client.query('GRANT ALL ON ALL TABLES IN SCHEMA public TO test_app_user');
+    await client.query('GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO test_app_user');
+    
+    // Switch to non-superuser so RLS policies are enforced
+    await client.query('SET SESSION AUTHORIZATION test_app_user');
+    
+    await client.query('SELECT set_config($1, $2, false)', [
+      'accensa.merchant_id',
+      String(merchantId),
+    ]);
+    return fn(client);
+  });
+}
 import {
   withClient,
-  withMerchantClient,
+  
   ensureSchema,
   setLastSyncedLedger,
   getLastSyncedLedger,
@@ -124,7 +153,7 @@ describe('Database Integration', () => {
       await client.query(
         `INSERT INTO payments (merchant_id, tx_hash) VALUES ($1, $2)
          ON CONFLICT (merchant_id, tx_hash) DO NOTHING`,
-        [merchantB.id, 'c'.repeat(64)],
+        [merchantB.id, 'c'.repeat(63)],
       );
     });
 
@@ -132,13 +161,13 @@ describe('Database Integration', () => {
     // with a query that has no WHERE clause at all — this is what
     // FORCE ROW LEVEL SECURITY buys as the second line of defence.
     const rowsSeenByA = await withMerchantClient(merchantA.id, async (client) => {
-      const res = await client.query(`SELECT * FROM payments WHERE tx_hash = $1`, ['c'.repeat(64)]);
+      const res = await client.query(`SELECT * FROM payments WHERE tx_hash = $1`, ['c'.repeat(63)]);
       return res.rows;
     });
     expect(rowsSeenByA).toHaveLength(0);
 
     const rowsSeenByB = await withMerchantClient(merchantB.id, async (client) => {
-      const res = await client.query(`SELECT * FROM payments WHERE tx_hash = $1`, ['c'.repeat(64)]);
+      const res = await client.query(`SELECT * FROM payments WHERE tx_hash = $1`, ['c'.repeat(63)]);
       return res.rows;
     });
     expect(rowsSeenByB).toHaveLength(1);
@@ -162,7 +191,7 @@ describe('Database Integration', () => {
 
     const rows = Array.from({ length: 3 }, (_, i) => ({
       merchantId: merchant!.id,
-      txHash: 'b'.repeat(64) + i,
+      txHash: 'b'.repeat(63) + i,
       ledger: 100 + i,
       payer: 'G' + 'B'.repeat(55),
       amount: String(1000 * (i + 1)),
@@ -208,7 +237,7 @@ describe('Database Integration', () => {
     });
     expect(merchant).not.toBeNull();
 
-    const txHash = 'c'.repeat(64) + '1';
+    const txHash = 'c'.repeat(63) + '1';
 
     // A merchant-reported row exists first — route attribution arrived before
     // the indexer saw the transfer, which is the normal ordering. It has a
