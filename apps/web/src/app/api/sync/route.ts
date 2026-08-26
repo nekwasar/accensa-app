@@ -11,7 +11,11 @@ import { eventsToPaymentRows, insertPaymentsInTransaction } from '@/lib/insert-p
 import { listMerchants, getMerchantFromRequest, type Merchant } from '@/lib/merchants';
 import { sweepLedgerRange, EVENTS_PAGE_LIMIT, type EventPage } from '@/lib/event-pager';
 import { cooldownRemaining } from '@/lib/sync-status';
+<<<<<<< HEAD
+import { isAuthorizedCronRequest } from '@/lib/cron-auth';
+=======
 import { createHmac } from 'node:crypto';
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -312,9 +316,13 @@ function failed(error: unknown) {
  * Scheduled entry point.
  *
  * Driven by Vercel Cron and by .github/workflows/sync.yml. Protected by
- * CRON_SECRET when set - both senders pass it as a bearer token - so the
- * endpoint cannot be driven by arbitrary callers. No cooldown: a scheduled run
- * is already rate limited by its schedule.
+ * CRON_SECRET, checked with a constant-time compare in isAuthorizedCronRequest
+ * (@/lib/cron-auth) - both senders pass it as a bearer token - so the
+ * endpoint cannot be driven by arbitrary callers. An unset CRON_SECRET fails
+ * closed: middleware.ts already denies this path before it reaches here, and
+ * this check denies it too, since no caller should ever run a sync against a
+ * deployment with no secret configured. No cooldown: a scheduled run is
+ * already rate limited by its schedule.
  *
  * Sweeps every configured merchant in turn, each with its own cursor - a
  * merchant with no activity still has its cursor advanced (see runSync),
@@ -322,8 +330,7 @@ function failed(error: unknown) {
  * checks in the first place.
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && request.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!isAuthorizedCronRequest(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
