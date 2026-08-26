@@ -161,7 +161,7 @@ export function Nav() {
             className={`text-4xl font-bold tracking-tight transition-colors flex items-center gap-3.5 ${
               pathname === '/'
                 ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-slate-900 dark:text-white hover:text-emerald-500'
+                : 'text-slate-900 dark:text-white hover:text-emerald-500 dark:hover:text-emerald-400'
             }`}
           >
             Home
@@ -174,7 +174,7 @@ export function Nav() {
             className={`text-4xl font-bold tracking-tight transition-colors flex items-center gap-3.5 ${
               pathname === '/verify'
                 ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-slate-900 dark:text-white hover:text-emerald-500'
+                : 'text-slate-900 dark:text-white hover:text-emerald-500 dark:hover:text-emerald-400'
             }`}
           >
             Verify
@@ -187,7 +187,7 @@ export function Nav() {
             className={`text-4xl font-bold tracking-tight transition-colors flex items-center gap-3.5 ${
               pathname === '/dashboard'
                 ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-slate-900 dark:text-white hover:text-emerald-500'
+                : 'text-slate-900 dark:text-white hover:text-emerald-500 dark:hover:text-emerald-400'
             }`}
           >
             Dashboard

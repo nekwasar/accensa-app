@@ -198,7 +198,7 @@ export default function Dashboard() {
                 </p>
                 <button
                   onClick={reload}
-                  className="mt-4 px-6 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white text-sm font-bold hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 transition-colors shadow-sm dark:shadow-none"
+                  className="mt-4 px-6 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white text-sm font-bold hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm dark:shadow-none"
                 >
                   Try Again
                 </button>
@@ -388,7 +388,7 @@ export function PaymentModal({
               href={explorerUrl(selected.tx_hash)}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-1.5 w-full py-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 shadow-sm dark:shadow-none transition-all font-bold text-sm tracking-wide uppercase"
+               className="flex items-center justify-center gap-1.5 w-full py-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none transition-all font-bold text-sm tracking-wide uppercase"
             >
               View on Explorer <ArrowUpRight className="w-4 h-4 opacity-70" />
             </a>
@@ -482,7 +482,7 @@ export function PaymentsTable({
                 <span className="text-slate-400 dark:text-slate-600">-</span>
               )}
             </td>
-            <td className="px-8 py-5 text-slate-500 text-sm">
+            <td className="px-8 py-5 text-slate-500 dark:text-slate-400 text-sm">
               {new Date(payment.ts).toLocaleString()}
             </td>
           </tr>

@@ -329,7 +329,7 @@ function Segmented({
           aria-pressed={option.key === value}
           className={`px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
             option.key === value
-              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+              ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
               : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
           }`}
         >
