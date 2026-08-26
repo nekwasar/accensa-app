@@ -8,12 +8,12 @@ import { useOnline } from '@/components/network-status';
 import { describeFailure, isAbortError } from '@/lib/network-status';
 import { RevenueChart } from '@/components/revenue-chart';
 import {
-  assetOptions,
-  buildRevenueSeries,
-  buildRouteBreakdown,
+  routeBreakdownFromAggregates,
+  seriesFromDayBuckets,
   UNATTRIBUTED_LABEL,
   type RangeKey,
-  type RevenuePayment,
+  type RevenueAnalyticsResponse,
+  type RouteBreakdown,
   type RouteBucket,
 } from '@/lib/revenue-analytics';
 
@@ -34,11 +34,11 @@ const RANGES: { key: RangeKey; label: string }[] = [
   { key: 'all', label: 'All time' },
 ];
 
-const EMPTY: RevenuePayment[] = [];
+const EMPTY_ANALYTICS: RevenueAnalyticsResponse = { assets: [], days: {}, routes: {} };
 
 type LoadState =
   | { status: 'loading' }
-  | { status: 'ready'; payments: RevenuePayment[] }
+  | { status: 'ready'; analytics: RevenueAnalyticsResponse }
   | { status: 'error'; message: string };
 
 export default function RoutesPage() {
@@ -47,16 +47,19 @@ export default function RoutesPage() {
   const [range, setRange] = useState<RangeKey>('30d');
   const online = useOnline();
 
+  // The heavy `SUM`/`GROUP BY` happens in PostgreSQL; this only fetches the
+  // per-day and per-route aggregates. Changing `range` re-windows client-side
+  // without another request.
   useEffect(() => {
     if (!online) return;
     const controller = new AbortController();
     (async () => {
       try {
-        const res = await fetch('/api/payments', { signal: controller.signal });
+        const res = await fetch('/api/analytics/revenue', { signal: controller.signal });
         if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-        const data = await res.json();
+        const data: RevenueAnalyticsResponse = await res.json();
         if (!controller.signal.aborted) {
-          setState({ status: 'ready', payments: data.payments ?? [] });
+          setState({ status: 'ready', analytics: data });
         }
       } catch (error) {
         if (!controller.signal.aborted && !isAbortError(error)) {
@@ -67,22 +70,28 @@ export default function RoutesPage() {
     return () => controller.abort();
   }, [online]);
 
-  // Memoised so the identity is stable: the literal `[]` on the loading and
-  // error branches would otherwise be a fresh array on every render, and each
-  // aggregation below would recompute for nothing.
-  const payments = useMemo(() => (state.status === 'ready' ? state.payments : EMPTY), [state]);
-  const assets = useMemo(() => assetOptions(payments), [payments]);
+  const analytics = useMemo(
+    () => (state.status === 'ready' ? state.analytics : EMPTY_ANALYTICS),
+    [state],
+  );
+  const assets = analytics.assets;
 
   // Default to whichever asset the merchant actually earns in, once known.
   const selectedAsset = asset ?? assets[0]?.key ?? null;
 
   const breakdown = useMemo(
-    () => (selectedAsset ? buildRouteBreakdown(payments, selectedAsset) : null),
-    [payments, selectedAsset],
+    () =>
+      selectedAsset
+        ? routeBreakdownFromAggregates(analytics.routes[selectedAsset] ?? [], selectedAsset)
+        : null,
+    [analytics, selectedAsset],
   );
   const series = useMemo(
-    () => (selectedAsset ? buildRevenueSeries(payments, { asset: selectedAsset, range }) : null),
-    [payments, selectedAsset, range],
+    () =>
+      selectedAsset
+        ? seriesFromDayBuckets(analytics.days[selectedAsset] ?? [], { asset: selectedAsset, range })
+        : null,
+    [analytics, selectedAsset, range],
   );
 
   return (
@@ -191,13 +200,7 @@ export default function RoutesPage() {
   );
 }
 
-export function RouteTable({
-  breakdown,
-  asset,
-}: {
-  breakdown: NonNullable<ReturnType<typeof buildRouteBreakdown>>;
-  asset: string;
-}) {
+export function RouteTable({ breakdown, asset }: { breakdown: RouteBreakdown; asset: string }) {
   const rows: RouteBucket[] = [
     ...breakdown.routes,
     ...(breakdown.unattributed ? [breakdown.unattributed] : []),
