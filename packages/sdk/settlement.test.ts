@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  parseSettlementHeader,
-  settlementFromResult,
-  routeFromResourceUrl,
-} from './settlement';
+import { parseSettlementHeader, settlementFromResult, routeFromResourceUrl } from './settlement';
 
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64');
 
@@ -47,7 +43,10 @@ describe('parseSettlementHeader', () => {
 
   it('ignores optional fields of the wrong type', () => {
     const odd = { success: true, transaction: 'c'.repeat(64), payer: 42, amount: null };
-    expect(parseSettlementHeader(encode(odd))).toMatchObject({ payer: undefined, amount: undefined });
+    expect(parseSettlementHeader(encode(odd))).toMatchObject({
+      payer: undefined,
+      amount: undefined,
+    });
   });
 
   it.each([
@@ -108,7 +107,9 @@ describe('settlementFromResult', () => {
   });
 
   it('omits the request id when absent', () => {
-    expect(settlementFromResult(settled, { route: '/x', method: 'GET' })?.requestId).toBeUndefined();
+    expect(
+      settlementFromResult(settled, { route: '/x', method: 'GET' })?.requestId,
+    ).toBeUndefined();
   });
 
   it('returns null for a failed settlement', () => {

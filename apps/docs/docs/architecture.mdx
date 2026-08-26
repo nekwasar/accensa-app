@@ -1,0 +1,86 @@
+---
+sidebar_position: 2
+title: Architecture
+description: 'How the three repositories relate, where the boundaries are, and what each does.'
+---
+
+# Architecture & Repository Boundaries
+
+The Accensa ecosystem spans three repositories. Each has a distinct role, and understanding the boundaries between them is essential for integrators and reviewers alike.
+
+## The Three Repositories
+
+### `accensa-app` — Merchant Back-Office (this repository)
+
+A Next.js dashboard and indexer that sits **downstream** of a facilitator. It reconstructs payment history from on-chain data, attributes settlements to HTTP routes (via the middleware hook), anchors verifiable receipts, and executes merchant-authorized refunds.
+
+**What it does:**
+
+- Indexes Stellar Asset Contract `transfer` events into a local Postgres ledger
+- Attributes payments to HTTP routes (when the SDK hook is installed)
+- Aggregates revenue by route, method, and time window
+- Anchors batch Merkle roots to the `ReceiptAnchor` Soroban contract
+- Provides a dashboard for reconciliation, refunds, and receipt verification
+
+**What it does not do:**
+
+- Process x402 payments — that is the facilitator's job
+- Escrow or move funds — payments flow directly from buyer to merchant
+- Verify x402 payment payloads against Soroban auth entries
+
+### `accensa-contracts` — On-Chain Trust Layer
+
+Soroban smart contracts (`ReceiptAnchor`, `RefundVault`) that provide the on-chain source of truth for verifiable receipts and trustless refunds.
+
+**What it does:**
+
+- Stores batch Merkle roots on-chain for receipt verification
+- Manages a refund vault for trustless merchant-initiated refunds
+
+**What it does not do:**
+
+- Process or verify x402 payments — it has no knowledge of the x402 protocol
+- Handle off-chain business logic
+
+### `x402-facilitator-stellar` — x402 Payment Facilitator
+
+The standard HTTP 402 facilitator that handles the x402 payment flow, indexes resource prices, and processes Stellar payments from AI agents.
+
+**What it does:**
+
+- Verifies x402 payment payloads against Soroban auth entries
+- Processes the x402 payment flow end to end
+- Dispatches webhooks after payment verification
+
+**What it does not do:**
+
+- Index payment history — that is the dashboard's job
+- Anchor receipts or manage refunds — that is the contracts' job
+
+## Relationship to the Dashboard
+
+The `accensa-app` dashboard is a **merchant back-office** that sits downstream of a facilitator. It does not process payments itself. A merchant runs both a facilitator (to accept payments) and the Accensa dashboard (to manage the business operations around those payments). The dashboard reads on-chain data and, optionally, receives route attribution from the facilitator via the SDK hook.
+
+## The `/verify` Naming Collision
+
+Both `accensa-app` and `x402-facilitator-stellar` expose a `/verify` endpoint. These are **different operations that happen to share a word.**
+
+**Receipt verification** (`accensa-app` `POST /api/verify`) verifies that a specific payment was included in a batch Merkle root anchored on-chain. It takes a batch ID, a leaf hash, and a Merkle proof, then checks the proof both locally and against the `ReceiptAnchor` contract. This is what an agent operator uses to confirm a merchant's receipt is legitimate.
+
+**x402 payment verification** (`x402-facilitator-stellar`) verifies a payment payload against Soroban auth entries. It confirms that a Stellar transaction actually paid the invoice defined by the x402 protocol. This happens at payment time, before the dashboard is involved at all.
+
+The two share the word "verify" but operate on different data, at different times, for different purposes. Receipt verification checks historical proof of inclusion; x402 payment verification checks that a payment was valid when it happened.
+
+## How Data Flows
+
+```
+AI Agent → x402 Facilitator → Stellar Network
+                                  ↓
+                          Accensa Indexer (reads on-chain transfers)
+                                  ↓
+                          Accensa Dashboard (revenue, receipts, refunds)
+                                  ↓
+                          ReceiptAnchor Contract (batch Merkle roots)
+```
+
+The facilitator handles the payment. The indexer observes the result on-chain. The dashboard presents it. The contracts anchor it. No component oversteps its boundary.

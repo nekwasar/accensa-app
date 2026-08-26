@@ -6,15 +6,27 @@ We welcome contributions from the community! Whether it's a bug fix, new feature
 
 1. **Fork the repository** on GitHub.
 2. **Clone your fork** locally.
-3. **Find an issue**: Look for issues labeled with `good first issue` if you are a new contributor. If you have an idea for a feature or found a bug, please create a new issue first to discuss it with the maintainers before writing code.
+3. **Find an issue**: Look for issues labeled with `good first issue` if you are a new contributor. If you have an idea for a feature or found a bug, please create a new issue first to discuss it with the maintainers before starting work.
 4. **Wait for assignment**: To avoid duplicate work, please express your interest on the issue and wait for a maintainer to assign it to you before starting work.
 5. **Create a new branch** for your feature or bug fix (`git checkout -b feature/my-new-feature` or `bugfix/issue-123`).
 6. **Make your changes** and test them thoroughly.
 
+## Code Style
+
+This project uses [Prettier](https://prettier.io/) for code formatting. Before committing, run:
+
+```bash
+pnpm format
+```
+
+CI will reject unformatted code via `pnpm format:check`.
+
 ## Submitting a Pull Request
 
 - Ensure your code follows the existing style conventions.
-- Run all local build and test commands (e.g., `pnpm build`, `go test`) before submitting.
+- Run `pnpm format` to format your code.
+- Run `pnpm lint` and `pnpm typecheck` from the workspace root to check for issues.
+- Run all local build and test commands (e.g., `pnpm build`, `pnpm test`) before submitting.
 - Provide a clear and descriptive PR title and description.
 - Link to any relevant open issues in your PR description (e.g. `Closes #123`).
 - Wait for a maintainer to review your PR. Address any feedback as needed.

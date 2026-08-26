@@ -24,14 +24,14 @@ pnpm dev
 
 ### Environment
 
-| Variable | Required | What it is |
-|---|---|---|
-| `ACCENSA_PRIVATE_KEY_HEX` | **yes** | Ed25519 private key, hex. Reports are signed with it; your Accensa deployment verifies against the matching public key and rejects anything else with 401. |
-| `MERCHANT_ADDRESS` | **yes** | Stellar address that receives payment (`G...`). |
-| `ACCENSA_URL` | no | Your Accensa deployment. Defaults to `http://localhost:3000`. |
-| `TOKEN_ADDRESS` | no | Asset contract to price in. Defaults to native XLM's testnet SAC. Must match an asset your Accensa indexer watches, or the settled transfer is never picked up. |
-| `ADMIN_TOKEN` | no | Bearer token for the example's own `/admin/stats` route. Unrelated to x402. |
-| `PORT` | no | Defaults to `3001`. |
+| Variable                  | Required | What it is                                                                                                                                                      |
+| ------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ACCENSA_PRIVATE_KEY_HEX` | **yes**  | Ed25519 private key, hex. Reports are signed with it; your Accensa deployment verifies against the matching public key and rejects anything else with 401.      |
+| `MERCHANT_ADDRESS`        | **yes**  | Stellar address that receives payment (`G...`).                                                                                                                 |
+| `ACCENSA_URL`             | no       | Your Accensa deployment. Defaults to `http://localhost:3000`.                                                                                                   |
+| `TOKEN_ADDRESS`           | no       | Asset contract to price in. Defaults to native XLM's testnet SAC. Must match an asset your Accensa indexer watches, or the settled transfer is never picked up. |
+| `ADMIN_TOKEN`             | no       | Bearer token for the example's own `/admin/stats` route. Unrelated to x402.                                                                                     |
+| `PORT`                    | no       | Defaults to `3001`.                                                                                                                                             |
 
 `ACCENSA_PRIVATE_KEY_HEX` and `MERCHANT_ADDRESS` are checked at boot, not at settlement
 time. A server that takes payments while silently dropping every attribution is
@@ -61,7 +61,7 @@ you can reach the resource server.
 **`attachAccensaHook`** — Express middleware that reads the settlement back from
 the `X-PAYMENT-RESPONSE` response header once the response finishes. Use it when
 the payment middleware is mounted by something you do not control. Mount it
-*after* that middleware, or the header will not exist yet.
+_after_ that middleware, or the header will not exist yet.
 
 ## Things that bite
 

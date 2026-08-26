@@ -1,0 +1,95 @@
+---
+sidebar_position: 5
+title: Syncing Mechanism
+---
+
+# Content Syncing Mechanism
+
+This document describes how content is kept in sync between this documentation site and the source repository (`x402-facilitator-stellar`).
+
+## Current Approach
+
+The role-based developer guides (Seller, Buyer/Agent, Operator) are authored directly in this documentation site (`apps/docs/docs/facilitator/`). This approach was chosen because:
+
+1. **Single source of truth** - The published documentation is the canonical version
+2. **Immediate updates** - Changes to guides are published without waiting for repository sync
+3. **Review process** - All documentation changes go through the standard PR review
+
+## Sync Process
+
+### Manual Sync
+
+When the `x402-facilitator-stellar` repository makes changes that should be reflected in the documentation:
+
+1. Review the changes in the source repository
+2. Update the corresponding guide pages in `apps/docs/docs/facilitator/`
+3. Create a PR with the documentation updates
+4. The PR should reference any relevant changes from the source repository
+
+### Automated Checks
+
+The documentation site includes:
+
+- **Broken link detection** - `onBrokenLinks: 'throw'` in `docusaurus.config.ts` ensures no broken links
+- **TypeScript type checking** - `pnpm typecheck` validates all TypeScript
+- **Build verification** - `pnpm build` ensures the site builds successfully
+
+## Content Guidelines
+
+### Structure
+
+Each guide page should follow this structure:
+
+1. **Title and overview** - What the guide covers
+2. **Prerequisites** - What's needed before starting
+3. **Quick Start** - Minimal steps to get working
+4. **Live Testnet Example** - Runnable code examples
+5. **Next Steps** - Links to related documentation
+
+### Code Examples
+
+- All code examples should be runnable against testnet
+- Use realistic but safe examples (no real private keys)
+- Include comments explaining key parts
+- Test examples before publishing
+
+### Links
+
+- Use relative links within the documentation site
+- Link to external resources (GitHub, Stellar docs) when appropriate
+- Verify all links work using the broken link checker
+
+## Future Improvements
+
+### Build-Time Vendoring
+
+A potential improvement would be to vendor content from the source repository at build time:
+
+```typescript
+// docusaurus.config.ts
+const config = {
+  // Future: vendor facilitator docs at build time
+  // plugins: ['@docusaurus/plugin-content-vendoring'],
+};
+```
+
+This would allow:
+
+- Automatic sync on each build
+- Single source of truth in the source repository
+- Reduced manual coordination
+
+### CI/CD Integration
+
+Future improvements could include:
+
+- Automatic documentation updates when source repository changes
+- Preview deployments for documentation PRs
+- Automated testing of code examples
+
+## Contact
+
+For questions about the documentation sync process:
+
+- See [Contributing](../contributing)
+- Open an issue in the [accensa-app repository](https://github.com/accensa/accensa-app)

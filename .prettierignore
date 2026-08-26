@@ -1,0 +1,10 @@
+node_modules
+.next
+build
+dist
+.docusaurus
+pnpm-lock.yaml
+*.min.js
+.merkle-vectors.json
+packages/sdk/merkle-vectors.json
+packages/sdk/vectors.rs

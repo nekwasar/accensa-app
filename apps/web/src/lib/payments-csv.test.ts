@@ -60,7 +60,7 @@ describe('paymentsToCsv', () => {
   it('emits the header even for an empty set', () => {
     const csv = paymentsToCsv([]);
     expect(lines(csv)).toEqual([
-      'Transaction Hash,Timestamp,Amount,Asset,Asset Identifier,Payer,Route,Method,Ledger',
+      'Transaction Hash,Timestamp,Amount,Asset,Asset Identifier,Payer,Route,Method,Ledger,Refunded',
     ]);
   });
 
