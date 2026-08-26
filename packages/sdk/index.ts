@@ -19,6 +19,7 @@ export {
   type Settlement,
   type X402SettleResult,
 } from './settlement';
+export { WEBHOOK_SIGNATURE_HEADER, signWebhookSignature, verifyWebhookSignature } from './webhooks';
 
 /**
  * This package deliberately ships no paywall middleware.
