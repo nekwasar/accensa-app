@@ -1,20 +1,24 @@
 ---
-title: "User Guides"
-description: "How to use Accensa as a Merchant or verify receipts as an Agent Operator."
+title: 'User Guides'
+description: 'How to use Accensa as a Merchant or verify receipts as an Agent Operator.'
 ---
 
 ## For Merchants (Supply-side)
 
-Running your Accensa back-office locally takes under 15 minutes. It requires PostgreSQL, the Go Indexer, and the Next.js Dashboard.
+Running your Accensa back-office locally takes under 15 minutes. It requires PostgreSQL and the Next.js Dashboard and Indexer.
 
 ### 1. Database Setup
+
 Accensa requires a standard PostgreSQL instance to store parsed ledger data.
+
 ```bash
 docker run --name pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
 ```
 
 ### 2. Start the Facilitator
+
 Run the `x402-facilitator-stellar` service to handle the standard x402 protocol flow and process payments from AI agents.
+
 ```bash
 cd x402-facilitator-stellar
 pnpm install
@@ -22,7 +26,9 @@ pnpm start
 ```
 
 ### 3. Start the Dashboard
+
 The Next.js dashboard connects to your local database to visualize your revenue and receipts.
+
 ```bash
 cd apps/web
 pnpm install
@@ -30,6 +36,7 @@ pnpm dev
 ```
 
 ### Path A vs Path B
+
 - **Path A (Chain-Only):** If you run Accensa with zero integration to your x402 server, you will see total revenue, payers, and timelines based purely on chain data.
 - **Path B (Middleware Hook):** By adding the Accensa SDK hook to your server, your indexer attributes every chain settlement to a specific HTTP route, unlocking route-level revenue analytics.
 
@@ -40,7 +47,8 @@ pnpm dev
 You do not need to run any infrastructure to verify an Accensa receipt provided by a merchant.
 
 ### Verifying a Receipt
-When a merchant gives you a receipt, it includes the batch Merkle root, the specific leaf (your payment hash + metadata), and the Merkle proof. 
+
+When a merchant gives you a receipt, it includes the batch Merkle root, the specific leaf (your payment hash + metadata), and the Merkle proof.
 
 You can mathematically verify this receipt off-chain by using the Accensa Node SDK. All three arguments are hex-encoded 32-byte hashes; the proof lists sibling hashes from leaf to root:
 
@@ -49,7 +57,7 @@ import { verifyReceipt } from '@accensa/sdk';
 
 const isValid = verifyReceipt(receiptLeaf, proof, batchRoot);
 if (!isValid) {
-  throw new Error("Receipt does not match the anchored batch root.");
+  throw new Error('Receipt does not match the anchored batch root.');
 }
 ```
 

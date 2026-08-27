@@ -7,47 +7,62 @@ sidebar_position: 1
 This guide walks you through deploying your own Accensa back-office, configuring it, and accepting your first x402 payment, timed end-to-end. We use the [demo-merchant](https://github.com/accensa/accensa-app/tree/main/apps/demo-merchant) as our reference implementation.
 
 ## 1. Deploy the dashboard and provision the database
+
 1. Click **Deploy to Vercel** (or clone the repository).
 2. Provision a PostgreSQL database (e.g., using Vercel Postgres or Supabase).
 3. Set the `DATABASE_URL` environment variable.
 
-## 2. Configure the merchant address, asset(s) and RPC
-1. Set `MERCHANT_ADDRESS` to your Stellar public key.
-2. Set `ACCEPTED_ASSETS` to a comma-separated list of Stellar assets you accept (e.g., `native` for XLM).
-3. Set `SOROBAN_RPC_URL` to your preferred Stellar RPC endpoint.
+## 2. Configure environment variables and RPC
+
+1. Set `DATABASE_URL` to your Postgres connection string.
+2. Set `JWT_SECRET_KEY` to a secure random string for merchant session authentication.
+3. Set `CRON_SECRET` to a secure bearer token for authorized cron syncs.
+4. Set `ASSET_CONTRACT_IDS` to a comma-separated list of Stellar Asset Contract IDs you settle in (defaults to testnet native XLM SAC `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`).
+5. Set `STELLAR_RPC_URL` to your preferred Stellar RPC endpoint (defaults to `https://soroban-testnet.stellar.org`).
 
 ## 3. Generate and configure the signing key
+
 Generate an Ed25519 keypair for signing settlement reports.
+
 1. The **private key** is kept in your merchant server (`MERCHANT_PRIVATE_KEY`).
 2. The **public key** is given to Accensa (`MERCHANT_PUBLIC_KEY`).
 
 ## 4. Install `@accensa/sdk` in your x402 resource server
+
 In your resource server:
+
 ```bash
 npm install @accensa/sdk
 ```
 
 Mount the hook in your application:
+
 ```ts
 import { attachAccensaHook } from '@accensa/sdk';
 
-app.use(attachAccensaHook({
-  indexerUrl: process.env.ACCENSA_URL,
-  privateKeyHex: process.env.MERCHANT_PRIVATE_KEY
-}));
+app.use(
+  attachAccensaHook({
+    indexerUrl: process.env.ACCENSA_URL,
+    privateKeyHex: process.env.MERCHANT_PRIVATE_KEY,
+  }),
+);
 ```
 
 > [!WARNING]
 > **Middleware Ordering Pitfall**: Ordinary authentication middleware must **not** be mounted globally, or it will reject the x402 handshake from an agent that by design has no account with you. The `attachAccensaHook` middleware must be mounted **after** your x402 payment middleware so the `X-PAYMENT-RESPONSE` header exists by the time the response finishes.
 
 ## 5. Verify the first payment appears
+
 Send a request to your paywalled endpoint. Check your Accensa dashboard to see the payment appear with its route attributed.
 
 ## 6. Set up the sync schedule
-Set up a cron job or external scheduler (e.g., GitHub Actions) to call `POST /api/sync` on your Accensa dashboard URL to index on-chain events.
+
+Set up a cron job or scheduler (e.g. Vercel Cron or GitHub Actions) to call `GET /api/sync` on your Accensa deployment with `Authorization: Bearer <CRON_SECRET>` to index on-chain events. Merchants can also manually trigger a sync from the dashboard via `POST /api/sync`.
 
 ## 7. Deploy the contracts and anchor your first batch
+
 Use the Soroban CLI to deploy your `ReceiptAnchor` contract. Anchor a batch of payments to verify your revenue.
 
 ## 8. Verify a receipt
+
 Use the SDK to verify the receipt. You can now hand an agent the same verification.

@@ -1,6 +1,6 @@
 ---
-title: "Introduction"
-description: "The merchant back-office for x402 sellers on Stellar."
+title: 'Introduction'
+description: 'The merchant back-office for x402 sellers on Stellar.'
 ---
 
 ## What is Accensa?
@@ -17,6 +17,8 @@ The Accensa ecosystem is split across three primary repositories:
 2. **`accensa-contracts`**: Soroban smart contracts (e.g., `ReceiptAnchor`, `RefundVault`) that provide the on-chain trust layer for verifiable receipts and trustless refunds.
 3. **`x402-facilitator-stellar`**: The standard HTTP 402 facilitator. Sellers run this to automatically handle the x402 payment flow, index resource prices, and handle Stellar payments from AI agents.
 
+See the [Architecture](/docs/architecture) page for a detailed breakdown of what each repository does and does not do, including the distinction between receipt verification and x402 payment verification.
+
 ## The Problem
 
 x402 (HTTP 402 over Stellar) facilitates agentic payments seamlessly. However, the seller experience ends the moment funds arrive at the `PAY_TO` address. This creates three critical operational gaps:
@@ -27,7 +29,7 @@ x402 (HTTP 402 over Stellar) facilitates agentic payments seamlessly. However, t
 
 ## How It Works
 
-Accensa runs adjacent to your existing x402 facilitator. It never touches the payment flow or escrows funds. 
+Accensa runs adjacent to your existing x402 facilitator. It never touches the payment flow or escrows funds.
 
 1. **Payment Execution:** The AI agent hits your endpoint and pays the invoice via the standard x402 facilitator.
 2. **Chain Ingestion:** Your Accensa Indexer continually polls the Stellar RPC and logs the USDC transfer into your local database.

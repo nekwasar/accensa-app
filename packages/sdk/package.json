@@ -16,12 +16,21 @@
   },
   "exports": {
     ".": "./index.ts",
-    "./merkle": "./merkle.ts"
+    "./receipt-anchor-client": "./receipt-anchor-client.ts",
+    "./merkle": "./merkle.ts",
+    "./types": "./src/types/index.ts",
+    "./webhooks": "./webhooks.ts",
+    "./retry": "./retry.ts"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "gen:vectors": "node scripts/generate-vectors.mjs"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^16.0.1"
   },
   "peerDependencies": {
     "express": ">=4"
@@ -35,6 +44,7 @@
     "@types/express": "^5.0.6",
     "@types/supertest": "^7.2.1",
     "supertest": "^7.2.2",
+    "typescript": "~5.9.3",
     "vitest": "^2.1.9"
   }
 }

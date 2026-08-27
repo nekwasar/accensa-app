@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Security
 
-The dashboard and API routes are secured using a Stellar Wallet Auth model (similar to SEP-10). Merchants must prove control of the configured `MERCHANT_ADDRESS` by signing a challenge using Freighter to access the dashboard. 
+The dashboard and API routes are secured using a Stellar Wallet Auth model (similar to SEP-10). Merchants must prove control of the configured `MERCHANT_ADDRESS` by signing a challenge using Freighter to access the dashboard.
 
 See [SECURITY.md](./SECURITY.md) and [DESIGN.md](./DESIGN.md) for full details on the access model and session handling.
 
