@@ -10,7 +10,7 @@ import {
 } from './settlement';
 import { fetchWithRetry, type RetryOptions } from './retry';
 
-export { verifyReceipt } from './merkle';
+export { verifyReceipt, buildBatch, type BatchInfo } from './merkle';
 export { fetchWithRetry, HttpError, type RetryOptions } from './retry';
 export {
   SETTLEMENT_HEADER,
