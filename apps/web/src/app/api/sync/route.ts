@@ -13,6 +13,7 @@ import {
   parallelSweepLedgerRange,
   PARALLEL_SYNC_THRESHOLD,
   EVENTS_PAGE_LIMIT,
+  LedgerWindowFetchError,
   type EventPage,
 } from '@/lib/event-pager';
 import {
@@ -26,6 +27,7 @@ import {
 import { listMerchants, getMerchantFromRequest, type Merchant } from '@/lib/merchants';
 import { cooldownRemaining } from '@/lib/sync-status';
 import { isAuthorizedCronRequest } from '@/lib/cron-auth';
+import { logSyncFailure, notifySyncFailure, type SyncFailureContext } from '@/lib/sync-logger';
 import { createHmac } from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
@@ -328,12 +330,38 @@ async function runSync(merchant: Merchant, opts: { cooldownMs?: number } = {}) {
 
 type SyncResult = Awaited<ReturnType<typeof runSync>>;
 
+/** One merchant's sync throwing instead of returning a result (#135). */
+interface SyncFailure {
+  merchant: string;
+  error: string;
+}
+
 /** Maps one merchant's run to its response fragment. */
 function summarize(result: SyncResult) {
   if ('cooldown' in result) {
     return { cooldown: true, retryAfterMs: Math.ceil(result.retryAfterMs) };
   }
   return result;
+}
+
+/**
+ * Builds the context+logging a caught sync error needs, then reports it both
+ * to the log (always) and to SYNC_ALERT_WEBHOOK_URL (if configured) (#135).
+ *
+ * A LedgerWindowFetchError carries the exact window being read when the RPC
+ * call failed; anything else (a parsing error, a DB error) is logged without
+ * ledger context rather than guessing at one.
+ */
+function reportSyncError(error: unknown, merchant?: string): void {
+  const context: SyncFailureContext = {
+    ...(merchant ? { merchant } : {}),
+    ...(error instanceof LedgerWindowFetchError
+      ? { startLedger: error.startLedger, endLedger: error.endLedger }
+      : {}),
+  };
+  logSyncFailure(context, error);
+  // Alerting must never block or fail the sync job itself.
+  void notifySyncFailure(context, error);
 }
 
 /**
@@ -345,12 +373,18 @@ function summarize(result: SyncResult) {
  * as deployment-wide maximums alongside the full per-merchant `results`, so
  * that check keeps working unchanged whether this deployment has one merchant
  * or many.
+ *
+ * `failures` (#135) are merchants whose sync threw rather than returned — they
+ * no longer abort the whole batch (see GET below), so they are reported here
+ * instead: `success` goes false, which the workflow already treats as a
+ * warning worth surfacing, while `results`/`syncedTo` still reflect whatever
+ * other merchants did complete.
  */
-function respond(results: SyncResult[]) {
+function respond(results: SyncResult[], failures: SyncFailure[] = []) {
   // The manual, single-merchant POST path preserves the original 429 +
   // Retry-After contract exactly, since the dashboard's "Sync now" button
   // already depends on it.
-  if (results.length === 1 && 'cooldown' in results[0]) {
+  if (failures.length === 0 && results.length === 1 && 'cooldown' in results[0]) {
     const retryAfterMs = Math.ceil(results[0].retryAfterMs);
     return NextResponse.json(
       { success: true, cooldown: true, retryAfterMs },
@@ -367,14 +401,15 @@ function respond(results: SyncResult[]) {
   const drained = synced.length ? synced.every((s) => s.drained) : true;
 
   return NextResponse.json({
-    success: true,
+    success: failures.length === 0,
     results: summaries,
     ...(syncedTo !== null ? { syncedTo, skippedLedgers, drained } : {}),
+    ...(failures.length ? { failures } : {}),
   });
 }
 
-function failed(error: unknown) {
-  console.error('Error during sync:', error);
+function failed(error: unknown, merchant?: string) {
+  reportSyncError(error, merchant);
   return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
 }
 
@@ -412,10 +447,22 @@ export async function GET(request: Request) {
     }
 
     const results: SyncResult[] = [];
+    const failures: SyncFailure[] = [];
     for (const merchant of merchants) {
-      results.push(await runSync(merchant));
+      // One merchant's RPC error or parsing failure must not cost every
+      // merchant after it in this run their turn (#135) — each is isolated
+      // and logged with context, and the loop moves on.
+      try {
+        results.push(await runSync(merchant));
+      } catch (error) {
+        reportSyncError(error, merchant.address);
+        failures.push({
+          merchant: merchant.address,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
-    return respond(results);
+    return respond(results, failures);
   } catch (error: unknown) {
     return failed(error);
   }
@@ -433,14 +480,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
   }
 
+  let merchant: Merchant | null = null;
   try {
-    const merchant = await withClient((client) => getMerchantFromRequest(client, request));
+    merchant = await withClient((client) => getMerchantFromRequest(client, request));
     if (!merchant) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     return respond([await runSync(merchant, { cooldownMs: MANUAL_COOLDOWN_MS })]);
   } catch (error: unknown) {
-    return failed(error);
+    return failed(error, merchant?.address);
   }
 }

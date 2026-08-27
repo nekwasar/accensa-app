@@ -5,6 +5,7 @@ import {
   parallelSweepLedgerRange,
   EVENTS_PAGE_LIMIT,
   LEDGER_WINDOW,
+  LedgerWindowFetchError,
   type EventPage,
 } from './event-pager';
 import type { RawEvent } from './stellar-events';
@@ -108,6 +109,54 @@ describe('drainEvents', () => {
     expect(result.drained).toBe(false);
     expect(result.pages).toBe(2);
     expect(result.events).toHaveLength(400);
+  });
+
+  it('wraps a failed fetch in a LedgerWindowFetchError carrying the window (#135)', async () => {
+    const rpcError = new Error('RPC getEvents: [-32001] request exceeded processing limit');
+    const fetchPage = async (): Promise<EventPage> => {
+      throw rpcError;
+    };
+
+    await expect(
+      drainEvents(fetchPage, { startLedger: 12_345, endLedger: 22_345 }),
+    ).rejects.toThrow(LedgerWindowFetchError);
+
+    try {
+      await drainEvents(fetchPage, { startLedger: 12_345, endLedger: 22_345 });
+      expect.unreachable('drainEvents should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LedgerWindowFetchError);
+      const wrapped = error as LedgerWindowFetchError;
+      expect(wrapped.startLedger).toBe(12_345);
+      expect(wrapped.endLedger).toBe(22_345);
+      expect(wrapped.cause).toBe(rpcError);
+      expect(wrapped.message).toContain('12345');
+      expect(wrapped.message).toContain('22345');
+    }
+  });
+
+  it('falls back to startLedger for the window end when a later page has no endLedger', async () => {
+    // A cursor-following page omits endLedger entirely (see the "supersedes
+    // startLedger" comment above) — a failure there must still report a
+    // sensible window rather than an undefined endLedger.
+    const all = makeEvents(EVENTS_PAGE_LIMIT + 1, () => 100);
+    let calls = 0;
+    const fetchPage = async (): Promise<EventPage> => {
+      calls++;
+      if (calls === 1) {
+        return { events: all.slice(0, EVENTS_PAGE_LIMIT), cursor: 'evt-199' };
+      }
+      throw new Error('second page failed');
+    };
+
+    try {
+      await drainEvents(fetchPage, { startLedger: 100 });
+      expect.unreachable('drainEvents should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LedgerWindowFetchError);
+      expect((error as LedgerWindowFetchError).startLedger).toBe(100);
+      expect((error as LedgerWindowFetchError).endLedger).toBe(100);
+    }
   });
 });
 
