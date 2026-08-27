@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { formatAmount, sumAmounts, assetLabel } from '@/lib/money';
 import { describeSync, type SyncState } from '@/lib/sync-status';
 import { CSV_BOM, paymentsCsvFilename, paymentsToCsv } from '@/lib/payments-csv';
@@ -92,45 +92,61 @@ export default function Dashboard() {
  return () => document.removeEventListener('keydown', onKey);
  }, [selected]);
 
- const payments = state.status === 'ready' ? state.payments : [];
- const total = sumAmounts(payments.map((p) => p.amount));
- const assets = new Set(payments.map((p) => assetLabel(p.asset)));
- const totalAsset = assets.size === 1 ? [...assets][0] : '';
+  const payments = state.status === 'ready' ? state.payments : [];
+  const totalsByAsset = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const p of payments) {
+      const asset = assetLabel(p.asset);
+      if (!map.has(asset)) map.set(asset, []);
+      map.get(asset)!.push(p.amount);
+    }
+    return Array.from(map.entries()).map(([asset, amounts]) => ({
+      asset,
+      total: sumAmounts(amounts)
+    }));
+  }, [payments]);
 
- return (
- <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid p-6 md:p-12 lg:p-20 pt-28 md:pt-32 lg:pt-32">
- <PageContainer className="space-y-12">
- 
- {/* Header Grid */}
- <header className="grid lg:grid-cols-3 gap-8 items-end">
- <div className="lg:col-span-2 space-y-6 text-center lg:text-left">
- <div>
- <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-3">Dashboard</p>
- <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Settled Volume</h1>
- <Link
- href="/dashboard/routes"
- className="inline-block mt-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
- >
- Revenue by route →
- </Link>
- </div>
- </div>
- 
- <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl p-8 flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] relative overflow-hidden transition-colors duration-300">
- <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[40px] dark:blur-[50px] pointer-events-none"/>
- <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Settled</span>
- <span className="text-4xl sm:text-5xl font-black tracking-tighter mt-4 flex items-baseline gap-2 text-slate-900 dark:text-white transition-colors duration-300">
- {state.status === 'loading' ? (
- <span className="block h-12 w-32 bg-slate-100 dark:bg-white/5 animate-pulse"/>
- ) : (
- <>
- {formatAmount(total)}
- {totalAsset && <span className="text-2xl text-emerald-600 dark:text-emerald-400 font-bold">{totalAsset}</span>}
- </>
- )}
- </span>
- </div>
- </header>
+  return (
+  <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid p-6 md:p-12 lg:p-20 pt-28 md:pt-32 lg:pt-32">
+  <PageContainer className="space-y-12">
+  
+  {/* Header Grid */}
+  <header className="grid lg:grid-cols-3 gap-8 items-end">
+  <div className="lg:col-span-2 space-y-6 text-center lg:text-left">
+  <div>
+  <p className="uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 font-bold text-xs mb-3">Dashboard</p>
+  <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors duration-300">Settled Volume</h1>
+  <Link
+  href="/dashboard/routes"
+  className="inline-block mt-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+  >
+  Revenue by route →
+  </Link>
+  </div>
+  </div>
+  
+  <div className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl p-8 flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] relative overflow-hidden transition-colors duration-300">
+  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[40px] dark:blur-[50px] pointer-events-none"/>
+  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Total Settled</span>
+  {state.status === 'loading' ? (
+  <span className="block h-12 w-32 bg-slate-100 dark:bg-white/5 animate-pulse mt-4"/>
+  ) : (
+  <div className="flex flex-col gap-2 relative z-10">
+    {totalsByAsset.length > 0 ? totalsByAsset.map(t => (
+      <span key={t.asset} className="text-4xl sm:text-5xl font-black tracking-tighter flex items-baseline gap-2 text-slate-900 dark:text-white transition-colors duration-300">
+        {formatAmount(t.total)}
+        <span className="text-2xl text-emerald-600 dark:text-emerald-400 font-bold">{t.asset}</span>
+      </span>
+    )) : (
+      <span className="text-4xl sm:text-5xl font-black tracking-tighter flex items-baseline gap-2 text-slate-900 dark:text-white transition-colors duration-300">
+        0
+        <span className="text-2xl text-emerald-600 dark:text-emerald-400 font-bold">XLM</span>
+      </span>
+    )}
+  </div>
+  )}
+  </div>
+  </header>
 
  {/* Data Table Section */}
  <section className="bg-white/50 dark:bg-white/5 backdrop-blur-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-colors duration-300">

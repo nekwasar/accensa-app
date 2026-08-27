@@ -25,8 +25,8 @@ export interface VerifyResponse {
  local: CheckResult;
  /** The contract's own answer, read from the ledger. */
  onchain: CheckResult;
- /** True only when both independent implementations agree the receipt is valid. */
- verified: boolean;
+ /** True only when both independent implementations agree the receipt is valid. False when either rejects it. Null if verification was incomplete (e.g. unreachable). */
+ verified: boolean | null;
  /** Set when the two disagree - which should never happen. */
  disagreement: boolean;
  batch?: { id: number; root: string; count: number; periodStart: number; periodEnd: number };
@@ -99,10 +99,14 @@ export async function POST(request: Request) {
  const disagreement =
  local.ok !== null && onchain.ok !== null && local.ok !== onchain.ok;
 
+ const verified = local.ok === true && onchain.ok === true
+    ? true
+    : (local.ok === false || onchain.ok === false ? false : null);
+
  const response: VerifyResponse = {
  local,
  onchain,
- verified: local.ok === true && onchain.ok === true,
+ verified,
  disagreement,
  batch: {
  id: batchId,

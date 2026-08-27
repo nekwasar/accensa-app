@@ -7,6 +7,14 @@ vi.mock('@/lib/db', () => ({
   getSyncState: vi.fn(),
 }));
 
+vi.mock('@/lib/receipt-anchor', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/lib/receipt-anchor')>();
+  return {
+    ...mod,
+    getMaxBatchSize: vi.fn().mockResolvedValue(1000),
+  };
+});
+
 describe('/api/payments GET', () => {
   const mockRequest = (url: string) => {
     return new Request(url);

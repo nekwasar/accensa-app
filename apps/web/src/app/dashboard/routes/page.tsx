@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { formatAmount, assetLabel } from '@/lib/money';
 import { PageContainer } from '@/components/page-container';
@@ -45,7 +45,13 @@ export default function RoutesPage() {
  const [state, setState] = useState<LoadState>({ status: 'loading' });
  const [asset, setAsset] = useState<string | null>(null);
  const [range, setRange] = useState<RangeKey>('30d');
+ const [reloadToken, setReloadToken] = useState(0);
  const online = useOnline();
+
+ const reload = useCallback(() => {
+  setState({ status: 'loading' });
+  setReloadToken((n) => n + 1);
+ }, []);
 
  useEffect(() => {
  if (!online) return;
@@ -65,7 +71,7 @@ export default function RoutesPage() {
  }
  })();
  return () => controller.abort();
- }, [online]);
+ }, [online, reloadToken]);
 
  // Memoised so the identity is stable: the literal `[]` on the loading and
  // error branches would otherwise be a fresh array on every render, and each
@@ -116,10 +122,18 @@ export default function RoutesPage() {
  </p>
  </header>
 
+ {state.status === 'loading' && (
+   <div className="py-12 space-y-6">
+     <div className="h-24 w-full sm:w-1/3 bg-slate-100 dark:bg-white/5 animate-pulse transition-colors duration-300"/>
+     <div className="h-64 w-full bg-slate-100 dark:bg-white/5 animate-pulse transition-colors duration-300"/>
+   </div>
+ )}
+
  {state.status === 'error' && (
- <p className="text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 p-4">
- {state.message}
- </p>
+ <div className="text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 p-4 flex justify-between items-center bg-red-50 dark:bg-red-900/10 transition-colors duration-300">
+ <span>{state.message}</span>
+ <button onClick={reload} className="px-4 py-2 font-bold tracking-widest uppercase text-[10px] border border-red-200 dark:border-red-500/30 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors duration-300">Retry</button>
+ </div>
  )}
 
  {state.status === 'ready' && assets.length === 0 && (

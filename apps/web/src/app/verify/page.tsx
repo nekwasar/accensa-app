@@ -156,20 +156,20 @@ function Result({ result }: { result: VerifyResponse }) {
  const { local, onchain, verified, batch } = result;
 
  return (
- <div className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
- <div className={` border p-6 md:p-12 transition-colors duration-300 ${verified ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-[#0a111a] shadow-lg shadow-emerald-600/10 dark:shadow-[0_0_50px_rgba(16,185,129,0.1)]' : 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-[#0a111a] shadow-lg shadow-red-600/10 dark:shadow-[0_0_50px_rgba(239,68,68,0.1)]'}`}>
- <div className="flex items-center gap-4 mb-4">
- <div className={`w-12 h-12 flex items-center justify-center text-xl font-bold transition-colors duration-300 ${verified ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black' : 'bg-red-600 dark:bg-red-500 text-white dark:text-black'}`}>
- {verified ? '✓' : '✕'}
- </div>
- <p className={`text-3xl font-black tracking-tight transition-colors duration-300 ${verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
- {verified ? 'Proof Verified' : 'Proof Rejected'}
- </p>
- </div>
- <p className="text-slate-600 dark:text-slate-400 text-lg transition-colors duration-300">
- {verified ? 'The receipt cryptographic proof accurately resolves to the anchored Merkle root on Stellar.' : 'This receipt is invalid. The cryptographic proof does not lead to the anchored batch root.'}
- </p>
- </div>
+  <div className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
+  <div className={` border p-6 md:p-12 transition-colors duration-300 ${verified === true ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-[#0a111a] shadow-lg shadow-emerald-600/10 dark:shadow-[0_0_50px_rgba(16,185,129,0.1)]' : verified === false ? 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-[#0a111a] shadow-lg shadow-red-600/10 dark:shadow-[0_0_50px_rgba(239,68,68,0.1)]' : 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-[#0a111a] shadow-lg shadow-amber-600/10 dark:shadow-[0_0_50px_rgba(245,158,11,0.1)]'}`}>
+  <div className="flex items-center gap-4 mb-4">
+  <div className={`w-12 h-12 flex items-center justify-center text-xl font-bold transition-colors duration-300 ${verified === true ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black' : verified === false ? 'bg-red-600 dark:bg-red-500 text-white dark:text-black' : 'bg-amber-600 dark:bg-amber-500 text-white dark:text-black'}`}>
+  {verified === true ? '✓' : verified === false ? '✕' : '!'}
+  </div>
+  <p className={`text-3xl font-black tracking-tight transition-colors duration-300 ${verified === true ? 'text-emerald-600 dark:text-emerald-400' : verified === false ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+  {verified === true ? 'Proof Verified' : verified === false ? 'Proof Rejected' : 'Verification Incomplete'}
+  </p>
+  </div>
+  <p className="text-slate-600 dark:text-slate-400 text-lg transition-colors duration-300">
+  {verified === true ? 'The receipt cryptographic proof accurately resolves to the anchored Merkle root on Stellar.' : verified === false ? 'This receipt is invalid. The cryptographic proof does not lead to the anchored batch root.' : 'Could not reach the Stellar network to verify the receipt on-chain.'}
+  </p>
+  </div>
 
  <div className="grid md:grid-cols-2 gap-6">
  <CheckCard title="Local Compute"source="Recomputed in browser"result={local} />
