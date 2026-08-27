@@ -39,7 +39,8 @@ export async function GET(request: Request) {
   let limit = 100;
   if (limitParam !== null) {
     const parsed = Number.parseFloat(limitParam);
-    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 1000) {
+    const maxLimit = await getMaxBatchSize().catch(() => 1000); // Fallback to 1000 if network fails
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > maxLimit) {
       return NextResponse.json(
         { error: 'limit must be an integer between 1 and 1000' },
         { status: 400 },
