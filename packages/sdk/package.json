@@ -17,6 +17,7 @@
   "exports": {
     ".": "./index.ts",
     "./merkle": "./merkle.ts",
+    "./types": "./src/types/index.ts"
     "./webhooks": "./webhooks.ts",
     "./retry": "./retry.ts"
   },
