@@ -151,6 +151,25 @@ describe('reportSettlement', () => {
     expect(fetchImpl.mock.calls[0][0]).toBe(`https://accensa.test${SETTLE_ENDPOINT}`);
   });
 
+  it('never logs the private key on signing failure', async () => {
+    const onError = vi.fn();
+    const veryBadKeyHex = 'abc';
+    const fetchImpl = vi.fn();
+    const options = opts({ privateKeyHex: veryBadKeyHex, onError, fetchImpl });
+    await expect(reportSettlement(settlement, options)).resolves.toBe(false);
+
+    expect(onError).toHaveBeenCalledOnce();
+    const errorStr = String(onError.mock.calls[0][0]);
+    expect(errorStr).not.toContain(veryBadKeyHex);
+    
+    // Also test fallback console.error
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const optionsFallback = opts({ privateKeyHex: 'def', onError: undefined });
+    await expect(reportSettlement(settlement, optionsFallback)).resolves.toBe(false);
+    expect(String(consoleSpy.mock.calls[0][0])).not.toContain('def');
+    expect(String(consoleSpy.mock.calls[0][2])).not.toContain('def');
+  });
+
   it('reports a non-2xx response as a failure without throwing', async () => {
     const onError = vi.fn();
     const fetchImpl = vi.fn(async () => new globalThis.Response(null, { status: 401 }));
@@ -158,6 +177,7 @@ describe('reportSettlement', () => {
     await expect(reportSettlement(settlement, opts({ fetchImpl, onError }))).resolves.toBe(false);
     expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
     expect(String(onError.mock.calls[0][0])).toContain('401');
+    expect(String(onError.mock.calls[0][0])).not.toContain(PRIVATE_KEY_HEX);
     // A 4xx means the request itself is wrong (#123) — it must not be retried.
     expect(fetchImpl).toHaveBeenCalledOnce();
     // The payload comes back with the error so a caller can retry or log it.
