@@ -16,13 +16,25 @@
   },
   "exports": {
     ".": "./index.ts",
-    "./merkle": "./merkle.ts"
+    "./errors": "./src/errors.ts",
+    "./merkle": "./merkle.ts",
+    "./receipt-anchor": "./receipt-anchor.ts",
+    "./receipt-anchor-client": "./receipt-anchor-client.ts",
+    "./retry": "./retry.ts",
+    "./webhooks": "./webhooks.ts",
+    "./types": "./src/types/index.ts",
+    "./react-native": "./src/react-native.ts"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "gen:vectors": "node scripts/generate-vectors.mjs"
+    "gen:vectors": "node scripts/generate-vectors.mjs",
+    "gen:api": "openapi-typescript ../../apps/web/openapi.yaml -o ./generated/api-types.ts && prettier --write ./generated/api-types.ts"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^16.0.1"
   },
   "peerDependencies": {
     "express": ">=4"
@@ -35,6 +47,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/supertest": "^7.2.1",
+    "openapi-typescript": "^7.13.0",
     "supertest": "^7.2.2",
     "typescript": "~5.9.3",
     "vitest": "^2.1.9"
