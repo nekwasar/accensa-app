@@ -1,4 +1,7 @@
-import { Client } from 'pg';
+import { Pool, type PoolClient } from 'pg';
+
+/** A checked-out connection. Named `Client` so call sites are unchanged. */
+export type Client = PoolClient;
 
 /**
  * Opens a database connection.
@@ -14,14 +17,61 @@ export function connectionString(): string {
   return url;
 }
 
+/**
+ * Connection strategy (issue #92).
+ *
+ * `apps/web` runs on Vercel serverless functions. A function *instance* is
+ * reused for a burst of requests and then frozen, so a `new Client()` per
+ * request paid a TCP connect + TLS handshake + Postgres startup on every
+ * dashboard load — tens of ms each, several per page render — and a burst of
+ * cold requests could exhaust Supabase's pooler connection limit.
+ *
+ * A module-scoped `Pool` is created lazily on first use and reused for the
+ * life of the warm instance. It is sized *small* (`PG_POOL_MAX`, default 3):
+ * one instance serves few concurrent requests, and a large pool multiplied
+ * across many concurrent instances is what exhausts the upstream limit
+ * faster. `idleTimeoutMillis` lets idle connections drop before the instance
+ * freezes; every checkout runs against `statement_timeout` so one slow query
+ * cannot pin an instance to its wall-clock limit. `pool.connect()` transparently
+ * discards a connection the platform severed between invocations.
+ */
+let pool: Pool | undefined;
+
+function getPool(): Pool {
+  if (!pool) {
+    const max = Number(process.env.PG_POOL_MAX ?? 3);
+    const p = new Pool({
+      connectionString: connectionString(),
+      max: Number.isFinite(max) && max > 0 ? max : 3,
+      idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT_MS ?? 10_000),
+      connectionTimeoutMillis: Number(process.env.PG_CONNECT_TIMEOUT_MS ?? 5_000),
+      statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT_MS ?? 15_000),
+    });
+    // A pool-level error (backend crash, network drop on an idle connection)
+    // must not become an unhandled rejection that kills the instance.
+    p.on('error', (err) => {
+      console.error('pg pool error (idle client):', err.message);
+    });
+    pool = p;
+  }
+  return pool;
+}
+
 export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
-  const client = new Client({ connectionString: connectionString() });
-  await client.connect();
+  const client = await getPool().connect();
   try {
     return await fn(client);
   } finally {
-    await client.end().catch(() => {});
+    client.release();
   }
+}
+
+/** Closes the pool. For tests and graceful shutdown; not called per request. */
+export async function closePool(): Promise<void> {
+  const p = pool;
+  pool = undefined;
+  schemaReady = undefined;
+  if (p) await p.end().catch(() => {});
 }
 
 /**
@@ -53,8 +103,32 @@ export async function withMerchantClient<T>(
  * Idempotent, and safe against either historical layout - see
  * migrations/001_unify_payments.sql for the full reasoning. Kept in code as
  * well so a fresh database works without a manual migration step.
+ *
+ * Runs **once per warm instance** (issue #91), not once per request: it was
+ * called defensively at the top of `/api/sync`, `/api/payments`,
+ * `/api/hook/settle` and `/api/routes`, so every API call issued a dozen DDL
+ * statements before doing any work, and `ALTER TABLE` under concurrent load
+ * takes locks. `schemaReady` memoises the first successful run; a failure
+ * clears it so the next request retries.
+ *
+ * This body remains the single place the schema is defined. The `migrations/`
+ * SQL files are the same objects for a from-scratch `psql -f` run; keeping
+ * them from drifting is what `schema.expected.sql` + the CI `schema-drift`
+ * job enforce.
  */
-export async function ensureSchema(client: Client): Promise<void> {
+let schemaReady: Promise<void> | undefined;
+
+export function ensureSchema(client: Client): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = ensureSchemaOnce(client).catch((err) => {
+      schemaReady = undefined;
+      throw err;
+    });
+  }
+  return schemaReady;
+}
+
+async function ensureSchemaOnce(client: Client): Promise<void> {
   await client.query(`
  CREATE TABLE IF NOT EXISTS payments (
  tx_hash VARCHAR(64) PRIMARY KEY,
@@ -115,6 +189,16 @@ export async function ensureSchema(client: Client): Promise<void> {
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
+  // Drift fix (issue #91): migrations/002 creates this partial index but
+  // ensureSchema never did, so a code-provisioned database was missing it.
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS idx_payments_hook_reported ON payments(hook_reported_at) WHERE hook_reported_at IS NOT NULL;`,
+  );
+  // Keyset pagination on /api/payments orders by (ts DESC, tx_hash DESC) and
+  // is now tenant-scoped, so it needs a matching composite (issue #93).
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS idx_payments_merchant_ts_txhash ON payments(merchant_id, ts DESC, tx_hash DESC);`,
+  );
 
   // Auth challenge nonces — issued by /api/auth/challenge, consumed by
   // /api/auth/verify. Prevents replay of unrelated signed transactions.
