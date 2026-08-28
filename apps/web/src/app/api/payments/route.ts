@@ -56,7 +56,7 @@ export async function GET(request: Request) {
   let limit = 100;
   if (limitParam !== null) {
     const parsed = Number.parseFloat(limitParam);
-    const maxLimit = await getMaxBatchSize().catch(() => 1000); // Fallback to 1000 if network fails
+    const maxLimit = await getMaxBatchSize().catch(() => 1000);
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > maxLimit) {
       return NextResponse.json(
         { error: 'limit must be an integer between 1 and 1000' },
@@ -164,7 +164,7 @@ export async function GET(request: Request) {
       }
         const countRes = await client.query<{ total_count: string; total_amount: string | null }>(
           `SELECT count(*)::text AS total_count, coalesce(sum(amount), 0)::text AS total_amount FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`,
-          [merchant.id],
+          [merchant!.id],
         );
         const totalCount = countRes.rows.length
           ? Number(countRes.rows[0].total_count ?? countRes.rows.length)
@@ -197,7 +197,7 @@ export async function GET(request: Request) {
         const result = await client.query(query, params);
         return {
           rows: result.rows,
-          sync: await getSyncState(client, merchant.id),
+          sync: await getSyncState(client, merchant!.id),
           totalCount,
           totalAmount,
         };
