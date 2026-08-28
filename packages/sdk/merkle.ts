@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { AccensaContractError } from './src/errors';
 
 /**
  * Verifies a payment receipt against an anchored batch root, off-chain.
@@ -37,7 +38,9 @@ export function verifyReceipt(leaf: string, proof: string[], root: string): bool
  */
 function decodeHash(value: string, label: string): Buffer {
   if (!/^[0-9a-fA-F]{64}$/.test(value)) {
-    throw new Error(`${label} must be a hex-encoded 32-byte hash`);
+    // A hash that is not hex-encoded 32 bytes violates the receipt format the
+    // contract anchors on-chain, so it surfaces as a contract error.
+    throw new AccensaContractError(`${label} must be a hex-encoded 32-byte hash`);
   }
   return Buffer.from(value, 'hex');
 }
@@ -124,9 +127,7 @@ export function buildBatch(leaves: string[]): BatchInfo {
         const left = currentLevel[i];
         const right = currentLevel[i + 1];
         const [lo, hi] =
-          Buffer.compare(left.buf, right.buf) <= 0
-            ? [left.buf, right.buf]
-            : [right.buf, left.buf];
+          Buffer.compare(left.buf, right.buf) <= 0 ? [left.buf, right.buf] : [right.buf, left.buf];
         const parent = createHash('sha256')
           .update(Buffer.concat([lo, hi]))
           .digest();

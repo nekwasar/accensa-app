@@ -8,7 +8,8 @@ import {
   type Settlement,
   type X402SettleResult,
 } from './settlement';
-import { fetchWithRetry, type RetryOptions } from './retry';
+import { AccensaAuthError, AccensaError, AccensaNetworkError } from './src/errors';
+import { fetchWithRetry, HttpError, type RetryOptions } from './retry';
 
 export { verifyReceipt, buildBatch, type BatchInfo } from './merkle';
 export { fetchWithRetry, HttpError, type RetryOptions } from './retry';
@@ -26,11 +27,18 @@ export { WEBHOOK_SIGNATURE_HEADER, signWebhookSignature, verifyWebhookSignature 
 /** Strict, typed Order and Product fetches against the Accensa indexer. */
 export {
   AccensaClient,
-  AccensaError,
   type AccensaClientOptions,
   type OrdersPage,
   type ProductsPage,
 } from './src/client';
+/** Typed error classes for the failure modes consumers actually branch on. */
+export {
+  AccensaError,
+  AccensaAuthError,
+  AccensaNetworkError,
+  AccensaContractError,
+  type AccensaErrorOptions,
+} from './src/errors';
 /** Strict mappers from the indexer's wire rows to Order/Product. */
 export {
   orderFromWire,
@@ -215,7 +223,7 @@ export async function reportSettlement(
 
   const doFetch = opts.fetchImpl ?? globalThis.fetch;
   if (typeof doFetch !== 'function') {
-    report(new Error('No fetch implementation available'), body);
+    report(new AccensaNetworkError('No fetch implementation available'), body);
     return false;
   }
 
@@ -249,7 +257,37 @@ export async function reportSettlement(
     );
     return true;
   } catch (error) {
-    report(error, body);
+    if (error instanceof HttpError) {
+      // A 401/403 means the report itself was rejected, not that the network
+      // is down — classify it so callers can distinguish the two.
+      const { status } = error;
+      report(
+        status === 401 || status === 403
+          ? new AccensaAuthError(`Accensa returned ${status} for ${settlement.txHash}`, {
+              status,
+              path: SETTLE_ENDPOINT,
+            })
+          : new AccensaError(`Accensa returned ${status} for ${settlement.txHash}`, {
+              status,
+            }),
+        body,
+      );
+    } else {
+      // A dropped connection, a timeout (surfacing as an AbortError), or a
+      // network-level failure that exhausted its retries. The underlying
+      // message rides along so `report` can show why the report failed.
+      const causeText = error instanceof Error ? error.message : String(error);
+      report(
+        new AccensaNetworkError(
+          `Failed to reach the Accensa indexer at ${SETTLE_ENDPOINT}: ${causeText}`,
+          {
+            url: `${opts.indexerUrl.replace(/\/$/, '')}${SETTLE_ENDPOINT}`,
+            cause: error,
+          },
+        ),
+        body,
+      );
+    }
     return false;
   } finally {
     clearTimeout(timer);

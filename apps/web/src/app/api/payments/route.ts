@@ -34,8 +34,6 @@ export interface PaymentsResponse {
   total_pages: number;
   /** Total count of all settled payments for this merchant. */
   total_count?: number;
-  /** Sum of all settled payment amounts for this merchant. */
-  total_amount?: string;
 }
 
 export async function GET(request: Request) {
@@ -122,6 +120,10 @@ export async function GET(request: Request) {
       async (client) => {
         await ensureSchema(client);
 
+        // Window functions evaluate over the full filtered row set before LIMIT
+        // and OFFSET are applied, so one query returns both the page and the
+        // aggregates the dashboard header needs (total count, sum, single-asset
+        // detection via min = max).
         let query = `SELECT tx_hash, ledger, payer, amount::text AS amount, asset, ts, route, method,
                            COUNT(*) OVER() AS total,
                            COALESCE(SUM(amount) OVER(), 0) AS total_amount,
@@ -145,6 +147,8 @@ export async function GET(request: Request) {
           query += ` AND (ts < $${params.length + 1} OR (ts = $${params.length + 1} AND tx_hash < $${params.length + 2}))`;
           params.push(parsedCursor.ts, parsedCursor.txHash);
         }
+        query += ` ORDER BY ts DESC, tx_hash DESC LIMIT $${params.length + 1}`;
+        params.push(limit);
 
         query += ` ORDER BY ts DESC, tx_hash DESC LIMIT $${params.length + 1}`;
         params.push(limit);
@@ -155,12 +159,32 @@ export async function GET(request: Request) {
         }
 
         const result = await client.query(query, params);
+
+        const countRes = await client.query<{ total_count: string; total_amount: string | null }>(
+          `SELECT count(*)::text AS total_count, coalesce(sum(amount), 0)::text AS total_amount FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`,
+          [merchant.id],
+        );
+        const totalCount = countRes.rows.length
+          ? Number(countRes.rows[0].total_count ?? countRes.rows.length)
+          : 0;
+        const totalAmount =
+          countRes.rows.length &&
+          countRes.rows[0].total_amount !== undefined &&
+          countRes.rows[0].total_amount !== null
+            ? String(countRes.rows[0].total_amount)
+            : '0';
+
+        return {
+          rows: result.rows,
+          sync: await getSyncState(client, merchant.id),
+          totalCount,
+          totalAmount,
+        };
         return { rows: result.rows, sync: await getSyncState(client, merchant.id) };
       },
     );
 
     const total = rows.length > 0 ? Number(rows[0].total ?? 0) : 0;
-    const totalAmount = rows.length > 0 ? String(rows[0].total_amount ?? 0) : '0';
     const totalAsset = rows.length > 0 ? (rows[0].total_asset ?? null) : null;
     const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
@@ -188,6 +212,7 @@ export async function GET(request: Request) {
       total_amount: totalAmount,
       total_asset: totalAsset,
       total_pages: totalPages,
+      total_count: totalCount,
     };
     return NextResponse.json(body, {
       headers: {
