@@ -11,6 +11,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { PageContainer } from '@/components/page-container';
 import { RefundPanel } from '@/components/refund-panel';
 import { CopyButton } from '@/components/copy-button';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { useOnline } from '@/components/network-status';
 import { describeFailure } from '@/lib/network-status';
 import { Pagination } from '@/components/pagination';
@@ -29,14 +30,15 @@ interface Payment {
 
 type LoadState =
   | { status: 'loading' }
-  | { status: 'ready'; payments: Payment[]; sync: SyncState | null }
   | {
       status: 'ready';
       payments: Payment[];
       fetchedAt: number;
       sync: SyncState | null;
+      /** Cursor for the page after the polled head. Null once exhausted. */
+      cursor: string | null;
       totalCount?: number;
-      totalAmount?: string;
+      totalAmount?: string; totalAsset?: string;
     }
   | { status: 'error'; message: string };
 
@@ -59,6 +61,25 @@ interface PaymentsResponse {
 /** Chunk size for the transaction history. */
 const PAGE_SIZE = 50;
 const POLL_INTERVAL_MS = 15_000;
+
+/**
+ * Merges the polled head page with any older pages the merchant has scrolled
+ * in, newest first, de-duplicated by `tx_hash`.
+ *
+ * The head is re-fetched every poll and a new settlement lands at its top, so
+ * an already-loaded older page can overlap it after a sync; the dedupe keeps
+ * that from showing a row twice.
+ */
+export function mergePayments(head: Payment[], older: Payment[]): Payment[] {
+  const seen = new Set<string>();
+  const out: Payment[] = [];
+  for (const payment of [...head, ...older]) {
+    if (seen.has(payment.tx_hash)) continue;
+    seen.add(payment.tx_hash);
+    out.push(payment);
+  }
+  return out;
+}
 const explorerUrl = (hash: string) => `https://stellar.expert/explorer/testnet/tx/${hash}`;
 
 const paymentsUrl = (page: number) => `/api/payments?limit=${PAGE_SIZE}&page=${page}`;
@@ -99,6 +120,14 @@ function saveRefundedToStorage(refunded: ReadonlySet<string>): void {
 export function Dashboard() {
   const [selected, setSelected] = useState<Payment | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  // Older pages the merchant has scrolled in, plus the cursor after the last
+  // of them. Kept across polls: they are historical rows the poll does not
+  // re-serve. `olderCursor` is undefined until the first older page is pulled,
+  // at which point it — not the head's cursor — marks where the tail is.
+  const [olderPages, setOlderPages] = useState<Payment[]>([]);
+  const [olderCursor, setOlderCursor] = useState<string | null | undefined>(undefined);
+  const [loadingMore, setLoadingMore] = useState(false);
   // Refunds issued in this session. The indexer does not watch RefundVault
   // events yet, so a refund is otherwise invisible until someone opens the
   // payment again and the contract is re-read.
@@ -123,6 +152,55 @@ export function Dashboard() {
   const pageParam = Number(searchParams.get('page') ?? '1');
   const page = Number.isInteger(pageParam) && pageParam >= 1 ? pageParam : 1;
 
+  // `online` is a dependency, not just a guard: polling stops while the browser
+  // has no connection - every request would fail and overwrite a good table with
+  // an error - and reconnecting re-runs the effect, which refetches immediately
+  // rather than waiting out the remainder of a 15s tick.
+  useEffect(() => {
+    if (!online) return;
+    const controller = new AbortController();
+    async function fetchPayments() {
+      try {
+        const res = await fetch('/api/payments', { signal: controller.signal, cache: 'no-store' });
+        if (!res.ok)
+          throw new Error((await res.json().catch(() => ({}))).error ?? `Error ${res.status}`);
+        const data = await res.json();
+        // Tolerate both shapes: the endpoint used to return a bare array, and
+        // a deploy can briefly serve an older build to an already-open tab.
+        const payments: Payment[] = Array.isArray(data) ? data : (data.payments ?? []);
+        const sync: SyncState | null = Array.isArray(data) ? null : (data.sync ?? null);
+        const cursor: string | null = Array.isArray(data) ? null : (data.next_cursor ?? null);
+        const totalCount = Array.isArray(data) ? undefined : data.total_count;
+        const totalAmount = Array.isArray(data) ? undefined : data.total_amount; const totalAsset = Array.isArray(data) ? undefined : data.total_asset;
+        if (!controller.signal.aborted) {
+          setState({ 
+            status: 'ready', 
+            payments, 
+            fetchedAt: Date.now(), 
+            sync, 
+            cursor, 
+            totalCount, 
+            totalAmount,
+            totalAsset
+          });
+        }
+      } catch (error) {
+        // Re-read navigator.onLine here rather than closing over `online`: the
+        // connection can drop between the request going out and it failing,
+        // and that is exactly the case worth naming correctly.
+        if (!controller.signal.aborted && !isAbortError(error)) {
+          setState({ status: 'error', message: describeFailure(error, navigator.onLine) });
+        }
+      }
+    }
+    void fetchPayments();
+    const timer = setInterval(fetchPayments, POLL_INTERVAL_MS);
+    return () => {
+      controller.abort();
+      clearInterval(timer);
+    };
+  }, [reloadToken, online]);
+=======
   const goToPage = useCallback(
     (next: number) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -164,6 +242,7 @@ export function Dashboard() {
   // clicking Next is instant. Renders nothing; the cache is the whole point.
   const hasNext = totalPages > page;
   useSWR(hasNext ? paymentsUrl(page + 1) : null, fetchPaymentsPage);
+>>>>>>> origin/main
 
   useEffect(() => {
     if (!selected) return;
@@ -173,6 +252,36 @@ export function Dashboard() {
     return () => document.removeEventListener('keydown', onKey);
   }, [selected]);
 
+  const headPayments = state.status === 'ready' ? state.payments : [];
+  const payments = mergePayments(headPayments, olderPages);
+
+  // Where the next "load older" page starts: the last older page's cursor once
+  // one has been pulled, otherwise the head's. `null` means the range is
+  // exhausted; `undefined` (before any load) falls back to the head cursor.
+  const tailCursor =
+    olderCursor !== undefined ? olderCursor : state.status === 'ready' ? state.cursor : null;
+
+  const loadOlder = useCallback(async () => {
+    if (!tailCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/payments?cursor=${encodeURIComponent(tailCursor)}`, {
+        cache: 'no-store',
+      });
+      if (!res.ok)
+        throw new Error((await res.json().catch(() => ({}))).error ?? `Error ${res.status}`);
+      const data = await res.json();
+      const page: Payment[] = Array.isArray(data) ? data : (data.payments ?? []);
+      setOlderPages((prev) => mergePayments(prev, page));
+      setOlderCursor(Array.isArray(data) ? null : (data.next_cursor ?? null));
+    } catch {
+      // A failed "load older" leaves the table as it was; the poll's own
+      // error handling covers a genuine connectivity problem.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [tailCursor, loadingMore]);
+
   // The header total covers every payment, not just the visible page, so the
   // number does not shrink when the merchant pages forward. Older deploys that
   // lack the server-side aggregates fall back to summing what is on screen.
@@ -180,11 +289,13 @@ export function Dashboard() {
   let totalAsset = '';
   const pageAssets = new Set(payments.map((p) => assetLabel(p.asset)));
   if (pageAssets.size === 1) totalAsset = [...pageAssets][0];
-  if (data?.total_amount != null) {
-    total = data.total_amount;
-    totalAsset = data.total_asset ? assetLabel(data.total_asset) : '';
+  if (state.status === 'ready' && state.totalAmount != null) {
+    total = state.totalAmount;
+    if (state.totalAsset) {
+      totalAsset = assetLabel(state.totalAsset as any);
+    }
   }
-  const totalCount = data?.total_count ?? payments.length;
+  const totalCount = state.status === 'ready' && state.totalCount != null ? state.totalCount : payments.length;
 
   return (
     <main className="min-h-screen text-slate-600 dark:text-slate-200 font-sans selection:bg-slate-200 dark:selection:bg-white/10 transition-colors duration-300 bg-grid p-6 md:p-12 lg:p-20 pt-28 md:pt-32 lg:pt-32">
@@ -321,7 +432,7 @@ export function Dashboard() {
             )}
 
             {state.status === 'ready' && payments.length > 0 && (
-              <>
+              <ErrorBoundary label="settlements table">
                 {/* Mobile View */}
                 <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
                   {payments.map((payment) => (
@@ -391,7 +502,21 @@ export function Dashboard() {
                 <div className="hidden md:block overflow-x-auto">
                   <PaymentsTable payments={payments} refunded={refunded} onSelect={setSelected} />
                 </div>
-              </>
+
+                {tailCursor && (
+                  <div className="p-6 border-t border-slate-100 dark:border-white/5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => void loadOlder()}
+                      disabled={loadingMore || !online}
+                      title={online ? undefined : 'Loading older settlements needs a connection.'}
+                      className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                    >
+                      {loadingMore ? 'Loading…' : 'Load older settlements'}
+                    </button>
+                  </div>
+                )}
+              </ErrorBoundary>
             )}
           </div>
 
