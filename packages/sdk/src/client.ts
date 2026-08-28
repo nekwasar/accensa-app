@@ -16,21 +16,6 @@
 import { ordersFromResponse, productsFromResponse } from './mapping';
 import type { Order } from './types/order';
 import type { Product } from './types/product';
-import {
-  AccensaAuthError,
-  AccensaContractError,
-  AccensaError,
-  AccensaNetworkError,
-} from './errors';
-
-// Re-exported so `import { AccensaError } from '@accensa/sdk'` keeps working and
-// the classes stay available from the client module.
-export {
-  AccensaAuthError,
-  AccensaContractError,
-  AccensaError,
-  AccensaNetworkError,
-} from './errors';
 import type { SyncEvent } from './types/sync-event';
 
 export interface AccensaClientOptions {

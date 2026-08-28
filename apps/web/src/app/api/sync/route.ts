@@ -4,12 +4,33 @@ import {
   withClient,
   ensureSchema,
   getLastSyncedLedger,
+  getSyncState,
+  rollbackSyncToLedger,
   setLastSyncedLedger,
   getSyncState,
 } from '@/lib/db';
-import { sweepLedgerRange, EVENTS_PAGE_LIMIT, type EventPage } from '@/lib/event-pager';
+import {
+  sweepLedgerRange,
+  parallelSweepLedgerRange,
+  PARALLEL_SYNC_THRESHOLD,
+  EVENTS_PAGE_LIMIT,
+  LedgerWindowFetchError,
+  type EventPage,
+} from '@/lib/event-pager';
+import {
+  eventsToPaymentRows,
+  chunkRows,
+  buildBatchInsertSql,
+  flattenRows,
+  PAYMENTS_BATCH_SIZE,
+  type PaymentRow,
+} from '@/lib/insert-payments';
+import { listMerchants, getMerchantFromRequest, type Merchant } from '@/lib/merchants';
 import { cooldownRemaining } from '@/lib/sync-status';
-import { enqueueWebhookDelivery, payloadFromRow } from '@/lib/webhooks';
+import { broadcastSyncEvent, hasSubscribers } from '@/lib/sync-events';
+import { isAuthorizedCronRequest } from '@/lib/cron-auth';
+import { logSyncFailure, notifySyncFailure, type SyncFailureContext } from '@/lib/sync-logger';
+import { createHmac } from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -114,7 +135,21 @@ async function runSync(merchant: string, opts: { cooldownMs?: number } = {}) {
     {
       const { sequence: latestLedger } = await rpc<{ sequence: number }>('getLatestLedger', {});
 
-      const cursor = await getLastSyncedLedger(client);
+      let cursor = await getLastSyncedLedger(client, merchant.id);
+
+      // A chain head lower than the processed cursor means the node rolled
+      // back — a re-org, or a failover to a peer that lost its tail. Ledgers
+      // past the head no longer exist on the canonical chain, so payments
+      // indexed from them describe a chain that is gone: purge them and
+      // rewind the cursor to the corrected head before working out where to
+      // resume. Without this the early return below would report `drained`
+      // while the local ledger silently keeps rolled-back payments.
+      let rollback: { purged: number } | null = null;
+      if (cursor !== null && latestLedger < cursor) {
+        rollback = await rollbackSyncToLedger(client, merchant.id, latestLedger);
+        cursor = latestLedger;
+      }
+
       const resumeFrom = cursor !== null ? cursor + 1 : latestLedger - COLD_START_LOOKBACK;
       const retentionFloor = latestLedger - MAX_LOOKBACK;
       const startLedger = Math.max(resumeFrom, retentionFloor, 1);
@@ -135,6 +170,13 @@ async function runSync(merchant: string, opts: { cooldownMs?: number } = {}) {
           scanned: 0,
           decoded: 0,
           inserted: 0,
+          // After a rollback there is nothing left to re-scan this
+          // invocation — the corrected head is the whole valid range — but
+          // the rewind was the work. Surface it so the run is not mistaken
+          // for a no-op.
+          ...(rollback
+            ? { rollback: true, rolledBackTo: latestLedger, purged: rollback.purged }
+            : {}),
         };
       }
 
@@ -229,6 +271,21 @@ async function runSync(merchant: string, opts: { cooldownMs?: number } = {}) {
       // fell behind the RPC retention window and stopped seeing payments.
       await setLastSyncedLedger(client, sweptThrough);
 
+      // Push a real-time update to any subscribed dashboard tab instead of
+      // waiting for the next poll (real-time indexer updates). Skipped when no
+      // client is listening so an idle sync does no broadcast bookkeeping.
+      if (hasSubscribers(merchant.id)) {
+        broadcastSyncEvent(merchant.id, {
+          merchant: merchant.address,
+          syncedTo: sweptThrough,
+          inserted,
+          scanned,
+          pages,
+          drained: complete,
+          occurredAt: new Date().toISOString(),
+        });
+      }
+
       return {
         latestLedger,
         startLedger,
@@ -245,10 +302,64 @@ async function runSync(merchant: string, opts: { cooldownMs?: number } = {}) {
   });
 }
 
-/** Maps a run to a response, so both entry points answer identically. */
-function respond(result: Awaited<ReturnType<typeof runSync>>) {
+type SyncResult = Awaited<ReturnType<typeof runSync>>;
+
+/** One merchant's sync throwing instead of returning a result (#135). */
+interface SyncFailure {
+  merchant: string;
+  error: string;
+}
+
+/** Maps one merchant's run to its response fragment. */
+function summarize(result: SyncResult) {
   if ('cooldown' in result) {
-    const retryAfterMs = Math.ceil(result.retryAfterMs);
+    return { cooldown: true, retryAfterMs: Math.ceil(result.retryAfterMs) };
+  }
+  return result;
+}
+
+/**
+ * Builds the context+logging a caught sync error needs, then reports it both
+ * to the log (always) and to SYNC_ALERT_WEBHOOK_URL (if configured) (#135).
+ *
+ * A LedgerWindowFetchError carries the exact window being read when the RPC
+ * call failed; anything else (a parsing error, a DB error) is logged without
+ * ledger context rather than guessing at one.
+ */
+function reportSyncError(error: unknown, merchant?: string): void {
+  const context: SyncFailureContext = {
+    ...(merchant ? { merchant } : {}),
+    ...(error instanceof LedgerWindowFetchError
+      ? { startLedger: error.startLedger, endLedger: error.endLedger }
+      : {}),
+  };
+  logSyncFailure(context, error);
+  // Alerting must never block or fail the sync job itself.
+  void notifySyncFailure(context, error);
+}
+
+/**
+ * Maps a set of per-merchant runs to a response.
+ *
+ * `.github/workflows/sync.yml` greps the body for `"syncedTo"` to prove real
+ * indexing happened (see the comment above that workflow) and for
+ * `"skippedLedgers":[1-9]` to catch a retention gap — both stay present here
+ * as deployment-wide maximums alongside the full per-merchant `results`, so
+ * that check keeps working unchanged whether this deployment has one merchant
+ * or many.
+ *
+ * `failures` (#135) are merchants whose sync threw rather than returned — they
+ * no longer abort the whole batch (see GET below), so they are reported here
+ * instead: `success` goes false, which the workflow already treats as a
+ * warning worth surfacing, while `results`/`syncedTo` still reflect whatever
+ * other merchants did complete.
+ */
+function respond(results: SyncResult[], failures: SyncFailure[] = []) {
+  // The manual, single-merchant POST path preserves the original 429 +
+  // Retry-After contract exactly, since the dashboard's "Sync now" button
+  // already depends on it.
+  if (failures.length === 0 && results.length === 1 && 'cooldown' in results[0]) {
+    const retryAfterMs = Math.ceil(results[0].retryAfterMs);
     return NextResponse.json(
       { success: true, cooldown: true, retryAfterMs },
       { status: 429, headers: { 'Retry-After': String(Math.ceil(retryAfterMs / 1000)) } },
@@ -257,18 +368,24 @@ function respond(result: Awaited<ReturnType<typeof runSync>>) {
   return NextResponse.json({ success: true, ...result });
 }
 
-function configError(): NextResponse | null {
-  if (!process.env.MERCHANT_ADDRESS) {
-    return NextResponse.json({ error: 'MERCHANT_ADDRESS is not configured' }, { status: 500 });
-  }
-  if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 });
-  }
-  return null;
+  const summaries = results.map(summarize);
+  const synced = summaries.filter(
+    (s): s is Extract<(typeof summaries)[number], { syncedTo: number }> => 'syncedTo' in s,
+  );
+  const syncedTo = synced.length ? Math.max(...synced.map((s) => s.syncedTo)) : null;
+  const skippedLedgers = synced.length ? Math.max(...synced.map((s) => s.skippedLedgers)) : 0;
+  const drained = synced.length ? synced.every((s) => s.drained) : true;
+
+  return NextResponse.json({
+    success: failures.length === 0,
+    results: summaries,
+    ...(syncedTo !== null ? { syncedTo, skippedLedgers, drained } : {}),
+    ...(failures.length ? { failures } : {}),
+  });
 }
 
-function failed(error: unknown) {
-  console.error('Error during sync:', error);
+function failed(error: unknown, merchant?: string) {
+  reportSyncError(error, merchant);
   return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
 }
 
@@ -290,7 +407,32 @@ export async function GET(request: Request) {
   if (bad) return bad;
 
   try {
-    return respond(await runSync(process.env.MERCHANT_ADDRESS as string));
+    const merchants = await withClient(async (client) => {
+      await ensureSchema(client);
+      return listMerchants(client);
+    });
+
+    if (merchants.length === 0) {
+      return NextResponse.json({ error: 'No merchants are configured' }, { status: 500 });
+    }
+
+    const results: SyncResult[] = [];
+    const failures: SyncFailure[] = [];
+    for (const merchant of merchants) {
+      // One merchant's RPC error or parsing failure must not cost every
+      // merchant after it in this run their turn (#135) — each is isolated
+      // and logged with context, and the loop moves on.
+      try {
+        results.push(await runSync(merchant));
+      } catch (error) {
+        reportSyncError(error, merchant.address);
+        failures.push({
+          merchant: merchant.address,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    return respond(results, failures);
   } catch (error: unknown) {
     return failed(error);
   }
@@ -305,11 +447,15 @@ export async function POST() {
   const bad = configError();
   if (bad) return bad;
 
+  let merchant: Merchant | null = null;
   try {
-    return respond(
-      await runSync(process.env.MERCHANT_ADDRESS as string, { cooldownMs: MANUAL_COOLDOWN_MS }),
-    );
+    merchant = await withClient((client) => getMerchantFromRequest(client, request));
+    if (!merchant) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    return respond([await runSync(merchant, { cooldownMs: MANUAL_COOLDOWN_MS })]);
   } catch (error: unknown) {
-    return failed(error);
+    return failed(error, merchant?.address);
   }
 }
