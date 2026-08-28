@@ -142,9 +142,7 @@ describe('Dashboard tables accessibility', () => {
       },
     ];
 
-    const html = renderToString(
-      <PaymentsCardList payments={payments} onSelect={() => {}} />,
-    );
+    const html = renderToString(<PaymentsCardList payments={payments} onSelect={() => {}} />);
 
     // Every <div> card must be a button for keyboard access
     const divMatches = html.match(/<div\b[^>]*role="button"[^>]*>/g) ?? [];
@@ -181,9 +179,7 @@ describe('Dashboard tables accessibility', () => {
       },
     ];
 
-    const html = renderToString(
-      <PaymentsCardList payments={payments} onSelect={() => {}} />,
-    );
+    const html = renderToString(<PaymentsCardList payments={payments} onSelect={() => {}} />);
 
     const ariaLabels = [...html.matchAll(/aria-label="([^"]+)"/g)].map((m) => m[1]);
     expect(ariaLabels.length).toBe(2);

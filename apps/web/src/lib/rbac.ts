@@ -100,7 +100,11 @@ export class ZanzibarStore {
  * Middleware factory for checking permissions on API routes.
  */
 export function requirePermission(store: ZanzibarStore, permission: Permission) {
-  return (req: any, res: any, next: any) => {
+  return (
+    req: { user?: { id?: string }; params?: Record<string, string>; body?: Record<string, string> },
+    res: { status: (code: number) => { json: (body: unknown) => unknown } },
+    next: () => void,
+  ) => {
     const userId = req.user?.id;
     const merchantId = req.params?.merchantId || req.body?.merchantId;
 

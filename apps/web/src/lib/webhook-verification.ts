@@ -27,10 +27,7 @@ const TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
  * @param secret    The webhook signing secret
  * @returns         true if the signature is valid
  */
-export async function verifyWebhookSignature(
-  request: Request,
-  secret: string,
-): Promise<boolean> {
+export async function verifyWebhookSignature(request: Request, secret: string): Promise<boolean> {
   try {
     const signatureHeader = request.headers.get(WEBHOOK_SIGNATURE_HEADER);
     if (!signatureHeader) return false;

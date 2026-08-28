@@ -12,7 +12,7 @@
  *   });
  */
 
-import type { PostgresClient } from './db';
+import type { Client } from 'pg';
 
 export type AnalyticsPeriod = '24h' | '7d' | '30d' | '90d' | 'all';
 
@@ -55,7 +55,7 @@ const PERIOD_DAYS: Record<AnalyticsPeriod, number> = {
  * Get dashboard analytics for a merchant.
  */
 export async function getDashboardAnalytics(
-  client: PostgresClient,
+  client: Client,
   merchantId: string,
   opts: { period?: AnalyticsPeriod } = {},
 ): Promise<DashboardAnalytics> {
@@ -101,12 +101,10 @@ export async function getDashboardAnalytics(
   const prevRevenue = parseFloat(prev?.total_revenue ?? '0');
   const prevPayments = parseInt(prev?.total_payments ?? '0', 10);
 
-  const revenueChange = prevRevenue > 0
-    ? ((parseFloat(totalRevenue) - prevRevenue) / prevRevenue) * 100
-    : 0;
-  const paymentsChange = prevPayments > 0
-    ? ((totalPayments - prevPayments) / prevPayments) * 100
-    : 0;
+  const revenueChange =
+    prevRevenue > 0 ? ((parseFloat(totalRevenue) - prevRevenue) / prevRevenue) * 100 : 0;
+  const paymentsChange =
+    prevPayments > 0 ? ((totalPayments - prevPayments) / prevPayments) * 100 : 0;
 
   // Top products
   const topProductsResult = await client.query<{
@@ -142,21 +140,23 @@ export async function getDashboardAnalytics(
   return {
     totalRevenue,
     totalPayments,
-    averagePayment: totalPayments > 0
-      ? (parseFloat(totalRevenue) / totalPayments).toFixed(7)
-      : '0',
+    averagePayment: totalPayments > 0 ? (parseFloat(totalRevenue) / totalPayments).toFixed(7) : '0',
     revenueChange: Math.round(revenueChange * 10) / 10,
     paymentsChange: Math.round(paymentsChange * 10) / 10,
-    topProducts: topProductsResult.rows.map((r) => ({
-      route: r.route,
-      revenue: r.revenue,
-      count: parseInt(r.count, 10),
-    })),
-    dailyTrend: dailyTrendResult.rows.map((r) => ({
-      date: r.day instanceof Date ? r.day.toISOString().split('T')[0] : String(r.day),
-      revenue: r.revenue,
-      count: parseInt(r.count, 10),
-    })),
+    topProducts: topProductsResult.rows.map(
+      (r: { route: string; revenue: string; count: string }) => ({
+        route: r.route,
+        revenue: r.revenue,
+        count: parseInt(r.count, 10),
+      }),
+    ),
+    dailyTrend: dailyTrendResult.rows.map(
+      (r: { day: string | Date; revenue: string; count: string }) => ({
+        date: r.day instanceof Date ? r.day.toISOString().split('T')[0] : String(r.day),
+        revenue: r.revenue,
+        count: parseInt(r.count, 10),
+      }),
+    ),
     uniquePayers,
   };
 }

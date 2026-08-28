@@ -115,7 +115,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { rows, sync } = await withMerchantClient(
+    const { rows, sync, totalCount, totalAmount } = await withMerchantClient(
       merchant.id,
       async (client) => {
         await ensureSchema(client);
@@ -150,9 +150,6 @@ export async function GET(request: Request) {
         query += ` ORDER BY ts DESC, tx_hash DESC LIMIT $${params.length + 1}`;
         params.push(limit);
 
-        query += ` ORDER BY ts DESC, tx_hash DESC LIMIT $${params.length + 1}`;
-        params.push(limit);
-
         if (!parsedCursor) {
           query += ` OFFSET $${params.length + 1}`;
           params.push(offset);
@@ -162,7 +159,7 @@ export async function GET(request: Request) {
 
         const countRes = await client.query<{ total_count: string; total_amount: string | null }>(
           `SELECT count(*)::text AS total_count, coalesce(sum(amount), 0)::text AS total_amount FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`,
-          [merchant.id],
+          [merchant!.id],
         );
         const totalCount = countRes.rows.length
           ? Number(countRes.rows[0].total_count ?? countRes.rows.length)
@@ -176,11 +173,10 @@ export async function GET(request: Request) {
 
         return {
           rows: result.rows,
-          sync: await getSyncState(client, merchant.id),
+          sync: await getSyncState(client, merchant!.id),
           totalCount,
           totalAmount,
         };
-        return { rows: result.rows, sync: await getSyncState(client, merchant.id) };
       },
     );
 
