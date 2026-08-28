@@ -73,6 +73,19 @@ function truncate(value: string, head = 8, tail = 6) {
   return value.length <= head + tail + 1 ? value : `${value.slice(0, head)}…${value.slice(-tail)}`;
 }
 
+/** Shared handler for Enter/Space activation on a payment row or card. */
+function handleActivationKeyDown(e: React.KeyboardEvent, onSelect: () => void) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    onSelect();
+  }
+}
+
+/** Accessible label identifying a payment by its truncated tx hash and amount. */
+function paymentLabel(p: Payment) {
+  return `Payment ${formatAmount(p.amount)} ${assetLabel(p.asset)} (${truncate(p.tx_hash)}), view details`;
+}
+
 const REFUNDED_STORAGE_KEY = 'accensa-refunded-txs';
 
 function loadRefundedFromStorage(): ReadonlySet<string> {
@@ -323,69 +336,7 @@ export function Dashboard() {
             {state.status === 'ready' && payments.length > 0 && (
               <>
                 {/* Mobile View */}
-                <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
-                  {payments.map((payment) => (
-                    <div
-                      key={payment.tx_hash}
-                      onClick={() => setSelected(payment)}
-                      className="p-6 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group flex flex-col gap-4"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="font-black text-2xl tracking-tight text-slate-900 dark:text-white transition-colors duration-300">
-                            {formatAmount(payment.amount)}
-                          </span>
-                          <span className="text-slate-400 dark:text-slate-500 ml-2 text-xs font-bold">
-                            {assetLabel(payment.asset)}
-                          </span>
-                        </div>
-                        <div className="text-slate-500 text-xs text-right mt-1">
-                          <time dateTime={toISO8601(payment.ts)} title={toISO8601(payment.ts)}>
-                            {formatTimestamp(payment.ts)}
-                          </time>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                            Transaction
-                          </p>
-                          <p className="font-mono text-emerald-600 dark:text-emerald-400 text-sm">
-                            {truncate(payment.tx_hash)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                            Payer
-                          </p>
-                          <p className="font-mono text-slate-500 dark:text-slate-400 text-sm">
-                            {truncate(payment.payer, 4, 4)}
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                            Route
-                          </p>
-                          {payment.route ? (
-                            <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-2.5 py-1 text-sm transition-colors duration-300">
-                              {payment.method && (
-                                <span className="text-emerald-600 dark:text-emerald-500/70 font-mono font-bold text-xs">
-                                  {payment.method}
-                                </span>
-                              )}
-                              <span className="font-mono text-slate-600 dark:text-slate-300">
-                                {payment.route}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 dark:text-slate-600">-</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <PaymentsCardList payments={payments} onSelect={setSelected} />
 
                 {/* Desktop View */}
                 <div className="hidden md:block overflow-x-auto">
@@ -520,6 +471,84 @@ export function PaymentModal({
   );
 }
 
+export function PaymentsCardList({
+  payments,
+  onSelect,
+}: {
+  payments: Payment[];
+  onSelect: (payment: Payment) => void;
+}) {
+  return (
+    <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
+      {payments.map((payment) => (
+        <div
+          key={payment.tx_hash}
+          role="button"
+          tabIndex={0}
+          aria-label={paymentLabel(payment)}
+          onClick={() => onSelect(payment)}
+          onKeyDown={(e) => handleActivationKeyDown(e, () => onSelect(payment))}
+          className="p-6 hover:bg-slate-50 dark:hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600 dark:focus-visible:outline-emerald-400 transition-colors cursor-pointer group flex flex-col gap-4"
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="font-black text-2xl tracking-tight text-slate-900 dark:text-white transition-colors duration-300">
+                {formatAmount(payment.amount)}
+              </span>
+              <span className="text-slate-400 dark:text-slate-500 ml-2 text-xs font-bold">
+                {assetLabel(payment.asset)}
+              </span>
+            </div>
+            <div className="text-slate-500 text-xs text-right mt-1">
+              <time dateTime={toISO8601(payment.ts)} title={toISO8601(payment.ts)}>
+                {formatTimestamp(payment.ts)}
+              </time>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                Transaction
+              </p>
+              <p className="font-mono text-emerald-600 dark:text-emerald-400 text-sm">
+                {truncate(payment.tx_hash)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                Payer
+              </p>
+              <p className="font-mono text-slate-500 dark:text-slate-400 text-sm">
+                {truncate(payment.payer, 4, 4)}
+              </p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                Route
+              </p>
+              {payment.route ? (
+                <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-2.5 py-1 text-sm transition-colors duration-300">
+                  {payment.method && (
+                    <span className="text-emerald-600 dark:text-emerald-500/70 font-mono font-bold text-xs">
+                      {payment.method}
+                    </span>
+                  )}
+                  <span className="font-mono text-slate-600 dark:text-slate-300">
+                    {payment.route}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-slate-400 dark:text-slate-600">-</span>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function PaymentsTable({
   payments,
   refunded,
@@ -555,8 +584,12 @@ export function PaymentsTable({
         {payments.map((payment) => (
           <tr
             key={payment.tx_hash}
+            role="button"
+            tabIndex={0}
+            aria-label={paymentLabel(payment)}
             onClick={() => onSelect(payment)}
-            className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group"
+            onKeyDown={(e) => handleActivationKeyDown(e, () => onSelect(payment))}
+            className="hover:bg-slate-50 dark:hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600 dark:focus-visible:outline-emerald-400 transition-colors cursor-pointer group"
           >
             <td className="px-8 py-5 font-mono text-emerald-700 dark:text-emerald-400 text-sm group-hover:text-emerald-800 dark:group-hover:text-emerald-300 transition-colors">
               {truncate(payment.tx_hash)}
