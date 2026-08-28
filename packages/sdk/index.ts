@@ -44,6 +44,17 @@ export {
 export type { Order, OrderMetadata } from './src/types/order';
 export type { Product, ProductMetadata } from './src/types/product';
 
+/** Multi-currency price formatting utilities. */
+export {
+  formatPrice,
+  formatPriceCompact,
+  assetSymbol,
+  toStroops,
+  fromStroops,
+  TOKENS,
+  type TokenMeta,
+} from './src/price-formatter';
+
 /**
  * This package deliberately ships no paywall middleware.
  *
