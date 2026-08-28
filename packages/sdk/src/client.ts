@@ -18,6 +18,9 @@ import type { Order } from './types/order';
 import type { Product } from './types/product';
 import type { SyncEvent } from './types/sync-event';
 
+/** Default request timeout in milliseconds (30 seconds). */
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 export interface AccensaClientOptions {
   /** Base URL of your Accensa deployment, e.g. https://accensa-dashboard.vercel.app */
   indexerUrl: string;
@@ -27,6 +30,13 @@ export interface AccensaClientOptions {
    * API key, …).
    */
   headers?: Record<string, string>;
+  /**
+   * Request timeout in milliseconds. Applies to every HTTP request made by
+   * the client. Set to 0 to disable the timeout entirely. (#134)
+   *
+   * Defaults to 30 000 ms (30 seconds).
+   */
+  timeoutMs?: number;
   /** Injected in tests. Defaults to global fetch. */
   fetchImpl?: typeof fetch;
   /** Optional request timeout in milliseconds. */
@@ -47,14 +57,35 @@ export interface ProductsPage {
   truncated: boolean;
 }
 
+/** Thrown when the indexer responds with a non-2xx status. */
+export class AccensaError extends Error {
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'AccensaError';
+    this.status = status;
+  }
+}
+
+/** Thrown when a request exceeds the configured timeout. */
+export class AccensaTimeoutError extends AccensaError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AccensaTimeoutError';
+  }
+}
+
 export class AccensaClient {
   private readonly indexerUrl: string;
   private readonly headers: Record<string, string>;
+  private readonly timeoutMs: number;
   private readonly fetchImpl?: typeof fetch;
 
   constructor(opts: AccensaClientOptions) {
     this.indexerUrl = opts.indexerUrl.replace(/\/$/, '');
     this.headers = opts.headers ?? {};
+    this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.fetchImpl = opts.fetchImpl;
   }
 
@@ -148,24 +179,32 @@ export class AccensaClient {
     return () => source.close();
   }
 
+  /**
+   * Makes a GET request and parses the JSON response, respecting the
+   * configured timeout. (#134)
+   */
   private async getJson(path: string): Promise<unknown> {
     const doFetch = this.fetchImpl ?? globalThis.fetch;
     if (typeof doFetch !== 'function') {
       throw new AccensaNetworkError('No fetch implementation available');
     }
 
-    const url = `${this.indexerUrl}${path}`;
+    const signal = this.timeoutMs > 0 ? AbortSignal.timeout(this.timeoutMs) : undefined;
+
     let response: Response;
     try {
-      response = await doFetch(url, {
+      response = await doFetch(`${this.indexerUrl}${path}`, {
         method: 'GET',
         headers: this.headers,
+        signal,
       });
-    } catch (cause) {
-      throw new AccensaNetworkError(`Failed to reach the Accensa indexer at ${path}`, {
-        url,
-        cause,
-      });
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'TimeoutError') {
+        throw new AccensaTimeoutError(
+          `Request to ${path} timed out after ${this.timeoutMs}ms`,
+        );
+      }
+      throw err;
     }
 
     if (!response.ok) {
