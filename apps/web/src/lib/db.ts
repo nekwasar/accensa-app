@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-import { Client } from 'pg';
-import { resolveShard } from './shard-router';
-=======
 import { Pool, type PoolClient } from 'pg';
+import { resolveShard } from './shard-router';
 
 /** A checked-out connection. Named `Client` so call sites are unchanged. */
 export type Client = PoolClient;
->>>>>>> main
 
 /**
  * Opens a database connection.
@@ -223,7 +219,6 @@ async function ensureSchemaOnce(client: Client): Promise<void> {
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
-<<<<<<< HEAD
 
   // Tenant identifier for multi-tenant sharding (issue #171, see
   // migrations/003_tenant_shard_columns.sql and SHARDING.md). Defaulting to
@@ -237,7 +232,6 @@ async function ensureSchemaOnce(client: Client): Promise<void> {
   await client.query(
     `CREATE INDEX IF NOT EXISTS idx_payments_workspace_id ON payments(workspace_id);`,
   );
-=======
   // Drift fix (issue #91): migrations/002 creates this partial index but
   // ensureSchema never did, so a code-provisioned database was missing it.
   await client.query(
@@ -430,7 +424,6 @@ async function ensureMultiMerchantSchema(client: Client): Promise<void> {
       USING (merchant_id = current_setting('accensa.merchant_id', true)::int)
       WITH CHECK (merchant_id = current_setting('accensa.merchant_id', true)::int);
   `);
->>>>>>> main
 }
 
 /**
