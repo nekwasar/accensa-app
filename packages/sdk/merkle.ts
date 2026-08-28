@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { AccensaContractError } from './src/errors';
 
 /**
  * Verifies a payment receipt against an anchored batch root, off-chain.
@@ -38,9 +37,7 @@ export function verifyReceipt(leaf: string, proof: string[], root: string): bool
  */
 function decodeHash(value: string, label: string): Buffer {
   if (!/^[0-9a-fA-F]{64}$/.test(value)) {
-    // A hash that is not hex-encoded 32 bytes violates the receipt format the
-    // contract anchors on-chain, so it surfaces as a contract error.
-    throw new AccensaContractError(`${label} must be a hex-encoded 32-byte hash`);
+    throw new Error(`${label} must be a hex-encoded 32-byte hash`);
   }
   return Buffer.from(value, 'hex');
 }
@@ -51,118 +48,99 @@ export interface BatchInfo {
   proofs: Record<string, string[]>;
 }
 
+/** Combine two nodes smaller-hash-first, so proofs need no position flags. */
+function combine(a: Buffer, b: Buffer): Buffer {
+  const [lo, hi] = Buffer.compare(a, b) <= 0 ? [a, b] : [b, a];
+  return createHash('sha256')
+    .update(Buffer.concat([lo, hi]))
+    .digest();
+}
+
 /**
- * Builds a Merkle tree from receipt leaves and returns the root together with
- * each leaf's proof.
+ * Builds every level of the tree. An odd node at the end of a level is promoted
+ * unchanged to the next level rather than duplicated — the same convention as
+ * `packages/sdk/scripts/generate-vectors.mjs` and `ReceiptAnchor::verify_receipt`.
+ */
+function buildLevels(leaves: Buffer[]): Buffer[][] {
+  const levels: Buffer[][] = [leaves];
+  let level = leaves;
+  while (level.length > 1) {
+    const next: Buffer[] = [];
+    for (let i = 0; i < level.length; i += 2) {
+      next.push(i + 1 < level.length ? combine(level[i], level[i + 1]) : level[i]);
+    }
+    levels.push(next);
+    level = next;
+  }
+  return levels;
+}
+
+function proofFor(levels: Buffer[][], index: number): Buffer[] {
+  const proof: Buffer[] = [];
+  let i = index;
+  for (let l = 0; l < levels.length - 1; l++) {
+    const sibling = i % 2 === 0 ? i + 1 : i - 1;
+    if (sibling < levels[l].length) proof.push(levels[l][sibling]);
+    i = Math.floor(i / 2);
+  }
+  return proof;
+}
+
+/**
+ * Builds a Merkle batch and a membership proof for every leaf.
  *
- * Mirrors `ReceiptAnchor.verify_receipt` exactly: sorted-pair SHA-256 hashing
- * (lexicographically smaller hash first), so proofs carry no left/right position
- * flags. Both implementations are pinned to the shared conformance fixture in
- * `merkle-vectors.json`.
+ * The tree is the production implementation of the convention pinned by
+ * `merkle-vectors.json`: sorted-pair SHA-256, odd nodes promoted unchanged,
+ * proofs in leaf-to-root order. `verifyReceipt` (and on-chain
+ * `verify_receipt`) will accept every proof this returns.
  *
- * Odd-node handling: an unpaired node at the end of a level is promoted
- * unchanged to the next level. This is the deliberate choice documented in
- * `merkle-vectors.json`'s `algorithm.oddNode` field, and it matches the
- * Soroban `ReceiptAnchor` contract's behaviour. A promoted node does not gain
- * any proof entries at that level because it is not hashed.
+ * Leaf order is significant — it is the order the caller supplies. The
+ * anchoring flow feeds payments ordered by ledger, then `tx_hash`, so the
+ * same selection always produces the same root.
  *
- * Boundaries:
- *  - Empty input returns a 32-byte zero root (a sentinel — a real batch can
- *    never produce this root because even a single-leaf batch returns the
- *    leaf itself as the root).
- *  - A single leaf returns the leaf as the root with an empty proof.
- *  - Duplicate leaves are rejected: the `proofs` map is keyed by leaf hash,
- *    so two leaves with the same hash would collide. In practice every receipt
- *    hash includes unique payment metadata, so duplicates do not arise.
- *
- * Leaves are validated through the existing `decodeHash`, which rejects any
- * value that is not a hex-encoded 32-byte hash.
- *
- * @param leaves  hex-encoded 32-byte hashes of receipts
- * @returns       the root, the leaves (passed through), and a proof per leaf
- * @throws if any leaf is not a valid hex hash, or if leaves contain duplicates
+ * @throws if `leaves` is empty, or if any value is not a hex-encoded 32-byte hash
  */
 export function buildBatch(leaves: string[]): BatchInfo {
   if (leaves.length === 0) {
-    return { root: Buffer.alloc(32).toString('hex'), leaves: [], proofs: {} };
+    throw new Error('buildBatch requires at least one leaf');
   }
 
-  // Validate all leaves upfront through decodeHash. This rejects malformed
-  // input early rather than letting it silently corrupt the tree.
-  const buffers = leaves.map((l) => decodeHash(l, 'leaf'));
+  const normalised = leaves.map((leaf, i) => {
+    const hex = leaf.trim().toLowerCase();
+    decodeHash(hex, `leaves[${i}]`);
+    return hex;
+  });
 
-  // Reject duplicate leaves: the `proofs` map is keyed by leaf hash, so two
-  // leaves with the same hash would share a proof entry even though their
-  // positions in the tree are different. In practice every receipt hash
-  // includes unique payment metadata, so this never arises.
-  const seen = new Set<string>();
-  for (const l of leaves) {
-    if (seen.has(l)) {
-      throw new Error(`duplicate leaf hash: ${l}`);
-    }
-    seen.add(l);
-  }
+  const buffers = normalised.map((hex) => Buffer.from(hex, 'hex'));
+  const levels = buildLevels(buffers);
+  const root = levels[levels.length - 1][0].toString('hex');
 
-  // Track each node's original indices so that proof entries can be
-  // accumulated correctly through promoted (unpaired) nodes. When two nodes
-  // are paired, all leaf indices behind each node record the other node as
-  // their sibling at that level. A promoted node carries all its leaf
-  // indices forward unchanged.
-  const proofsByIndex: string[][] = leaves.map(() => []);
-
-  let currentLevel: { buf: Buffer; indices: number[] }[] = buffers.map((buf, i) => ({
-    buf,
-    indices: [i],
-  }));
-
-  while (currentLevel.length > 1) {
-    const nextLevel: { buf: Buffer; indices: number[] }[] = [];
-
-    for (let i = 0; i < currentLevel.length; i += 2) {
-      if (i + 1 === currentLevel.length) {
-        // Odd node: promoted unchanged. No proof entry because the node is
-        // not hashed at this level — it simply carries forward.
-        nextLevel.push(currentLevel[i]);
-      } else {
-        const left = currentLevel[i];
-        const right = currentLevel[i + 1];
-        const [lo, hi] =
-          Buffer.compare(left.buf, right.buf) <= 0 ? [left.buf, right.buf] : [right.buf, left.buf];
-        const parent = createHash('sha256')
-          .update(Buffer.concat([lo, hi]))
-          .digest();
-
-        // Every leaf behind the left node records the right node as its
-        // sibling at this level, and vice versa.
-        for (const idx of left.indices) {
-          proofsByIndex[idx].push(right.buf.toString('hex'));
-        }
-        for (const idx of right.indices) {
-          proofsByIndex[idx].push(left.buf.toString('hex'));
-        }
-
-        // The parent inherits all leaf indices from both children.
-        nextLevel.push({
-          buf: parent,
-          indices: [...left.indices, ...right.indices],
-        });
-      }
-    }
-
-    currentLevel = nextLevel;
-  }
-
-  // Convert the index-keyed proofs to the leaf-keyed Record the interface
-  // requires. Since we rejected duplicates above, each leaf string maps to
-  // exactly one index.
   const proofs: Record<string, string[]> = {};
-  for (let i = 0; i < leaves.length; i++) {
-    proofs[leaves[i]] = proofsByIndex[i];
+  for (let i = 0; i < normalised.length; i++) {
+    proofs[normalised[i]] = proofFor(levels, i).map((b) => b.toString('hex'));
   }
 
-  return {
-    root: currentLevel[0].buf.toString('hex'),
-    leaves,
-    proofs,
-  };
+  return { root, leaves: normalised, proofs };
+}
+
+/**
+ * Production receipt leaf: SHA-256 of the 32-byte Stellar transaction hash.
+ *
+ * This is the contract between the anchoring flow, `@accensa/sdk`, and anyone
+ * verifying a receipt. A third party who knows only the payment's `tx_hash`
+ * can recompute the leaf, fetch the proof, and check it against the anchored
+ * root — locally via {@link verifyReceipt} or on-chain via `verify_receipt`.
+ *
+ * The shared conformance vectors in `merkle-vectors.json` pin the *tree*
+ * algorithm (sorted-pair SHA-256), not the leaf preimage. Those fixtures hash
+ * UTF-8 labels so the SDK and the Soroban tests can agree without depending
+ * on a live ledger. Production leaves are always `receiptLeaf(tx_hash)`.
+ *
+ * @param txHash hex-encoded 32-byte Stellar transaction hash
+ * @throws if `txHash` is not a hex-encoded 32-byte value
+ */
+export function receiptLeaf(txHash: string): string {
+  const hex = txHash.trim().replace(/^0x/i, '').toLowerCase();
+  const bytes = decodeHash(hex, 'tx_hash');
+  return createHash('sha256').update(bytes).digest('hex');
 }
