@@ -105,13 +105,6 @@ export async function GET(request: Request) {
 
   const offset = (page - 1) * limit;
 
-  // Filter parameters
-  const filterRoute = searchParams.get('route');
-  const filterPayer = searchParams.get('payer');
-  const filterAsset = searchParams.get('asset');
-  const filterDateFrom = searchParams.get('date_from');
-  const filterDateTo = searchParams.get('date_to');
-
   try {
     const merchant = await withClient((client) => getMerchantFromRequest(client, request));
     if (!merchant) {
@@ -135,29 +128,6 @@ export async function GET(request: Request) {
                               THEN MIN(COALESCE(asset, 'native')) OVER() END AS total_asset
                   FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`;
       const params: (string | number)[] = [merchant.id];
-
-      // Apply filter parameters
-      if (filterRoute) {
-        query += ` AND route = $${params.length + 1}`;
-        params.push(filterRoute);
-      }
-      if (filterPayer) {
-        query += ` AND payer = $${params.length + 1}`;
-        params.push(filterPayer);
-      }
-      if (filterAsset) {
-        query += ` AND asset = $${params.length + 1}`;
-        params.push(filterAsset);
-      }
-      if (filterDateFrom) {
-        query += ` AND ts >= $${params.length + 1}`;
-        params.push(filterDateFrom);
-      }
-      if (filterDateTo) {
-        query += ` AND ts <= $${params.length + 1}`;
-        params.push(filterDateTo);
-      }
-
       if (parsedCursor) {
         query += ` AND (ts < $${params.length + 1} OR (ts = $${params.length + 1} AND tx_hash < $${params.length + 2}))`;
         params.push(parsedCursor.ts, parsedCursor.txHash);
