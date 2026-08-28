@@ -21,7 +21,7 @@
     "./types": "./src/types/index.ts",
     "./webhooks": "./webhooks.ts",
     "./retry": "./retry.ts",
-    "./verify-auth": "./src/verify-auth.ts"
+    "./currency": "./currency.ts"
   },
   "scripts": {
     "test": "vitest run",
