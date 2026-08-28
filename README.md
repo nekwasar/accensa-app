@@ -119,6 +119,9 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 MERCHANT_ADDRESS=GCALKSGAZRJLSUEJT3M5W6LN4R7XQOLIRCOS6ZA6EDZVTZDBIIPPFKJ6
 STELLAR_RPC_URL=https://soroban-testnet.stellar.org
 HOOK_API_KEY=any-shared-secret   # required for /api/hook/settle
+# ASSET_CONTRACT_IDS — comma-separated SAC ids whose transfers are revenue.
+# Omitted, it defaults to the testnet native XLM SAC. For USDC (or XLM + USDC):
+# ASSET_CONTRACT_IDS=CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA,CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 
 # 3. Dashboard (schema is created on first request)
 cd apps/web
@@ -163,10 +166,38 @@ transfers the indexer has not reached yet are staged and completed on the next r
 
 [`apps/demo-merchant/`](apps/demo-merchant) is a working example.
 
+### Tenancy model
+
+One deployment now supports **multiple merchants**. Each merchant is a row in the
+`merchants` table (`address`, and optionally a settlement-reporting `public_key_hex`,
+`asset_contract_ids`, `refund_vault_id`, and `webhook_url` that override the
+deployment-wide env vars). `payments` and the indexer's ledger cursor
+(`sync_state`) are scoped by `merchant_id`, enforced both by application-level query
+scoping and by Postgres row-level security as a second line of defence — see
+[DESIGN.md](DESIGN.md) for the full design.
+
+Upgrading an existing single-merchant deployment needs no action: the migration
+(`migrations/003_multi_merchant.sql`, applied automatically) backfills one `merchants`
+row from `MERCHANT_ADDRESS`/`MERCHANT_PUBLIC_KEY` and every existing payment onto it.
+Onboarding another merchant means inserting one more row into `merchants`, not
+standing up another deployment.
+
 ### Contract addresses
 
 Testnet IDs are published in
 [`accensa-contracts/deployments/testnet.env`](https://github.com/accensa/accensa-contracts/blob/main/deployments/testnet.env).
+
+### Settling in USDC or multiple assets
+
+`ASSET_CONTRACT_IDS` selects which Stellar Asset Contracts the indexer treats as
+revenue. It defaults to the testnet native XLM SAC; set it to a comma-separated
+list to index USDC, or XLM and USDC together. `payments.asset` records each
+row's asset, and revenue is grouped by asset — never summed across them.
+
+RefundVault holds a **single** token, so a merchant taking both assets refunds
+in only one of them unless a second vault is deployed. Receiving USDC also
+requires a trustline. Both constraints are spelled out in
+[DEPLOYMENT.md](DEPLOYMENT.md#settling-in-usdc-or-multiple-assets).
 
 ## Testing
 

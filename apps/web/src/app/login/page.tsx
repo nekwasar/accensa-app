@@ -27,8 +27,9 @@ export default function LoginPage() {
         }
       }
 
-      // Fetch challenge
-      const res = await fetch('/api/auth/challenge');
+      // Fetch challenge, naming which merchant is logging in — the challenge
+      // transaction's source account has to be chosen before it can be built.
+      const res = await fetch(`/api/auth/challenge?address=${encodeURIComponent(status.address)}`);
       if (!res.ok) {
         const { error } = await res.json();
         throw new Error(error || 'Failed to fetch auth challenge');
@@ -89,7 +90,7 @@ export default function LoginPage() {
               aria-live="assertive"
               className="border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-[#0a111a] p-4 flex gap-3 items-start text-sm text-red-600 dark:text-red-400 transition-colors duration-300"
             >
-              <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" />
+              <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500 dark:text-red-400" />
               <p>{error}</p>
             </div>
           )}
