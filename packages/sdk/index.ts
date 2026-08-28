@@ -9,7 +9,7 @@ import {
   type X402SettleResult,
 } from './settlement';
 
-export { verifyReceipt } from './merkle';
+export { verifyReceipt, buildBatch, receiptLeaf, type BatchInfo } from './merkle';
 export {
   SETTLEMENT_HEADER,
   parseSettlementHeader,
@@ -19,6 +19,17 @@ export {
   type Settlement,
   type X402SettleResult,
 } from './settlement';
+
+/** Multi-currency price formatting utilities. */
+export {
+  formatPrice,
+  formatPriceCompact,
+  assetSymbol,
+  toStroops,
+  fromStroops,
+  TOKENS,
+  type TokenMeta,
+} from './src/price-formatter';
 
 /**
  * This package deliberately ships no paywall middleware.

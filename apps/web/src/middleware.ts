@@ -25,8 +25,12 @@ export async function middleware(request: NextRequest) {
   // bytes plus a five-minute timestamp bound. Gating it here would 401 every legitimate
   // settlement report before its own verification ever ran.
   const isPublicApi =
-    path.startsWith('/api/verify') || path.startsWith('/api/auth') || path.startsWith('/api/hook/');
-  const isCronSync = path === '/api/sync' && request.method === 'GET';
+    path.startsWith('/api/verify') ||
+    path.startsWith('/api/auth') ||
+    path.startsWith('/api/hook/') ||
+    path.startsWith('/api/receipts/');
+  const isCronSync =
+    (path === '/api/sync' || path === '/api/webhooks/deliver') && request.method === 'GET';
   const isPrivateApi = path.startsWith('/api/') && !isPublicApi && !isCronSync;
   const isDashboard = path.startsWith('/dashboard');
 
@@ -54,7 +58,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Enforce CRON_SECRET for GET /api/sync
+  // Enforce CRON_SECRET for GET /api/sync and GET /api/webhooks/deliver
   if (isCronSync) {
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
