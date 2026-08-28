@@ -44,6 +44,8 @@ export interface AccensaClientOptions {
   headers?: Record<string, string>;
   /** Injected in tests. Defaults to global fetch. */
   fetchImpl?: typeof fetch;
+  /** Optional request timeout in milliseconds. */
+  timeoutMs?: number;
 }
 
 /** A page of {@link Order}s as `/api/payments` returns them. */
