@@ -8,6 +8,7 @@ import {
   type Settlement,
   type X402SettleResult,
 } from './settlement';
+import type { components } from './generated/api-types';
 import { AccensaAuthError, AccensaError, AccensaNetworkError } from './src/errors';
 import { fetchWithRetry, HttpError, type RetryOptions } from './retry';
 
@@ -167,24 +168,29 @@ async function signSettlementPayload(payload: string, privateKeyHex: string): Pr
  * Snake-cased because it is a wire format, not an in-process value. Declaring
  * it here means a change to either end that the other does not follow is a
  * compile error in this package rather than a 401 or 400 found in production.
+ *
+ * Generated from apps/web/openapi.yaml (see issue #169) rather than
+ * hand-declared, so a change to what /api/hook/settle actually accepts shows
+ * up here as a stale-generated-file diff instead of a runtime 400 discovered
+ * in production. Regenerate with `pnpm gen:api`; CI fails if the checked-in
+ * file and the spec disagree.
  */
-export interface SettleHookPayload {
-  tx_hash: string;
-  route: string;
-  method: string;
-  request_id?: string;
-  payer?: string;
-  amount?: string;
-  network?: string;
-  reported_at?: string;
-}
+export type SettleHookPayload = components['schemas']['SettlementReport'];
 
-/** Builds the wire body for one settlement. */
+/**
+ * Builds the wire body for one settlement.
+ *
+ * `settlement.method` is already upper-cased by `settlementFromResult`, from
+ * whatever HTTP method the paid request actually used - the generated type's
+ * enum is the API's contract, not a claim that every value has been checked
+ * against it client-side. A method outside the standard set is rejected by
+ * the server itself (see settlement-report.ts's `parseSettlementReport`).
+ */
 export function toSettleHookPayload(settlement: Settlement): SettleHookPayload {
   return {
     tx_hash: settlement.txHash,
     route: settlement.route,
-    method: settlement.method,
+    method: settlement.method as SettleHookPayload['method'],
     request_id: settlement.requestId,
     payer: settlement.payer,
     amount: settlement.amount,

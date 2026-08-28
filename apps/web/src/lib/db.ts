@@ -1,4 +1,5 @@
 import { Pool, type PoolClient } from 'pg';
+import { resolveShard } from './shard-router';
 
 /** A checked-out connection. Named `Client` so call sites are unchanged. */
 export type Client = PoolClient;
@@ -98,6 +99,35 @@ export async function withMerchantClient<T>(
 }
 
 /**
+ * Like {@link withClient}, but opens a connection to whichever shard owns
+ * `tenantId` (see `shard-router.ts` and `SHARDING.md`, issue #171) instead of
+ * always connecting to `DATABASE_URL`.
+ *
+ * Additive by construction: nothing above this function changed, and none of
+ * the four existing call sites (`/api/payments`, `/api/sync`,
+ * `/api/routes`, `/api/hook/settle`) use it. With `DATABASE_SHARDS` unset -
+ * true of every deployment today - `resolveShard` returns the single shard
+ * backed by `DATABASE_URL`, so a caller that switches from `withClient` to
+ * `withTenantClient` today connects to the exact same database. Adopting
+ * tenant-aware routing is therefore a call-site-by-call-site decision, not a
+ * flag day, and it costs nothing until `DATABASE_SHARDS` actually names more
+ * than one shard.
+ */
+export async function withTenantClient<T>(
+  tenantId: string,
+  fn: (client: Client) => Promise<T>,
+): Promise<T> {
+  const shard = resolveShard(tenantId);
+  const client = new Client({ connectionString: shard.connectionString });
+  await client.connect();
+  try {
+    return await fn(client);
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
+/**
  * Brings the schema up to the canonical shape.
  *
  * Idempotent, and safe against either historical layout - see
@@ -189,6 +219,19 @@ async function ensureSchemaOnce(client: Client): Promise<void> {
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_ts ON payments(ts DESC);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_route ON payments(route);`);
   await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_payer ON payments(payer);`);
+
+  // Tenant identifier for multi-tenant sharding (issue #171, see
+  // migrations/003_tenant_shard_columns.sql and SHARDING.md). Defaulting to
+  // 'default' means every row this single-tenant deployment has ever written,
+  // and every INSERT that doesn't mention the column, keeps meaning exactly
+  // what it already meant - this does not, by itself, put any row on a
+  // different physical database.
+  await client.query(
+    `ALTER TABLE payments ADD COLUMN IF NOT EXISTS workspace_id VARCHAR(64) NOT NULL DEFAULT 'default';`,
+  );
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS idx_payments_workspace_id ON payments(workspace_id);`,
+  );
   // Drift fix (issue #91): migrations/002 creates this partial index but
   // ensureSchema never did, so a code-provisioned database was missing it.
   await client.query(
