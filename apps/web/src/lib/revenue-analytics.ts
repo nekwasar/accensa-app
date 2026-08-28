@@ -364,6 +364,30 @@ function bucketStart(ms: number, granularity: Granularity): number {
   return granularity === 'week' ? startOfWeek(ms) : startOfDay(ms);
 }
 
+/**
+ * The payments inside `range`, counting back from `now`.
+ *
+ * The window start is aligned to midnight UTC so it matches `buildRevenueSeries`,
+ * which buckets by UTC day: the earliest payment the route breakdown counts is
+ * the same one the chart shows in its first bucket. `'all'` returns the input
+ * untouched. Future-dated rows (ledger clock skew) are kept — they are real
+ * revenue — even though the chart's fixed geometry has to drop them.
+ */
+export function filterByRange(
+  payments: RevenuePayment[],
+  range: RangeKey,
+  now: number = Date.now(),
+): RevenuePayment[] {
+  const days = RANGE_DAYS[range];
+  if (days === null) return payments;
+
+  const start = startOfDay(now - (days - 1) * DAY_MS);
+  return payments.filter((payment) => {
+    const ms = Date.parse(payment.ts);
+    return !Number.isNaN(ms) && ms >= start;
+  });
+}
+
 function advance(ms: number, granularity: Granularity): number {
   return ms + (granularity === 'week' ? 7 * DAY_MS : DAY_MS);
 }

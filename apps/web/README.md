@@ -6,12 +6,15 @@ The dashboard and API routes are secured using a Stellar Wallet Auth model (simi
 
 See [SECURITY.md](./SECURITY.md) and [DESIGN.md](./DESIGN.md) for full details on the access model and session handling.
 
-## Payment webhooks
+## Configuration
 
-`WEBHOOK_URL` queues a signed POST for each newly indexed payment. Delivery
-runs on `GET /api/webhooks/deliver`, not inside the indexing loop — see the
-root README for the retry policy and Ed25519 signature scheme
-(`WEBHOOK_SIGNING_KEY`). Terminal failures are listed on the dashboard.
+Environment variables prefixed `NEXT_PUBLIC_` are exposed to the browser.
+
+| Variable                      | Values                                             | Default                           | Purpose                                                                                                                                                                                                                                                                         |
+| ----------------------------- | -------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_STELLAR_NETWORK` | `testnet`, `mainnet` (aliases: `public`, `pubnet`) | `testnet`, with a console warning | Network that block-explorer links (stellar.expert) point at. Set it to `mainnet` for a production deployment — otherwise every transaction and contract link resolves to a testnet page for something that only exists on mainnet. An unrecognised value fails fast at startup. |
+
+Other required server-side variables (`DATABASE_URL`, `MERCHANT_ADDRESS`, `STELLAR_NETWORK_PASSPHRASE`, …) are described in [SECURITY.md](./SECURITY.md) and [DESIGN.md](./DESIGN.md).
 
 ## Getting Started
 
