@@ -36,6 +36,14 @@ export interface PaymentsResponse {
   total_count?: number;
   /** Sum of all settled payment amounts for this merchant. */
   total_amount?: string;
+  /** Filter metadata returned when filters are applied. */
+  filter_info?: {
+    route?: string;
+    payer?: string;
+    asset?: string;
+    date_from?: string;
+    date_to?: string;
+  };
 }
 
 export async function GET(request: Request) {
@@ -48,7 +56,7 @@ export async function GET(request: Request) {
   let limit = 100;
   if (limitParam !== null) {
     const parsed = Number.parseFloat(limitParam);
-    const maxLimit = await getMaxBatchSize().catch(() => 1000); // Fallback to 1000 if network fails
+    const maxLimit = await getMaxBatchSize().catch(() => 1000);
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > maxLimit) {
       return NextResponse.json(
         { error: 'limit must be an integer between 1 and 1000' },
@@ -97,6 +105,13 @@ export async function GET(request: Request) {
 
   const offset = (page - 1) * limit;
 
+  // Filter parameters
+  const filterRoute = searchParams.get('route');
+  const filterPayer = searchParams.get('payer');
+  const filterAsset = searchParams.get('asset');
+  const filterDateFrom = searchParams.get('date_from');
+  const filterDateTo = searchParams.get('date_to');
+
   try {
     const merchant = await withClient((client) => getMerchantFromRequest(client, request));
     if (!merchant) {
@@ -120,13 +135,36 @@ export async function GET(request: Request) {
                               THEN MIN(COALESCE(asset, 'native')) OVER() END AS total_asset
                   FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`;
       const params: (string | number)[] = [merchant.id];
+
+      // Apply filter parameters
+      if (filterRoute) {
+        query += ` AND route = $${params.length + 1}`;
+        params.push(filterRoute);
+      }
+      if (filterPayer) {
+        query += ` AND payer = $${params.length + 1}`;
+        params.push(filterPayer);
+      }
+      if (filterAsset) {
+        query += ` AND asset = $${params.length + 1}`;
+        params.push(filterAsset);
+      }
+      if (filterDateFrom) {
+        query += ` AND ts >= $${params.length + 1}`;
+        params.push(filterDateFrom);
+      }
+      if (filterDateTo) {
+        query += ` AND ts <= $${params.length + 1}`;
+        params.push(filterDateTo);
+      }
+
       if (parsedCursor) {
         query += ` AND (ts < $${params.length + 1} OR (ts = $${params.length + 1} AND tx_hash < $${params.length + 2}))`;
         params.push(parsedCursor.ts, parsedCursor.txHash);
       }
         const countRes = await client.query<{ total_count: string; total_amount: string | null }>(
           `SELECT count(*)::text AS total_count, coalesce(sum(amount), 0)::text AS total_amount FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`,
-          [merchant.id],
+          [merchant!.id],
         );
         const totalCount = countRes.rows.length
           ? Number(countRes.rows[0].total_count ?? countRes.rows.length)
@@ -159,7 +197,7 @@ export async function GET(request: Request) {
         const result = await client.query(query, params);
         return {
           rows: result.rows,
-          sync: await getSyncState(client, merchant.id),
+          sync: await getSyncState(client, merchant!.id),
           totalCount,
           totalAmount,
         };
@@ -199,6 +237,17 @@ export async function GET(request: Request) {
       total_pages: totalPages,
       total_count: totalCount,
       total_amount: totalAmount,
+      ...(filterRoute || filterPayer || filterAsset || filterDateFrom || filterDateTo
+        ? {
+            filter_info: {
+              route: filterRoute ?? undefined,
+              payer: filterPayer ?? undefined,
+              asset: filterAsset ?? undefined,
+              date_from: filterDateFrom ?? undefined,
+              date_to: filterDateTo ?? undefined,
+            },
+          }
+        : {}),
     };
     return NextResponse.json(body, {
       headers: {

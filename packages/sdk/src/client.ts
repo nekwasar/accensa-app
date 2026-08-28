@@ -39,6 +39,8 @@ export interface AccensaClientOptions {
   timeoutMs?: number;
   /** Injected in tests. Defaults to global fetch. */
   fetchImpl?: typeof fetch;
+  /** Optional request timeout in milliseconds. */
+  timeoutMs?: number;
 }
 
 /** A page of {@link Order}s as `/api/payments` returns them. */
@@ -184,7 +186,7 @@ export class AccensaClient {
   private async getJson(path: string): Promise<unknown> {
     const doFetch = this.fetchImpl ?? globalThis.fetch;
     if (typeof doFetch !== 'function') {
-      throw new AccensaError('No fetch implementation available');
+      throw new AccensaNetworkError('No fetch implementation available');
     }
 
     const signal = this.timeoutMs > 0 ? AbortSignal.timeout(this.timeoutMs) : undefined;
@@ -206,11 +208,26 @@ export class AccensaClient {
     }
 
     if (!response.ok) {
-      throw new AccensaError(`Accensa returned ${response.status} for ${path}`, response.status);
+      if (response.status === 401 || response.status === 403) {
+        throw new AccensaAuthError(
+          `Accensa rejected the request with ${response.status} for ${path}`,
+          {
+            status: response.status,
+            path,
+          },
+        );
+      }
+      throw new AccensaError(`Accensa returned ${response.status} for ${path}`, {
+        status: response.status,
+      });
     }
 
-    const body: unknown = await response.json();
-    return body;
+    try {
+      const body: unknown = await response.json();
+      return body;
+    } catch (cause) {
+      throw new AccensaContractError(`Accensa returned a non-JSON body for ${path}`, { cause });
+    }
   }
 }
 
