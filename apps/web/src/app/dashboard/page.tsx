@@ -17,6 +17,7 @@ import { describeFailure } from '@/lib/network-status';
 import { Pagination } from '@/components/pagination';
 import { useOnline, useVisibility } from '@/components/network-status';
 import { describeFailure, isAbortError } from '@/lib/network-status';
+import { formatTimestamp, toISO8601 } from '@/lib/format-timestamp';
 
 interface Payment {
   tx_hash: string;
@@ -400,7 +401,9 @@ export function Dashboard() {
                           </span>
                         </div>
                         <div className="text-slate-500 text-xs text-right mt-1">
-                          {new Date(payment.ts).toLocaleString()}
+                          <time dateTime={toISO8601(payment.ts)} title={toISO8601(payment.ts)}>
+                            {formatTimestamp(payment.ts)}
+                          </time>
                         </div>
                       </div>
 
@@ -546,9 +549,13 @@ export function PaymentModal({
             </div>
           </Field>
           <Field label="Timestamp">
-            <span className="text-slate-700 dark:text-slate-300 transition-colors duration-300">
-              {new Date(selected.ts).toLocaleString()}
-            </span>
+            <time
+              dateTime={toISO8601(selected.ts)}
+              title={toISO8601(selected.ts)}
+              className="text-slate-700 dark:text-slate-300 transition-colors duration-300"
+            >
+              {formatTimestamp(selected.ts)}
+            </time>
           </Field>
 
           <div className="pt-6 mt-6 border-t border-slate-100 dark:border-white/10 transition-colors duration-300">
@@ -651,7 +658,9 @@ export function PaymentsTable({
               )}
             </td>
             <td className="px-8 py-5 text-slate-600 dark:text-slate-300 text-sm">
-              {new Date(payment.ts).toLocaleString()}
+              <time dateTime={toISO8601(payment.ts)} title={toISO8601(payment.ts)}>
+                {formatTimestamp(payment.ts)}
+              </time>
             </td>
           </tr>
         ))}
