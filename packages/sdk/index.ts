@@ -20,6 +20,17 @@ export {
   type X402SettleResult,
 } from './settlement';
 
+/** Multi-currency price formatting utilities. */
+export {
+  formatPrice,
+  formatPriceCompact,
+  assetSymbol,
+  toStroops,
+  fromStroops,
+  TOKENS,
+  type TokenMeta,
+} from './src/price-formatter';
+
 /**
  * This package deliberately ships no paywall middleware.
  *
