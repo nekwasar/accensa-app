@@ -12,6 +12,27 @@ export interface EventPage {
 
 export type EventConsumer = (events: RawEvent[]) => void | Promise<void>;
 
+/**
+ * Thrown when a `getEvents` page fetch fails, carrying the exact ledger window
+ * that was being read at the time (#135). Without this, an RPC error or a
+ * parsing failure bubbles up as a bare error with no way to tell which ledgers
+ * were affected — the window is only ever in scope at the call site below.
+ */
+export class LedgerWindowFetchError extends Error {
+  readonly startLedger: number;
+  readonly endLedger: number;
+
+  constructor(startLedger: number, endLedger: number, cause: unknown) {
+    const reason = cause instanceof Error ? cause.message : String(cause);
+    super(`Failed to fetch events for ledger window [${startLedger}, ${endLedger}]: ${reason}`, {
+      cause,
+    });
+    this.name = 'LedgerWindowFetchError';
+    this.startLedger = startLedger;
+    this.endLedger = endLedger;
+  }
+}
+
 export interface DrainResult {
   events: RawEvent[];
   /**
@@ -70,7 +91,12 @@ export async function drainEvents(
 
   for (;;) {
     // A cursor supersedes startLedger; sending both is rejected by the RPC.
-    const page = await fetchPage(cursor ? { cursor } : { startLedger, endLedger });
+    let page: EventPage;
+    try {
+      page = await fetchPage(cursor ? { cursor } : { startLedger, endLedger });
+    } catch (cause) {
+      throw new LedgerWindowFetchError(startLedger, endLedger ?? startLedger, cause);
+    }
     pages++;
     events.push(...page.events);
 
