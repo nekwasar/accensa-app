@@ -13,7 +13,6 @@
  */
 
 import type { Client } from 'pg';
-import { fromStroops, toStroops } from './money';
 
 export type AnalyticsPeriod = '24h' | '7d' | '30d' | '90d' | 'all';
 
@@ -51,19 +50,6 @@ const PERIOD_DAYS: Record<AnalyticsPeriod, number> = {
   '90d': 90,
   all: 36500, // ~100 years
 };
-
-/**
- * Divides two bigints, rounding half away from zero instead of truncating.
- *
- * Bigint division truncates toward zero; this adds half the denominator back
- * (in the sign's direction) so the last kept digit is the nearest one, the
- * same behaviour `Math.round` gives a float quotient — without any amount
- * passing through a float to get there.
- */
-function roundDiv(num: bigint, den: bigint): bigint {
-  const half = den / 2n;
-  return (num + (num < 0n ? -half : half)) / den;
-}
 
 /**
  * Get dashboard analytics for a merchant.
@@ -109,25 +95,16 @@ export async function getDashboardAnalytics(
   const cur = currentStats.rows[0];
   const prev = previousStats.rows[0];
 
-  // Revenue is folded in integer stroops exactly as on the ledger — never
-  // through a float, which would round a sum past 2^53 stroops. Only the final
-  // *ratios* (percentages) become Numbers, and they are derived by dividing
-  // bigints first, so no amount is ever represented as a float.
   const totalRevenue = cur?.total_revenue ?? '0';
-  const totalStroops = toStroops(totalRevenue) ?? 0n;
   const totalPayments = parseInt(cur?.total_payments ?? '0', 10);
   const uniquePayers = parseInt(cur?.unique_payers ?? '0', 10);
-  const prevStroops = toStroops(prev?.total_revenue ?? '0') ?? 0n;
+  const prevRevenue = parseFloat(prev?.total_revenue ?? '0');
   const prevPayments = parseInt(prev?.total_payments ?? '0', 10);
 
-  // Percentage at 0.1% resolution, rounded in bigint before anything becomes
-  // a float: ((cur - prev) / prev) * 100, with the rounding digit kept exact.
-  const revenueChange = prevStroops > 0n
-    ? Number(roundDiv((totalStroops - prevStroops) * 1000n, prevStroops)) / 10
-    : 0;
-  const paymentsChange = prevPayments > 0
-    ? ((totalPayments - prevPayments) / prevPayments) * 100
-    : 0;
+  const revenueChange =
+    prevRevenue > 0 ? ((parseFloat(totalRevenue) - prevRevenue) / prevRevenue) * 100 : 0;
+  const paymentsChange =
+    prevPayments > 0 ? ((totalPayments - prevPayments) / prevPayments) * 100 : 0;
 
   // Top products
   const topProductsResult = await client.query<{
@@ -146,8 +123,7 @@ export async function getDashboardAnalytics(
 
   // Daily trend
   const dailyTrendResult = await client.query<{
-    // pg returns a Date for `::date` columns; the mapper below accepts both.
-    day: Date | string;
+    day: string;
     revenue: string;
     count: string;
   }>(
@@ -164,23 +140,23 @@ export async function getDashboardAnalytics(
   return {
     totalRevenue,
     totalPayments,
-    // Integer division in stroops, floored to the stroop like the route
-    // breakdown averages — never divided through a float.
-    averagePayment: totalPayments > 0
-      ? fromStroops(totalStroops / BigInt(totalPayments))
-      : '0',
-    revenueChange,
+    averagePayment: totalPayments > 0 ? (parseFloat(totalRevenue) / totalPayments).toFixed(7) : '0',
+    revenueChange: Math.round(revenueChange * 10) / 10,
     paymentsChange: Math.round(paymentsChange * 10) / 10,
-    topProducts: topProductsResult.rows.map((r) => ({
-      route: r.route,
-      revenue: r.revenue,
-      count: parseInt(r.count, 10),
-    })),
-    dailyTrend: dailyTrendResult.rows.map((r) => ({
-      date: r.day instanceof Date ? r.day.toISOString().split('T')[0] : String(r.day),
-      revenue: r.revenue,
-      count: parseInt(r.count, 10),
-    })),
+    topProducts: topProductsResult.rows.map(
+      (r: { route: string; revenue: string; count: string }) => ({
+        route: r.route,
+        revenue: r.revenue,
+        count: parseInt(r.count, 10),
+      }),
+    ),
+    dailyTrend: dailyTrendResult.rows.map(
+      (r: { day: string | Date; revenue: string; count: string }) => ({
+        date: r.day instanceof Date ? r.day.toISOString().split('T')[0] : String(r.day),
+        revenue: r.revenue,
+        count: parseInt(r.count, 10),
+      }),
+    ),
     uniquePayers,
   };
 }

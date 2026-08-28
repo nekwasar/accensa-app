@@ -114,10 +114,9 @@ export async function GET(request: Request) {
     if (!merchant) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const merchantId = merchant.id;
 
     const { rows, sync, totalCount, totalAmount } = await withMerchantClient(
-      merchantId,
+      merchant.id,
       async (client) => {
         await ensureSchema(client);
 
@@ -132,7 +131,7 @@ export async function GET(request: Request) {
                                      MAX(COALESCE(asset, 'native')) OVER()
                                 THEN MIN(COALESCE(asset, 'native')) OVER() END AS total_asset
                     FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`;
-        const params: (string | number)[] = [merchantId];
+        const params: (string | number)[] = [merchant.id];
 
         // Apply date range filter (#142)
         if (fromDate) {
@@ -160,7 +159,7 @@ export async function GET(request: Request) {
 
         const countRes = await client.query<{ total_count: string; total_amount: string | null }>(
           `SELECT count(*)::text AS total_count, coalesce(sum(amount), 0)::text AS total_amount FROM payments WHERE merchant_id = $1 AND ts IS NOT NULL`,
-          [merchantId],
+          [merchant!.id],
         );
         const totalCount = countRes.rows.length
           ? Number(countRes.rows[0].total_count ?? countRes.rows.length)
@@ -174,7 +173,7 @@ export async function GET(request: Request) {
 
         return {
           rows: result.rows,
-          sync: await getSyncState(client, merchantId),
+          sync: await getSyncState(client, merchant!.id),
           totalCount,
           totalAmount,
         };

@@ -37,8 +37,8 @@ export function createAccensaClient(opts: ReactNativeClientOptions): AccensaClie
   if (!fetchImpl) {
     throw new Error(
       'No fetch implementation available. In React Native, ensure you are ' +
-      'running in a JavaScript engine that provides fetch (JSC/Hermes). ' +
-      'Or pass a customFetch option.',
+        'running in a JavaScript engine that provides fetch (JSC/Hermes). ' +
+        'Or pass a customFetch option.',
     );
   }
 
