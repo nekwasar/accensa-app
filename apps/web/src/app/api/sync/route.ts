@@ -103,7 +103,26 @@ async function rpc<T>(method: string, params: unknown, maxAttempts = 3): Promise
       return body.result as T;
     } catch (error) {
       if (attempt >= maxAttempts) throw error;
-      await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 100)); // Exponential backoff
+      // Exponential backoff (issue #143). Each retry waits 2^attempt * 100ms
+      // (100ms, 200ms), capped so a long outage cannot stall the whole
+      // invocation; the committed cursor means a partial run resumes cleanly
+      // on the next poll regardless. Log every retry as one structured JSON
+      // line so an operator can tell transient RPC blips from a real outage
+      // without waiting for the run to fail outright.
+      const delayMs = Math.min(Math.pow(2, attempt) * 100, 2_000);
+      console.error(
+        JSON.stringify({
+          level: 'warn',
+          event: 'rpc.retry',
+          method,
+          attempt,
+          maxAttempts,
+          retryInMs: delayMs,
+          error: error instanceof Error ? error.message : String(error),
+          at: new Date().toISOString(),
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
   throw new Error('Unreachable');
