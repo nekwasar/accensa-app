@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { rateLimit } from '@/lib/rate-limit';
+import { parseRole, type Role } from '@/lib/rbac';
 
 /**
  * No fallback secret, deliberately.
@@ -72,6 +73,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
+      // RBAC (#156): the role rides in the signed session. Legacy sessions
+      // without a role claim default to admin, so an existing cookie is never
+      // locked out of the dashboard mid-deployment.
+      const role: Role = parseRole(payload.role) ?? 'admin';
+
       // Route handlers trust this header for merchant scoping instead of each
       // re-verifying and re-decoding the session cookie themselves. It is only
       // ever set here, after jwtVerify has succeeded, so a request cannot
@@ -80,6 +86,7 @@ export async function middleware(request: NextRequest) {
       // any value a caller tried to smuggle in.
       const headers = new Headers(request.headers);
       headers.set('x-accensa-merchant', merchantAddress ?? '');
+      headers.set('x-accensa-role', role);
       return NextResponse.next({ request: { headers } });
     } catch {
       if (isPrivateApi) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

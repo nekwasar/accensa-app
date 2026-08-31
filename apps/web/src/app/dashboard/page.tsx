@@ -17,6 +17,7 @@ import { describeFailure } from '@/lib/network-status';
 import { Pagination } from '@/components/pagination';
 import { useOnline, useVisibility } from '@/components/network-status';
 import { describeFailure, isAbortError } from '@/lib/network-status';
+import type { Role } from '@/lib/rbac';
 
 interface Payment {
   tx_hash: string;
@@ -103,6 +104,12 @@ export function Dashboard() {
   // events yet, so a refund is otherwise invisible until someone opens the
   // payment again and the contract is re-read.
   const [refunded, setRefunded] = useState<ReadonlySet<string>>(() => loadRefundedFromStorage());
+  // RBAC (#156): the signed-in session's role, fetched once. `null` until the
+  // fetch resolves (and for legacy sessions without a role claim, which the
+  // server treats as admin), so the UI starts permissive and narrows only
+  // when the session is known to be a viewer. The server routes enforce the
+  // same boundary; hiding UI here is a convenience, not the control.
+  const [role, setRole] = useState<Role | null>(null);
   const markRefunded = useCallback(
     (txHash: string) =>
       setRefunded((prev) => {
@@ -114,6 +121,25 @@ export function Dashboard() {
   );
   const online = useOnline();
   const visible = useVisibility();
+
+  useEffect(() => {
+    let live = true;
+    fetch('/api/session', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { role?: unknown } | null) => {
+        if (live && (data?.role === 'admin' || data?.role === 'viewer')) setRole(data.role);
+      })
+      .catch(() => {
+        // A failed role read degrades to admin (permissive); server-side
+        // gating still protects every admin-only action.
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  // Viewers can inspect payments and revenue but cannot initiate refunds.
+  const canRefund = role !== 'viewer';
 
   // The current page lives in the URL (?page=2) so it survives reloads and can
   // be linked to; searchParams is the single source of truth, and `goToPage`
@@ -468,6 +494,7 @@ export function Dashboard() {
           onClose={() => setSelected(null)}
           refunded={refunded}
           onRefunded={markRefunded}
+          canRefund={canRefund}
         />
       )}
     </main>
@@ -479,11 +506,14 @@ export function PaymentModal({
   onClose,
   refunded,
   onRefunded,
+  canRefund,
 }: {
   selected: Payment;
   onClose: () => void;
   refunded: ReadonlySet<string>;
   onRefunded: (tx_hash: string) => void;
+  /** False for viewer sessions, which must not be able to initiate refunds (#156). */
+  canRefund?: boolean;
 }) {
   return (
     <div
@@ -562,12 +592,14 @@ export function PaymentModal({
             </a>
           </div>
 
-          <div className="pt-6 mt-6 border-t border-slate-100 dark:border-white/10 transition-colors duration-300">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300 mb-3">
-              Refund
-            </p>
-            <RefundPanel payment={selected} onRefunded={onRefunded} />
-          </div>
+          {canRefund !== false && (
+            <div className="pt-6 mt-6 border-t border-slate-100 dark:border-white/10 transition-colors duration-300">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300 mb-3">
+                Refund
+              </p>
+              <RefundPanel payment={selected} onRefunded={onRefunded} />
+            </div>
+          )}
         </div>
       </div>
     </div>

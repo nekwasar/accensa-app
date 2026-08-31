@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { withClient, withMerchantClient } from '@/lib/db';
 import { getMerchantFromRequest, updateMerchantProfile, type Merchant } from '@/lib/merchants';
+import { isAdmin } from '@/lib/rbac';
 import {
   getCachedMerchantFromRequest,
   merchantProfileCacheTag,
@@ -42,6 +43,16 @@ export async function PATCH(request: Request) {
   const caller = await withClient((client) => getMerchantFromRequest(client, request));
   if (!caller) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // RBAC (#156): the profile carries the webhook URL, signing key and asset
+  // watch-list — developer/settings configuration. Viewers must not be able
+  // to change it.
+  if (!isAdmin(request)) {
+    return NextResponse.json(
+      { error: 'Forbidden: viewer sessions cannot modify merchant settings' },
+      { status: 403 },
+    );
   }
 
   const profile = await withMerchantClient(caller.id, (client) =>
